@@ -35,6 +35,6 @@ void _tmain(int argc, _TCHAR* argv[])
 
     f.close();
 
-    cout << floor << " floors" << endl;
-    cout << firstBasementStep << " was first basement step" << endl;
+    cout << "floor " << floor << endl;
+    cout << "first basement step was " << firstBasementStep << endl;
 }

@@ -13,7 +13,6 @@ std::map<std::string, std::map<std::string, unsigned>> distances;
 
 void ReadInputFile(const std::string filename)
 {
-    // Populate distance table
     std::ifstream f(filename);
     for (std::string line; getline(f, line);)
     {
