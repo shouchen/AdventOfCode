@@ -11,68 +11,63 @@
 
 using namespace std;
 
-std::string GetHashText(const void *data, const size_t data_size)
+std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize)
 {
     std::ostringstream oss;
+    HCRYPTPROV hHash = NULL;
+    DWORD cbHashSize = 0, dwCount = sizeof(DWORD);
 
-    HCRYPTPROV hProv = NULL;
-    if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
+    if (CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash) &&
+        CryptHashData(hHash, static_cast<const BYTE *>(data), dataSize, 0) &&
+        CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&cbHashSize, &dwCount, 0))
     {
-        HCRYPTPROV hHash = NULL;
-        if (CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash))
+        std::vector<BYTE> buffer(cbHashSize);
+        if (CryptGetHashParam(hHash, HP_HASHVAL, reinterpret_cast<BYTE *>(&buffer[0]), &cbHashSize, 0))
         {
-            if (CryptHashData(hHash, static_cast<const BYTE *>(data), data_size, 0))
+            for (std::vector<BYTE>::const_iterator iter = buffer.begin(); iter != buffer.end(); ++iter)
             {
-                DWORD cbHashSize = 0, dwCount = sizeof(DWORD);
-                if (CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&cbHashSize, &dwCount, 0))
-                {
-                    std::vector<BYTE> buffer(cbHashSize);
-                    if (CryptGetHashParam(hHash, HP_HASHVAL, reinterpret_cast<BYTE*>(&buffer[0]), &cbHashSize, 0))
-                    {
-                        for (std::vector<BYTE>::const_iterator iter = buffer.begin(); iter != buffer.end(); ++iter)
-                        {
-                            oss.fill('0');
-                            oss.width(2);
-                            oss << std::hex << static_cast<const int>(*iter);
-                        }
-                    }
-                }
+                oss.fill('0');
+                oss.width(2);
+                oss << std::hex << static_cast<const int>(*iter);
             }
-
-            CryptDestroyHash(hHash);
         }
-
-        CryptReleaseContext(hProv, 0);
     }
 
     return oss.str();
 }
 
-void _tmain(int argc, _TCHAR *argv[])
+void SolveForInput(const string &input)
 {
-    string input = "bgvyzdsv";
-
-    bool foundFiveZeros = false;
-
-    for (unsigned long long i = 0; i < ULLONG_MAX; i++)
+    HCRYPTPROV hProv = NULL;
+    if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
     {
-        char buffer[100];
-        int size = sprintf_s(buffer, sizeof(buffer), "%s%llu", input.c_str(), i);
+        bool foundFiveZeros = false;
 
-        string output = GetHashText(buffer, size);
-        if (output[0] == '0' && output[1] == '0' && output[2] == '0' && output[3] == '0' && output[4] == '0')
+        for (unsigned long long i = 0; i < ULLONG_MAX; i++)
         {
-            if (!foundFiveZeros)
-            {
-                cout << "five zeros: " << i << " " << output << endl;
-                foundFiveZeros = true;
-            }
+            char buffer[100];
+            int size = sprintf_s(buffer, sizeof(buffer), "%s%llu", input.c_str(), i);
 
-            if (output[5] == '0')
+            string output = GetHashText(hProv, buffer, size);
+            if (output[0] == '0' && output[1] == '0' && output[2] == '0' && output[3] == '0' && output[4] == '0')
             {
-                cout << "six zeros: " << i << " " << output << endl;
-                break;
+                if (!foundFiveZeros)
+                {
+                    cout << "five zeros: " << i << " " << output << endl;
+                    foundFiveZeros = true;
+                }
+
+                if (output[5] == '0')
+                {
+                    cout << "six zeros: " << i << " " << output << endl;
+                    break;
+                }
             }
         }
     }
+}
+
+void _tmain(int argc, _TCHAR *argv[])
+{
+    SolveForInput("bgvyzdsv");
 }
