@@ -8,7 +8,8 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
-
+#include <iomanip>
+#include <cstdio>
 
 std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize)
 {
@@ -28,9 +29,7 @@ std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSiz
             {
                 for (std::vector<BYTE>::const_iterator iter = buffer.begin(); iter != buffer.end(); ++iter)
                 {
-                    oss.fill('0');
-                    oss.width(2);
-                    oss << std::hex << static_cast<const int>(*iter);
+                    oss << std::setfill('0') << std::setw(2) << std::hex << static_cast<const int>(*iter);
                 }
             }
         }
@@ -41,32 +40,42 @@ std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSiz
     return oss.str();
 }
 
+unsigned GetLongestUnsignedLongLong()
+{
+    std::ostringstream oss;
+    oss << ULLONG_MAX;
+    return oss.str().length();
+}
+
 void SolveForInput(const std::string &input)
 {
     HCRYPTPROV hProv = NULL;
     if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
     {
-        bool foundFiveZeros = false;
+        std::vector<char> buffer(input.length() + GetLongestUnsignedLongLong() + 1);
 
-        char buffer[100];
-        int inputLength = sprintf_s(buffer, sizeof(buffer), "%s", input.c_str());
+        auto inputLength = sprintf_s(&buffer[0], buffer.capacity(), "%s", input.c_str());
+        auto remainingBufferSize = buffer.capacity() - inputLength;
+        auto suffixStart = &buffer[0] + inputLength;
+
+        auto foundFiveZeros = false;
 
         for (unsigned long long i = 0; i < ULLONG_MAX; i++)
         {
-            int numericSuffixSize = sprintf_s(buffer + inputLength, sizeof(buffer) - inputLength, "%llu", i);
+            int numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", i);
 
-            std::string hashed = GetHashText(hProv, buffer, inputLength+numericSuffixSize);
+            std::string hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
             if (hashed[0] == '0' && hashed[1] == '0' && hashed[2] == '0' && hashed[3] == '0' && hashed[4] == '0')
             {
                 if (!foundFiveZeros)
                 {
-                    std::cout << "five zeros: " << i << " " << hashed << std::endl;
+                    std::cout << "five zeros: " << i << " (" << hashed << ")" << std::endl;
                     foundFiveZeros = true;
                 }
 
                 if (hashed[5] == '0')
                 {
-                    std::cout << "six zeros: " << i << " " << hashed << std::endl;
+                    std::cout << "six zeros: " << i << " (" << hashed << ")" << std::endl;
                     break;
                 }
             }
