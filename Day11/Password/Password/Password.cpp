@@ -4,59 +4,67 @@
 #include "stdafx.h"
 #include <iostream>
 
+typedef char Password[8];
 
-void IncrementPassword(char password[8])
+bool HasIncreasingStraight(Password password)
 {
-    for (auto place = &password[7]; place >= password; --place)
+    for (int i = 0; i <= sizeof(Password) - 3; i++)
+        if ((password[i + 1] == password[i] + 1) && (password[i + 2] == password[i] + 2))
+            return true;
+
+    return false;
+}
+
+bool HasForbiddenLetters(Password password)
+{
+    for (int i = 0; i < sizeof(Password); i++)
+        if (password[i] == 'i' || password[i] == 'o' || password[i] == 'l')
+            return true;
+
+    return false;
+}
+
+bool HasAtLeastTwoLetterPairs(Password password)
+{
+    int numLetterPairs = 0;
+
+    for (int i = 0; i < sizeof(Password) - 1; i++)
     {
-        if (*place == 'z')
+        if (password[i] == password[i + 1])
         {
-            *place = 'a';
+            if (++numLetterPairs == 2)
+                return true;
+
+            i++;
         }
-        else
+    }
+
+    return false;
+}
+
+bool IsValidPassword(Password password)
+{
+    return 
+        HasIncreasingStraight(password) &&
+        !HasForbiddenLetters(password) &&
+        HasAtLeastTwoLetterPairs(password);
+}
+
+void IncrementPassword(Password password)
+{
+    for (auto place = &password[sizeof(Password) - 1]; place >= password; --place)
+    {
+        if (*place < 'z')
         {
             (*place)++;
             break;
         }
+
+        *place = 'a';
     }
 }
 
-bool IsValidPassword(char password[8])
-{
-    bool hasIncreasingStraight = false;
-    bool hasForbiddenLetter = false;
-    int numLetterPairs = 0;
-
-    for (int i = 0; i <= 5; i++)
-    {
-        if ((password[i + 1] == password[i] + 1) &&
-            (password[i + 2] == password[i] + 2))
-        {
-            hasIncreasingStraight = true;
-        }
-    }
-
-    for (int i = 0; i < 8; i++)
-    {
-        if (password[i] == 'i' || password[i] == 'o' || password[i] == 'l')
-        {
-            hasForbiddenLetter = true;
-        }
-    }
-
-    for (int i = 0; i < 7; i++)
-    {
-        if (password[i] == password[i + 1])
-        {
-            numLetterPairs++;
-            i++;
-        }
-    }
-         
-    return hasIncreasingStraight && !hasForbiddenLetter && (numLetterPairs >= 2);
-}
-
-const char *FindNextPassword(char password[8])
+const char *FindNextPassword(Password password)
 {
     do
     {
@@ -68,7 +76,7 @@ const char *FindNextPassword(char password[8])
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    char password[9] { "hxbxwxba" };
+    char password[] { "hxbxwxba" };
 
     std::cout << "part 1: " << FindNextPassword(password) << std::endl;
     std::cout << "part 2: " << FindNextPassword(password) << std::endl;
