@@ -11,47 +11,47 @@ using namespace std;
 
 unsigned ProcessLine1(const char *line)
 {
-    unsigned literal = 0, actual = 0;
+    // literal start with two more for open + close quotes
+    unsigned totalDiff = 2;
 
-    // skip over opening quote, add one to literal but not actual
-    line++, literal++;
+    // skip over opening quote
+    assert(*line == '"');
+    line++;
 
-    while (*line != '"')
+    for (auto curr = line; *curr != '"'; curr++)
     {
-        auto literalRun = 1;
-
-        if (*line == '\\')
+        if (*curr == '\\')
         {
-            if (line[1] == '\\' || line[1] == '"')
-                literalRun = 2;
-            else if (line[1] == 'x' && isxdigit(line[2]) && isxdigit(line[3]))
-                literalRun = 4;
-        }
+            unsigned diff = 0;
 
-        actual++;
-        line += literalRun;
-        literal += literalRun;
+            if (curr[1] == '\\' || curr[1] == '"')
+                diff = 1;
+            else if (curr[1] == 'x' && isxdigit(curr[2]) && isxdigit(curr[3]))
+                diff = 3;
+
+            curr += diff;
+            totalDiff += diff;
+        }
     }
 
-    literal++; // for close quote
-    return literal - actual;
+    return totalDiff;
 }
 
 unsigned ProcessLine2(const char *line)
 {
     // 2 is for open/close quotes
-    unsigned literal = 2, actual = 0;
+    unsigned totalDiff = 2;
 
     while (*line)
     {
         // these result in one additional literal character
         if (*line == '\\' || *line == '"')
-            literal++;
+            totalDiff++;
 
-        line++, actual++, literal++;
+        line++;
     }
 
-    return literal - actual;
+    return totalDiff;
 }
 
 void _tmain(int argc, _TCHAR* argv[])
