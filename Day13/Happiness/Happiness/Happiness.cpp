@@ -27,10 +27,10 @@ void ReadInputFile(const std::string filename)
 
         assert(sm.size() == 5);
 
-        std::string person1 = sm[1], person2 = sm[4];
-        int happiness = ((sm[2] == "gain") ? 1 : -1) * atoi(sm[3].str().c_str());
+        auto person1 = sm[1], person2 = sm[4];
+        auto amount = atoi(sm[3].str().c_str());
 
-        happinessTable[person1][person2] = happiness;
+        happinessTable[person1][person2] = (sm[2] == "gain") ? amount : -amount;
     }
 
     f.close();
@@ -43,18 +43,18 @@ int GetHappinessOfPerson1NextToPerson2(const std::string &person1, const std::st
 
 int EvaluateHappinessOfPermutation(const std::vector<std::string> &people)
 {
-    int overallHappiness = 0;
+    int happiness = 0;
 
     for (auto i = 0U; i < people.size(); i++)
     {
         auto leftIndex = ((i == 0) ? people.size() : i) - 1;
         auto rightIndex = (i == people.size() - 1) ? 0 : (i + 1);
 
-        overallHappiness += GetHappinessOfPerson1NextToPerson2(people[i], people[leftIndex]);
-        overallHappiness += GetHappinessOfPerson1NextToPerson2(people[i], people[rightIndex]);
+        happiness += GetHappinessOfPerson1NextToPerson2(people[i], people[leftIndex]);
+        happiness += GetHappinessOfPerson1NextToPerson2(people[i], people[rightIndex]);
     }
 
-    return overallHappiness;
+    return happiness;
 }
 
 int FindHappiestPermutation()
@@ -68,7 +68,7 @@ int FindHappiestPermutation()
     return maxHappiness;
 }
 
-void SeatPeopleAtTable()
+void SeatAllPeopleAtTable()
 {
     for (auto curr = happinessTable.begin(); curr != happinessTable.end(); curr++)
         people.push_back(curr->first);
@@ -83,7 +83,7 @@ void _tmain(int argc, _TCHAR *argv[])
 {
     ReadInputFile("Input.txt");
 
-    SeatPeopleAtTable();
+    SeatAllPeopleAtTable();
     std::cout << "part one: " << FindHappiestPermutation() << std::endl;
 
     AddSelfToTable();
