@@ -8,8 +8,10 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <regex>
+#include <cassert>
 
-std::map<std::string, std::map<std::string, unsigned>> distances;
+std::map<std::string, std::map<std::string, int>> happinessTable;
 
 // Foo would gain/lose <n> happiness point(s) by sitting next to bar.
 void ReadInputFile(const std::string filename)
@@ -19,28 +21,65 @@ void ReadInputFile(const std::string filename)
 
     for (std::string line; getline(f, line);)
     {
-        auto endName1 = line.find(" would ");
-        auto gainOrLose = line.substr(endName1 + 7, 4);
+        std::smatch sm;
+        std::regex e("(.*) would ([a-z]*) (\\d*) happiness units+ by sitting next to (.*).");
+        std::regex_match(line, sm, e);
 
-        auto origin = line.substr(0, to);
-        auto destination = line.substr(to + 4, equals - to - 4);
-        auto distance = atoi(line.substr(equals + 3).c_str());
+        assert(sm.size() == 5);
 
-        distances[origin][destination] = distances[destination][origin] = distance;
+        std::string person1 = sm[1];
+        std::string person2 = sm[4];
+
+        int happiness = ((sm[2] == "gain") ? 1 : -1) * atoi(sm[3].str().c_str());
+
+        happinessTable[person1][person2] = happiness;
     }
 
     f.close();
 }
 
-int EvaluateHappiness()
+int EvaluateHappiness(const std::vector<std::string> &people)
 {
-    return 0;
+    //std::cout << "Evaluating: ";
+    //for (auto person : people)
+    //{
+    //    std::cout << person << " ";
+    //}
+    //std::cout << std::endl;
+
+    int overallHappiness = 0;
+
+    for (auto i = 0U; i < people.size(); i++)
+    {
+        auto leftIndex = ((i == 0) ? people.size() : i) - 1;
+        auto rightIndex = (i == people.size() - 1) ? 0 : (i + 1);
+
+        overallHappiness += happinessTable[people[i]][people[leftIndex]];
+        overallHappiness += happinessTable[people[i]][people[rightIndex]];
+        //std::cout << happinessTable[people[i]][people[leftIndex]] << "," << happinessTable[people[i]][people[rightIndex]];
+    }
+
+    //std::cout << "returning " << overallHappiness << std::endl;
+    return overallHappiness;
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
     ReadInputFile("Input.txt");
 
-    // todo:  do perms
-    // Evaluate happiness and save best
+    std::vector<std::string> people;
+    for (auto curr = happinessTable.begin(); curr != happinessTable.end(); curr++)
+        people.push_back(curr->first);
+
+    auto maxHappiness = INT_MIN;
+
+    do
+    {
+        int happiness = EvaluateHappiness(people);
+        if (happiness > maxHappiness)
+            maxHappiness = happiness;
+
+    } while (next_permutation(people.begin(), people.end()));
+
+    std::cout << maxHappiness << std::endl;
 }
