@@ -13,11 +13,9 @@
 
 std::map<std::string, std::map<std::string, int>> happinessTable;
 
-// Foo would gain/lose <n> happiness point(s) by sitting next to bar.
 void ReadInputFile(const std::string filename)
 {
     std::ifstream f(filename);
-    std::string word;
 
     for (std::string line; getline(f, line);)
     {
@@ -29,7 +27,6 @@ void ReadInputFile(const std::string filename)
 
         std::string person1 = sm[1];
         std::string person2 = sm[4];
-
         int happiness = ((sm[2] == "gain") ? 1 : -1) * atoi(sm[3].str().c_str());
 
         happinessTable[person1][person2] = happiness;
@@ -38,15 +35,14 @@ void ReadInputFile(const std::string filename)
     f.close();
 }
 
+int GetHappiness(const std::string &person1, const std::string &person2)
+{
+    if (person1 == "" || person2 == "") return 0;
+    return happinessTable[person1][person2];
+}
+
 int EvaluateHappiness(const std::vector<std::string> &people)
 {
-    //std::cout << "Evaluating: ";
-    //for (auto person : people)
-    //{
-    //    std::cout << person << " ";
-    //}
-    //std::cout << std::endl;
-
     int overallHappiness = 0;
 
     for (auto i = 0U; i < people.size(); i++)
@@ -56,11 +52,46 @@ int EvaluateHappiness(const std::vector<std::string> &people)
 
         overallHappiness += happinessTable[people[i]][people[leftIndex]];
         overallHappiness += happinessTable[people[i]][people[rightIndex]];
-        //std::cout << happinessTable[people[i]][people[leftIndex]] << "," << happinessTable[people[i]][people[rightIndex]];
     }
 
-    //std::cout << "returning " << overallHappiness << std::endl;
     return overallHappiness;
+}
+
+int FindHappiest1()
+{
+    std::vector<std::string> people;
+    for (auto curr = happinessTable.begin(); curr != happinessTable.end(); curr++)
+        people.push_back(curr->first);
+
+    auto maxHappiness = INT_MIN;
+
+    do
+    {
+        int happiness = EvaluateHappiness(people);
+        if (happiness > maxHappiness)
+            maxHappiness = happiness;
+    } while (next_permutation(people.begin(), people.end()));
+
+    return maxHappiness;
+}
+
+int FindHappiest2()
+{
+    std::vector<std::string> people;
+    people.push_back(""); // me
+    for (auto curr = happinessTable.begin(); curr != happinessTable.end(); curr++)
+        people.push_back(curr->first);
+
+    auto maxHappiness = INT_MIN;
+
+    do
+    {
+        int happiness = EvaluateHappiness(people);
+        if (happiness > maxHappiness)
+            maxHappiness = happiness;
+    } while (next_permutation(people.begin(), people.end()));
+
+    return maxHappiness;
 }
 
 void _tmain(int argc, _TCHAR *argv[])
@@ -78,8 +109,8 @@ void _tmain(int argc, _TCHAR *argv[])
         int happiness = EvaluateHappiness(people);
         if (happiness > maxHappiness)
             maxHappiness = happiness;
-
     } while (next_permutation(people.begin(), people.end()));
 
-    std::cout << maxHappiness << std::endl;
+    std::cout << "part one: " << FindHappiest1() << std::endl;
+    std::cout << "part two: " << FindHappiest2() << std::endl;
 }
