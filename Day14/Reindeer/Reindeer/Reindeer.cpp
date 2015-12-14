@@ -5,18 +5,24 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
-#include <string>
-#include <map>
 #include <vector>
-#include <algorithm>
 #include <regex>
 #include <cassert>
 
 struct Reindeer
 {
-    unsigned speed;
-    unsigned endurance;
-    unsigned rest;
+    void Move(unsigned whichSecond)
+    {
+        if ((whichSecond % (endurance + rest)) < endurance)
+            distance += speed;
+    }
+
+    const unsigned speed;
+    const unsigned endurance;
+    const unsigned rest;
+
+    unsigned distance;
+    unsigned points;
 };
 
 std::vector<Reindeer> reindeer;
@@ -38,44 +44,43 @@ void ReadInputFile(const std::string filename)
         auto endurance = atoi(sm[2].str().c_str());
         auto rest = atoi(sm[3].str().c_str());
 
-        reindeer.push_back(Reindeer { speed, endurance, rest });
+        reindeer.push_back(Reindeer { speed, endurance, rest, 0, 0 });
     }
 
     f.close();
 }
 
-unsigned GetDistance(const Reindeer &reindeer, unsigned seconds)
+void Solve(unsigned seconds, unsigned &maxDistance, unsigned &maxPoints)
 {
-    // Calculate the number of complete run-rest cycles, and how far and how long it took.
-    auto cycleDuration = reindeer.endurance + reindeer.rest;
-    auto cycles = seconds / cycleDuration;
-    auto baseTime = cycles * cycleDuration;
-    auto baseDistance = cycles * reindeer.speed * reindeer.endurance;
+    maxDistance = maxPoints = 0U;
 
-    // Figure out how far the reindeer gets in the time remaining after the cycles.
-    auto remainingTime = seconds - baseTime;
-    auto remainingTimeToRun = std::min(remainingTime, reindeer.endurance);
-    auto additionalDistance = remainingTimeToRun * reindeer.speed;
-
-    return baseDistance + additionalDistance;
-}
-
-int SolvePuzzle(unsigned seconds)
-{
-    unsigned maxDistance = 0;
-
-    for (auto &r : reindeer)
+    for (auto i = 0U; i < seconds; i++)
     {
-        unsigned dist = GetDistance(r, seconds);
-        maxDistance = std::max(maxDistance, dist);
+        // Advance all the reindeer for this second
+        for (auto &r : reindeer)
+        {
+            r.Move(i);
+            maxDistance = std::max(maxDistance, r.distance);
+        }
+
+        // Award points to front-runner(s)
+        for (auto &r : reindeer)
+            if (r.distance == maxDistance)
+                r.points++;
     }
 
-    return maxDistance;
+    // Find max points
+    for (auto &r : reindeer)
+        maxPoints = std::max(maxPoints, r.points);
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
     ReadInputFile("Input.txt");
 
-    std::cout << SolvePuzzle(2503) << std::endl;
+    unsigned maxDistance, maxPoints;
+    Solve(2503, maxDistance, maxPoints);
+
+    std::cout << "part one: " << maxDistance << std::endl;
+    std::cout << "part two: " << maxPoints << std::endl;
 }
