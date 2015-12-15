@@ -11,35 +11,7 @@ struct Ingredient
     int capacity, durability, flavor, texture, calories;
 };
 
-void DoExample()
-{
-    Ingredient butterscotch{ -1, -2, 6, 3, 8 };
-    Ingredient cinnamon{ 2, 3, -2, -1, 3 };
-
-    int max = 0;
-
-    for (auto b = 0; b <= 100; b++)
-    {
-        auto c = 100 - b;
-
-        auto capacity = b * butterscotch.capacity + c * cinnamon.capacity;
-        auto durability = b * butterscotch.durability + c * cinnamon.durability;
-        auto flavor = b * butterscotch.flavor + c * cinnamon.flavor;
-        auto texture = b * butterscotch.texture + c * cinnamon.texture;
-
-        if (capacity < 0) capacity = 0;
-        if (durability < 0) durability = 0;
-        if (flavor < 0) flavor = 0;
-        if (texture < 0) texture = 0;
-
-        auto total = capacity * durability * flavor * texture;
-        max = std::max(max, total);
-    }
-
-    std::cout << max << std::endl;
-}
-
-void DoPart1()
+void DoIt(int exactCalories = 0)
 {
     Ingredient sprinkles{ 2, 0, -2, 0, 3 };
     Ingredient butterscotch{ 0, 5, -3, 0, 3 };
@@ -60,14 +32,18 @@ void DoPart1()
                 auto durability = s * sprinkles.durability + b * butterscotch.durability + ch * chocolate.durability + c * candy.durability;
                 auto flavor = s * sprinkles.flavor + b * butterscotch.flavor + ch * chocolate.flavor + c * candy.flavor;
                 auto texture = s * sprinkles.texture + b * butterscotch.texture + ch * chocolate.texture + c * candy.texture;
+                auto calories = s * sprinkles.calories + b * butterscotch.calories + ch * chocolate.calories + c * candy.calories;
 
                 if (capacity < 0) capacity = 0;
                 if (durability < 0) durability = 0;
                 if (flavor < 0) flavor = 0;
                 if (texture < 0) texture = 0;
 
-                auto total = capacity * durability * flavor * texture;
-                max = std::max(max, total);
+                if (!exactCalories || calories == exactCalories)
+                {
+                    auto total = capacity * durability * flavor * texture;
+                    max = std::max(max, total);
+                }
             }
         }
     }
@@ -77,5 +53,6 @@ void DoPart1()
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    DoPart1();
+    DoIt();
+    DoIt(500);
 }
