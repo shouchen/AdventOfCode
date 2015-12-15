@@ -2,9 +2,11 @@
 //
 
 #include "stdafx.h"
+#include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <string>
 #include <cassert>
 
 struct Ingredient
@@ -12,19 +14,19 @@ struct Ingredient
     int capacity, durability, flavor, texture, calories;
 };
 
-std::vector<Ingredient> ingredient;
+std::vector<Ingredient> ingredients;
 
-int max;
+int max, exactCalories;
 
-int Recurse(int index, int teaspoons, int exactCalories, int capacity, int durability, int flavor, int texture, int calories)
+int Recurse(int index, int teaspoons, int capacity, int durability, int flavor, int texture, int calories)
 {
-    if (index == ingredient.size() - 1)
+    if (index == ingredients.size() - 1)
     {
-        capacity += teaspoons * ingredient[index].capacity;
-        durability += teaspoons * ingredient[index].durability;
-        flavor += teaspoons * ingredient[index].flavor;
-        texture += teaspoons * ingredient[index].texture;
-        calories += teaspoons * ingredient[index].calories;
+        capacity += teaspoons * ingredients[index].capacity;
+        durability += teaspoons * ingredients[index].durability;
+        flavor += teaspoons * ingredients[index].flavor;
+        texture += teaspoons * ingredients[index].texture;
+        calories += teaspoons * ingredients[index].calories;
 
         if (capacity > 0 && durability > 0 && flavor > 0 && texture > 0)
         {
@@ -40,13 +42,13 @@ int Recurse(int index, int teaspoons, int exactCalories, int capacity, int durab
 
     while (teaspoons)
     {
-        Recurse(index + 1, teaspoons, exactCalories, capacity, durability, flavor, texture, calories);
+        Recurse(index + 1, teaspoons, capacity, durability, flavor, texture, calories);
 
-        capacity += ingredient[index].capacity;
-        durability += ingredient[index].durability;
-        flavor += ingredient[index].flavor;
-        texture += ingredient[index].texture;
-        calories += ingredient[index].calories;
+        capacity += ingredients[index].capacity;
+        durability += ingredients[index].durability;
+        flavor += ingredients[index].flavor;
+        texture += ingredients[index].texture;
+        calories += ingredients[index].calories;
 
         --teaspoons;
     }
@@ -57,15 +59,30 @@ int Recurse(int index, int teaspoons, int exactCalories, int capacity, int durab
 int Solve(int teaspoons, int exactCalories = 0)
 {
     max = 0;
-    return Recurse(0, teaspoons, exactCalories, 0, 0, 0, 0, 0);
+    ::exactCalories = exactCalories;
+    return Recurse(0, teaspoons, 0, 0, 0, 0, 0);
+}
+
+void ReadInputFile()
+{
+    std::ifstream f("Input.txt");
+    for (std::string line; getline(f, line);)
+    {
+        auto capacity = atoi(&line[line.find(" capacity ") + 10]);
+        auto durability = atoi(&line[line.find(" durability ") + 11]);
+        auto flavor = atoi(&line[line.find(" flavor ") + 8]);
+        auto texture = atoi(&line[line.find(" texture ") + 9]);
+        auto calories = atoi(&line[line.find(" calories ") + 10]);
+
+        ingredients.push_back(Ingredient{ capacity, durability, flavor, texture, calories });
+    }
+
+    f.close();
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    ingredient.push_back(Ingredient { 2, 0, -2, 0, 3 });
-    ingredient.push_back(Ingredient { 0, 5, -3, 0, 3 });
-    ingredient.push_back(Ingredient { 0, 0, 5, -1, 8 });
-    ingredient.push_back(Ingredient { 0, -1, 0, 5, 8 });
+    ReadInputFile();
 
     assert(Solve(100, 0) == 21367368);
     assert(Solve(100, 500) == 1766400);
