@@ -4,55 +4,72 @@
 #include "stdafx.h"
 #include <iostream>
 #include <algorithm>
-#include <climits>
+#include <vector>
+#include <cassert>
 
 struct Ingredient
 {
     int capacity, durability, flavor, texture, calories;
 };
 
-void DoIt(int exactCalories = 0)
+std::vector<Ingredient> ingredient;
+
+int max;
+
+int Recurse(int index, int teaspoons, int exactCalories, int capacity, int durability, int flavor, int texture, int calories)
 {
-    Ingredient sprinkles{ 2, 0, -2, 0, 3 };
-    Ingredient butterscotch{ 0, 5, -3, 0, 3 };
-    Ingredient chocolate{ 0, 0, 5, -1, 8 };
-    Ingredient candy{ 0, -1, 0, 5, 8 };
-
-    int max = 0;
-
-    for (auto s = 0; s <= 100; s++)
+    if (index == ingredient.size() - 1)
     {
-        for (auto b = 0; b <= 100 - s; b++)
+        capacity += teaspoons * ingredient[index].capacity;
+        durability += teaspoons * ingredient[index].durability;
+        flavor += teaspoons * ingredient[index].flavor;
+        texture += teaspoons * ingredient[index].texture;
+        calories += teaspoons * ingredient[index].calories;
+
+        if (capacity > 0 && durability > 0 && flavor > 0 && texture > 0)
         {
-            for (auto ch = 0; ch <= 100 - s - b; ch++)
+            if (!exactCalories || calories == exactCalories)
             {
-                auto c = 100 - s - b - ch;
-
-                auto capacity = s * sprinkles.capacity + b * butterscotch.capacity + ch * chocolate.capacity + c * candy.capacity;
-                auto durability = s * sprinkles.durability + b * butterscotch.durability + ch * chocolate.durability + c * candy.durability;
-                auto flavor = s * sprinkles.flavor + b * butterscotch.flavor + ch * chocolate.flavor + c * candy.flavor;
-                auto texture = s * sprinkles.texture + b * butterscotch.texture + ch * chocolate.texture + c * candy.texture;
-                auto calories = s * sprinkles.calories + b * butterscotch.calories + ch * chocolate.calories + c * candy.calories;
-
-                if (capacity < 0) capacity = 0;
-                if (durability < 0) durability = 0;
-                if (flavor < 0) flavor = 0;
-                if (texture < 0) texture = 0;
-
-                if (!exactCalories || calories == exactCalories)
-                {
-                    auto total = capacity * durability * flavor * texture;
-                    max = std::max(max, total);
-                }
+                auto total = capacity * durability * flavor * texture;
+                max = std::max(max, total);
             }
         }
+
+        return max;
     }
 
-    std::cout << max << std::endl;
+    while (teaspoons)
+    {
+        Recurse(index + 1, teaspoons, exactCalories, capacity, durability, flavor, texture, calories);
+
+        capacity += ingredient[index].capacity;
+        durability += ingredient[index].durability;
+        flavor += ingredient[index].flavor;
+        texture += ingredient[index].texture;
+        calories += ingredient[index].calories;
+
+        --teaspoons;
+    }
+
+    return max;
+}
+
+int Solve(int teaspoons, int exactCalories = 0)
+{
+    max = 0;
+    return Recurse(0, teaspoons, exactCalories, 0, 0, 0, 0, 0);
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    DoIt();
-    DoIt(500);
+    ingredient.push_back(Ingredient { 2, 0, -2, 0, 3 });
+    ingredient.push_back(Ingredient { 0, 5, -3, 0, 3 });
+    ingredient.push_back(Ingredient { 0, 0, 5, -1, 8 });
+    ingredient.push_back(Ingredient { 0, -1, 0, 5, 8 });
+
+    assert(Solve(100, 0) == 21367368);
+    assert(Solve(100, 500) == 1766400);
+
+    std::cout << "part one: " << Solve(100) << std::endl;
+    std::cout << "part two: " << Solve(100, 500) << std::endl;
 }
