@@ -10,42 +10,52 @@ struct Data
 {
     int children, cats, samoyeds, pomeranians, akitas;
     int vizslas, goldfish, trees, cars, perfumes;
-
-    bool Matches1(const Data &data)
-    {
-        return
-            FieldMatches(children, data.children) &&
-            FieldMatches(cats, data.cats) &&
-            FieldMatches(samoyeds, data.samoyeds) &&
-            FieldMatches(pomeranians, data.pomeranians) &&
-            FieldMatches(akitas, data.akitas) &&
-            FieldMatches(vizslas, data.vizslas) &&
-            FieldMatches(goldfish, data.goldfish) &&
-            FieldMatches(trees, data.trees) &&
-            FieldMatches(cars, data.cars) &&
-            FieldMatches(perfumes, data.perfumes);
-    }
-
-    bool Matches2(const Data &data)
-    {
-        return
-            FieldMatches(children, data.children) &&
-            (cats == -1 || data.cats == -1 || cats > data.cats) &&
-            FieldMatches(samoyeds, data.samoyeds) &&
-            (pomeranians == -1 || data.pomeranians == -1 || pomeranians < data.pomeranians) &&
-            FieldMatches(akitas, data.akitas) &&
-            FieldMatches(vizslas, data.vizslas) &&
-            (goldfish == -1 || data.goldfish == -1 || goldfish < data.goldfish) &&
-            (trees == -1 || data.trees == -1 || trees > data.trees) &&
-            FieldMatches(cars, data.cars) &&
-            FieldMatches(perfumes, data.perfumes);
-    }
-
-    bool FieldMatches(int left, int right)
-    {
-        return left == -1 || right == -1 || left == right;
-    }
 };
+
+bool FieldsMatch(int first, int second)
+{
+    return first == -1 || second == -1 || first == second;
+}
+
+bool SecondFieldIsOvercounted(int first, int second)
+{
+    return first == -1 || second == -1 || first < second;
+}
+
+bool SecondFieldIsUndercounted(int first, int second)
+{
+    return first == -1 || second == -1 || first > second;
+}
+
+bool MatchesPart1(const Data &first, const Data &second)
+{
+    return
+        FieldsMatch(first.children, second.children) &&
+        FieldsMatch(first.cats, second.cats) &&
+        FieldsMatch(first.samoyeds, second.samoyeds) &&
+        FieldsMatch(first.pomeranians, second.pomeranians) &&
+        FieldsMatch(first.akitas, second.akitas) &&
+        FieldsMatch(first.vizslas, second.vizslas) &&
+        FieldsMatch(first.goldfish, second.goldfish) &&
+        FieldsMatch(first.trees, second.trees) &&
+        FieldsMatch(first.cars, second.cars) &&
+        FieldsMatch(first.perfumes, second.perfumes);
+}
+
+bool MatchesPart2(const Data &first, const Data &second)
+{
+    return
+        FieldsMatch(first.children, second.children) &&
+        SecondFieldIsUndercounted(first.cats, second.cats) &&
+        FieldsMatch(first.samoyeds, second.samoyeds) &&
+        SecondFieldIsOvercounted(first.pomeranians, second.trees) &&
+        FieldsMatch(first.akitas, second.akitas) &&
+        FieldsMatch(first.vizslas, second.vizslas) &&
+        SecondFieldIsOvercounted(first.goldfish, second.goldfish) &&
+        SecondFieldIsUndercounted(first.trees, second.trees) &&
+        FieldsMatch(first.cars, second.cars) &&
+        FieldsMatch(first.perfumes, second.perfumes);
+}
 
 void ParseField(const std::string input, std::string name, int &value)
 {
@@ -69,10 +79,10 @@ void ParseData(const std::string input, int &number, Data &data)
     ParseField(input, "perfumes", data.perfumes);
 }
 
-Data answer{ 3, 7, 2, 3, 0, 0, 5, 3, 2, 1 };  // ans: 103
-
 void _tmain(int argc, _TCHAR *argv[])
 {
+    Data answer{ 3, 7, 2, 3, 0, 0, 5, 3, 2, 1 };
+
     std::ifstream f("Input.txt");
 
     for (std::string line; getline(f, line);)
@@ -81,10 +91,10 @@ void _tmain(int argc, _TCHAR *argv[])
         Data data;
         ParseData(line, number, data);
 
-        if (data.Matches1(answer))
+        if (MatchesPart1(data, answer))
             std::cout << "part one: " << number << std::endl;
 
-        if (data.Matches2(answer))
+        if (MatchesPart2(data, answer))
             std::cout << "part two: " << number << std::endl;
     }
 
