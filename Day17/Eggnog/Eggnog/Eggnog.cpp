@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <map>
 
 using namespace std;
 
@@ -22,16 +23,12 @@ void ReadInput(const char *filename)
     }
 
     f.close();
-
-    //containers.push_back(20);
-    //containers.push_back(15);
-    //containers.push_back(10);
-    //containers.push_back(5);
-    //containers.push_back(5);
 }
 
+map<unsigned, unsigned> lengthToCount;
+
 // returns count of (sub)solutions
-unsigned Solve(vector<unsigned>::iterator begin, vector<unsigned>::iterator end, unsigned amount)
+unsigned Solve(vector<unsigned>::iterator begin, vector<unsigned>::iterator end, unsigned amount, unsigned chosenSoFar)
 {
     if (begin == end) return 0;
 
@@ -43,22 +40,22 @@ unsigned Solve(vector<unsigned>::iterator begin, vector<unsigned>::iterator end,
         auto temp = *begin;
 
         begin++;
-        retval += Solve(begin, end, amount - temp);  // TAKE THIS ONE, SUM SUB ONES
-        retval += Solve(begin, end, amount);         // DON'T TAKE THIS ONE, SUM SUB ONES
+        retval += Solve(begin, end, amount - temp, chosenSoFar + 1);  // TAKE THIS ONE, SUM SUB ONES
+        retval += Solve(begin, end, amount, chosenSoFar);         // DON'T TAKE THIS ONE, SUM SUB ONES
 
         return retval;
     }
     else if (amount == *begin)
     {
-        cout << "FOUND!" << endl;
-        return 1 + Solve(++begin, end, amount);  // ONE FOR THIS, PLUS ANY OTHERS
+        lengthToCount[chosenSoFar + 1]++;
+        return 1 + Solve(++begin, end, amount, chosenSoFar);  // ONE FOR THIS, PLUS ANY OTHERS
     }
     else // if (amount < *begin) SKIP THIS ONE, SUM SUB ONES
     {
         unsigned retval = 0;
 
         begin++;
-        retval += Solve(begin, end, amount);
+        retval += Solve(begin, end, amount, chosenSoFar);
 
         return retval;
     }
@@ -67,5 +64,13 @@ unsigned Solve(vector<unsigned>::iterator begin, vector<unsigned>::iterator end,
 void _tmain(int argc, _TCHAR *argv[])
 {
     ReadInput("Input.txt");
-    unsigned count = Solve(containers.begin(), containers.end(), 150);
+    unsigned count = Solve(containers.begin(), containers.end(), 150, 0);
+    unsigned part2 = 0;
+    for (int i = 1; i < 1000; i++)
+    {
+        if (lengthToCount.find(i) != lengthToCount.end())
+        {
+            part2 = lengthToCount[i];
+        }
+    }
 }
