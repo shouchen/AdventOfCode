@@ -152,6 +152,7 @@ map<string, string> wires;
 
 unsigned short Evaluate(string wire)
 {
+    cout << wire << endl;
     assert(wire.length());
     assert(!isdigit(wire[0]));
 
