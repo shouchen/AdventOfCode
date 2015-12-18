@@ -32,8 +32,6 @@ void ReadInputFile(const std::string filename)
 
         happinessTable[person1][person2] = (sm[2] == "gain") ? amount : -amount;
     }
-
-    f.close();
 }
 
 int GetHappinessOfPerson1NextToPerson2(const std::string &person1, const std::string &person2)

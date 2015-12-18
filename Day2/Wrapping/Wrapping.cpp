@@ -34,8 +34,6 @@ void _tmain(int argc, char *argv[])
         totalRibbon += RibbonNeeded(length, width, height);
     }
 
-    f.close();
-
     std::cout << "paper = " << totalPaper << std::endl;
     std::cout << "ribbon = " << totalRibbon << std::endl;
 }

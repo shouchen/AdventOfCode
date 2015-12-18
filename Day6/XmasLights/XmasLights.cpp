@@ -82,8 +82,6 @@ int ProcessFile(Grid1 *grid)
         }
     }
 
-    f.close();
-
     return grid->GetTotal();
 }
 

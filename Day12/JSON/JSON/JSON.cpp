@@ -53,7 +53,5 @@ void _tmain(int argc, _TCHAR *argv[])
         }
     }
 
-    f.close();
-
     std::cout << total << std::endl;
 }

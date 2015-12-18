@@ -13,8 +13,6 @@ void ReadInput(const char *filename, std::vector<unsigned> &containers)
 
     while (f >> n)
         containers.push_back(n);
-
-    f.close();
 }
 
 void _tmain(int argc, _TCHAR *argv[])

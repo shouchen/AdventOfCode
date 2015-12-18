@@ -97,6 +97,4 @@ void _tmain(int argc, _TCHAR *argv[])
         if (MatchesPart2(data, answer))
             std::cout << "part two: " << number << std::endl;
     }
-
-    f.close();
 }

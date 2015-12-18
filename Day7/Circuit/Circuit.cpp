@@ -309,8 +309,6 @@ int _tmain(int argc, _TCHAR* argv[])
         }
     }
 
-    f.close();
-
     //unsigned xw = wf.GetOrCreateWire("x")->GetValue();
     //unsigned yw = wf.GetOrCreateWire("y")->GetValue();
     //unsigned dw = wf.GetOrCreateWire("d")->GetValue();
