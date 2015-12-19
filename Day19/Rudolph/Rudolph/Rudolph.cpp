@@ -8,29 +8,34 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <cassert>
 
 using namespace std;
 
 map<string, vector<string>> replacements;
 
-void AddReplacement(string line)
+void BuildReplacements(ifstream &f)
 {
-    auto arrow = line.find(" => ");
-    auto from = line.substr(0, arrow);
-    auto to = line.substr(arrow + 4);
+    for (string line; getline(f, line);)
+    {
+        if (line.length() == 0)
+            break;
 
-    replacements[from].push_back(to);
+        auto arrow = line.find(" => ");
+        auto from = line.substr(0, arrow);
+        auto to = line.substr(arrow + 4);
+
+        replacements[from].push_back(to);
+    }
 }
 
-unsigned CountDistinctReplacements(string line)
+unsigned CountDistinctReplacements(const string &line)
 {
     set<string> newLines;
 
     cout << line << endl << endl;
     for (auto curr = replacements.begin(); curr != replacements.end(); curr++)
     {
-        cout << endl << "FOR REPLACEMENT \"" << curr->first << "\":" << endl;
-
         auto place = -1;
         for (;;)
         {
@@ -43,7 +48,6 @@ unsigned CountDistinctReplacements(string line)
             {
                 auto newLine = line.substr(0, place) + *curr2 + line.substr(place + curr->first.length());
                 newLines.insert(newLine);
-                //cout << newLine << endl;
             }
         }
     }
@@ -51,20 +55,24 @@ unsigned CountDistinctReplacements(string line)
     return newLines.size();
 }
 
+unsigned PartTwo(const string &medicine)
+{
+    return 0;
+}
+
 void _tmain(int argc, _TCHAR *argv[])
 {
     ifstream f("Input.txt");
-    string line;
+    BuildReplacements(f);
 
-    for (string line; getline(f, line);)
-    {
-        if (line.length() == 0)
-            break;
+    string medicine;
+    f >> medicine;
 
-        AddReplacement(line);
-    }
+    unsigned part1 = CountDistinctReplacements(medicine);
+    assert(part1 == 535);
+    cout << "part one: " << part1 << endl;
 
-    f >> line;
-    unsigned answer = CountDistinctReplacements(line); // 638 was too high
-    cout << "part one: " << answer << endl;
+    unsigned part2 = PartTwo(medicine);
+    //assert(part2 == 535);
+    cout << "part two: " << part2 << endl;
 }
