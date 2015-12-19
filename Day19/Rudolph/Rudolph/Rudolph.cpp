@@ -29,35 +29,57 @@ void BuildReplacements(ifstream &f)
     }
 }
 
-unsigned CountDistinctReplacements(const string &line)
+set<string> GenerateNewStringsByApplyingReplacement(const string &original, const string &from, const vector<string> &to)
+{
+    set<string> strings;
+    auto place = -1;
+
+    for (;;)
+    {
+        place = original.find(from, place + 1);
+        if (place == string::npos) break;
+
+        for (auto curr2 = to.begin(); curr2 != to.end(); curr2++)
+        {
+            auto newLine = original.substr(0, place) + *curr2 + original.substr(place + from.length());
+            strings.insert(newLine);
+        }
+    }
+
+    return strings;
+}
+
+unsigned CountDistinctPart1(const string &line)
 {
     set<string> newLines;
 
-    cout << line << endl << endl;
     for (auto curr = replacements.begin(); curr != replacements.end(); curr++)
     {
-        auto place = -1;
-        for (;;)
-        {
-            place = line.find(curr->first, place + 1);
-            if (place == string::npos) break;
+        auto newStrings = GenerateNewStringsByApplyingReplacement(line, curr->first, curr->second);
 
-            cout << "place = " << place << endl;
-
-            for (auto curr2 = curr->second.begin(); curr2 != curr->second.end(); curr2++)
-            {
-                auto newLine = line.substr(0, place) + *curr2 + line.substr(place + curr->first.length());
-                newLines.insert(newLine);
-            }
-        }
+        for (auto s : newStrings)
+            newLines.insert(s);
     }
 
     return newLines.size();
 }
 
-unsigned PartTwo(const string &medicine)
+void PartTwoAddStep(set<string> &all)
 {
-    return 0;
+    set<string> next;
+
+    for (auto currString = all.begin(); currString != all.end(); currString++)
+    {
+        for (auto curr = replacements.begin(); curr != replacements.end(); curr++)
+        {
+            auto newStrings = GenerateNewStringsByApplyingReplacement(*currString, curr->first, curr->second);
+
+            for (auto s : newStrings)
+                next.insert(s);
+        }
+    }
+
+    all = next;
 }
 
 void _tmain(int argc, _TCHAR *argv[])
@@ -68,11 +90,22 @@ void _tmain(int argc, _TCHAR *argv[])
     string medicine;
     f >> medicine;
 
-    unsigned part1 = CountDistinctReplacements(medicine);
-    assert(part1 == 535);
-    cout << "part one: " << part1 << endl;
+    //unsigned part1 = CountDistinctPart1(medicine);
+    //assert(part1 == 535);
+    //cout << "part one: " << part1 << endl;
 
-    unsigned part2 = PartTwo(medicine);
+    set<string> all;
+    all.insert("e");
+    unsigned part2 = 0;
+
+    while (all.find(medicine) == all.end())
+    {
+        PartTwoAddStep(all);
+        part2++;
+
+        cout << "After " << part2 << " steps there are " << all.size() << endl;
+    }
+
     //assert(part2 == 535);
     cout << "part two: " << part2 << endl;
 }
