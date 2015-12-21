@@ -3,16 +3,16 @@
 
 #include "stdafx.h"
 #include <iostream>
-#include <set>
-#include <map>
 #include <vector>
+#include <numeric>
+#include <cassert>
 
-using namespace std;
 
-vector<unsigned> Factorize(unsigned number)
+std::vector<unsigned> Factorize(unsigned number)
 {
-    vector<unsigned> retval;
+    std::vector<unsigned> retval;
     unsigned mid = static_cast<unsigned>(sqrt(number));
+
     for (unsigned i = 1; i <= mid; i++)
         if ((number % i) == 0)
         {
@@ -23,46 +23,43 @@ vector<unsigned> Factorize(unsigned number)
     return retval;
 }
 
-unsigned NumPresents1(unsigned house)
+struct PartTwoRule
 {
-    auto factors = Factorize(house);
-    auto sum = 0U;
-    for (auto f : factors)
-        sum += f;
+    PartTwoRule(unsigned house, unsigned elfLimit) : house(house), elfLimit(elfLimit) {}
+    int operator()(int l, int r) { return (house <= elfLimit * r) ? (l + r) : l; }
+    unsigned house, elfLimit;
+};
 
-    return 10 * sum;
-}
-
-unsigned NumPresents2(unsigned house)
+void Solve(int input, unsigned &part1, unsigned &part2)
 {
-    auto factors = Factorize(house);
-    auto sum = 0U;
-    for (auto f : factors)
-        if (house <= 50 * f)
-            sum += f;
+    part1 = part2 = 0U;
 
-    return 11 * sum;
+    for (auto house = 0U; house < UINT_MAX; house++)
+    {
+        const std::vector<unsigned> factors = Factorize(house);
+
+        if (!part1 && std::accumulate(factors.begin(), factors.end(), 0) * 10 >= input)
+        {
+            part1 = house;
+            if (part2) break;
+        }
+
+        if (!part2 && std::accumulate(factors.begin(), factors.end(), 0, PartTwoRule(house, 50)) * 11 >= input)
+        {
+            part2 = house;
+            if (part1) break;
+        }
+    }
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    auto input = 33100000U;
+    auto part1 = 0U, part2 = 0U;
+    Solve(33100000, part1, part2);
 
-    //for (auto house = 0U; house < UINT_MAX; house++)
-    //{
-    //    if (NumPresents1(house) >= input)
-    //    {
-    //        cout << "part one: House " << house << endl;
-    //        break;
-    //    }
-    //} // 776160
+    assert(part1 == 776160);
+    assert(part2 == 786240);
 
-    for (auto house = 0U; house < UINT_MAX; house++)
-    {
-        if (NumPresents2(house) >= input)
-        {
-            cout << "part two: House " << house << endl;
-            break;
-        }
-    } // 786240
+    std::cout << "part one: " << part1 << std::endl;
+    std::cout << "part two: " << part2 << std::endl;
 }
