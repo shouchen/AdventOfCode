@@ -33,8 +33,6 @@ void _tmain(int argc, _TCHAR* argv[])
             firstBasementStep = currentStep;
     }
 
-    f.close();
-
     cout << "floor " << floor << endl;
     cout << "first basement step was " << firstBasementStep << endl;
 }

@@ -72,8 +72,6 @@ void _tmain(int argc, _TCHAR *argv[])
         if (IsNice2(word)) count2++;
     }
 
-    f.close();
-
     cout << "part one: " << count1 << endl;
     cout << "part two: " << count2 << endl;
 }

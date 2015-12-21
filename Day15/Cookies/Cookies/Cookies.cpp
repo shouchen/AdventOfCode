@@ -76,8 +76,6 @@ void ReadInputFile()
 
         ingredients.push_back(Ingredient{ capacity, durability, flavor, texture, calories });
     }
-
-    f.close();
 }
 
 void _tmain(int argc, _TCHAR *argv[])

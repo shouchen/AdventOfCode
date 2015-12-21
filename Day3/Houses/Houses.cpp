@@ -60,8 +60,6 @@ unsigned ProcessFile(const string &filename, bool doubleSanta)
         }
     }
 
-    f.close();
-
     return visited.size();
 }
 

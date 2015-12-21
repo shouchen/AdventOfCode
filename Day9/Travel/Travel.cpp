@@ -25,8 +25,6 @@ void ReadInputFile(const std::string filename)
 
         distances[origin][destination] = distances[destination][origin] = distance;
     }
-
-    f.close();
 }
 
 void FindMinimumAndMaximum(unsigned &minimum, unsigned &maximum)

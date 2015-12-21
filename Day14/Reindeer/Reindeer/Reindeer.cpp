@@ -46,8 +46,6 @@ void ReadInputFile(const std::string filename)
 
         reindeer.push_back(Reindeer { speed, endurance, rest, 0, 0 });
     }
-
-    f.close();
 }
 
 void Solve(unsigned seconds, unsigned &maxDistance, unsigned &maxPoints)
