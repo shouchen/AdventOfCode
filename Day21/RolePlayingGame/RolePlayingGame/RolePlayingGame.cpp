@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <algorithm>
+#include <cassert>
 
 using namespace std;
 
@@ -26,21 +27,21 @@ Item ringList[] =   { { "Damage +1", 25, 1, 0 },  { "Damage +2", 50, 2, 0 },  { 
 // return true if player wins
 bool DoesPlayerWin(State player, State enemy)
 {
-    cout << "      (" << player.hitPoints << ", " << player.damage << ", " << player.armor << ") vs. (" << enemy.hitPoints << ", " << enemy.damage << ", " << enemy.armor << ")";
     for (;;)
     {
         // Player's Turn
         enemy.hitPoints -= std::max(player.damage - enemy.armor, 1);
-        if (enemy.hitPoints <= 0) { cout << " ********** WIN! **********" << endl;  return true; }
+        if (enemy.hitPoints <= 0) return true;
 
         // Enemy's Turn
         player.hitPoints -= std::max(enemy.damage - player.armor, 1);
-        if (player.hitPoints <= 0) { cout << endl; return false; }
+        if (player.hitPoints <= 0) return false;
     }
 }
 
 State enemy{ 103, 9, 2 };
 auto minCost = UINT_MAX;
+auto maxCost = 0U;
 
 void Step4(State player, unsigned cost, const Item *ring1 = nullptr, const Item *ring2 = nullptr)
 {
@@ -58,10 +59,10 @@ void Step4(State player, unsigned cost, const Item *ring1 = nullptr, const Item 
         player.armor += ring2->armor;
     }
 
-    cout << "    Rings = " << (ring1 ? ring1->name : "(none)") << " and " << (ring2 ? ring2->name : "(none)") << " cost = " << cost << endl;
-
     if (DoesPlayerWin(player, enemy))
         minCost = min(minCost, cost);
+    else
+        maxCost = max(maxCost, cost);
 }
 
 void Step3(State player, unsigned cost, const Item *armor = nullptr)
@@ -72,8 +73,6 @@ void Step3(State player, unsigned cost, const Item *armor = nullptr)
         player.damage += armor->damage;
         player.armor += armor->armor;
     }
-
-    cout << "  Armor = " << (armor ? armor->name : "(none)") << " cost = " << cost << endl;
 
     // Try with no rings
     Step4(player, cost);
@@ -93,8 +92,6 @@ void Step2(State player, const Item *weapon)
     auto cost = weapon->cost;
     player.damage += weapon->damage;
     player.armor += weapon->armor;
-
-    cout << "Weapon = " << weapon->name << " cost = " << cost << endl;
 
     // Try with no armor first
     Step3(player, cost);
@@ -117,4 +114,8 @@ void _tmain(int argc, _TCHAR *argv[])
     Step1(player);
 
     cout << "part one: " << minCost << endl;
-} // 121 was right!
+    cout << "part two: " << maxCost << endl;
+
+    assert(minCost == 121);
+    assert(maxCost == 201);
+}
