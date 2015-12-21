@@ -40,10 +40,10 @@ bool DoesPlayerWin(State player, State enemy)
 }
 
 State enemy{ 103, 9, 2 };
-auto minCost = UINT_MAX;
-auto maxCost = 0U;
+auto minCostToWin = UINT_MAX;
+auto maxCostToLose = 0U;
 
-void Step4(State player, unsigned cost, const Item *ring1 = nullptr, const Item *ring2 = nullptr)
+void DoForRings(State player, unsigned cost, const Item *ring1 = nullptr, const Item *ring2 = nullptr)
 {
     if (ring1)
     {
@@ -60,12 +60,12 @@ void Step4(State player, unsigned cost, const Item *ring1 = nullptr, const Item 
     }
 
     if (DoesPlayerWin(player, enemy))
-        minCost = min(minCost, cost);
+        minCostToWin = min(minCostToWin, cost);
     else
-        maxCost = max(maxCost, cost);
+        maxCostToLose = max(maxCostToLose, cost);
 }
 
-void Step3(State player, unsigned cost, const Item *armor = nullptr)
+void DoForArmor(State player, unsigned cost, const Item *armor = nullptr)
 {
     if (armor)
     {
@@ -75,47 +75,47 @@ void Step3(State player, unsigned cost, const Item *armor = nullptr)
     }
 
     // Try with no rings
-    Step4(player, cost);
+    DoForRings(player, cost);
 
     // Try with one ring
     for (auto ring : ringList)
-        Step4(player, cost, &ring);
+        DoForRings(player, cost, &ring);
 
     // Try with two rings
     for (int ring1 = 0; ring1 < (sizeof(ringList) / sizeof(ringList[0])); ring1++)
         for (int ring2 = ring1 + 1; ring2 < (sizeof(ringList) / sizeof(ringList[0])); ring2++)
-            Step4(player, cost, &ringList[ring1], &ringList[ring2]);
+            DoForRings(player, cost, &ringList[ring1], &ringList[ring2]);
 }
 
-void Step2(State player, const Item *weapon)
+void DoForWeapon(State player, const Item *weapon)
 {
     auto cost = weapon->cost;
     player.damage += weapon->damage;
     player.armor += weapon->armor;
 
     // Try with no armor first
-    Step3(player, cost);
+    DoForArmor(player, cost);
 
     // Now try with each possible armor
     for (auto armor : armorList)
-        Step3(player, cost, &armor);
+        DoForArmor(player, cost, &armor);
 }
 
-void Step1(State player)
+void Solve(State player)
 {
     for (auto weapon : weaponList)
-        Step2(player, &weapon);
+        DoForWeapon(player, &weapon);
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
     State player{ 100, 0, 0 };
 
-    Step1(player);
+    Solve(player);
 
-    cout << "part one: " << minCost << endl;
-    cout << "part two: " << maxCost << endl;
+    cout << "part one: " << minCostToWin << endl;
+    cout << "part two: " << maxCostToLose << endl;
 
-    assert(minCost == 121);
-    assert(maxCost == 201);
+    assert(minCostToWin == 121);
+    assert(maxCostToLose == 201);
 }
