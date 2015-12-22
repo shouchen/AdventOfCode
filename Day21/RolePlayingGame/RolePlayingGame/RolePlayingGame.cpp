@@ -49,76 +49,69 @@ State enemy{ 103, 9, 2 };
 auto minCostToWin = UINT_MAX;
 auto maxCostToLose = 0U;
 
-class Solver
+static void DoForRings(State player, unsigned cost, const Item *ring1 = nullptr, const Item *ring2 = nullptr)
 {
-public:
-    static void DoForRings(State player, unsigned cost, const Item *ring1 = nullptr, const Item *ring2 = nullptr)
+    if (ring1)
     {
-        if (ring1)
-        {
-            cost += ring1->cost;
-            player += *ring1;
-        }
-
-        if (ring2)
-        {
-            cost += ring2->cost;
-            player.damage += ring2->damage;
-            player.armor += ring2->armor;
-        }
-
-        if (DoesPlayerWin(player, enemy))
-            minCostToWin = min(minCostToWin, cost);
-        else
-            maxCostToLose = max(maxCostToLose, cost);
+        cost += ring1->cost;
+        player += *ring1;
     }
 
-    static void DoForArmor(State player, unsigned cost, const Item *armor = nullptr)
+    if (ring2)
     {
-        if (armor)
-        {
-            cost += armor->cost;
-            player += *armor;
-        }
+        cost += ring2->cost;
+        player += *ring2;
+    }
 
-        // Try with no rings
-        DoForRings(player, cost);
+    if (DoesPlayerWin(player, enemy))
+        minCostToWin = min(minCostToWin, cost);
+    else
+        maxCostToLose = max(maxCostToLose, cost);
+}
 
-        // Try with one ring
-        for (auto ring : ringList)
-            DoForRings(player, cost, &ring);
+static void DoForArmor(State player, unsigned cost, const Item *armor = nullptr)
+{
+    if (armor)
+    {
+        cost += armor->cost;
+        player += *armor;
+    }
 
-        // Try with two rings
-        for (int ring1 = 0; ring1 < (sizeof(ringList) / sizeof(ringList[0])); ring1++)
+    // Try with no rings
+    DoForRings(player, cost);
+
+    // Try with one ring
+    for (auto ring : ringList)
+        DoForRings(player, cost, &ring);
+
+    // Try with two rings
+    for (int ring1 = 0; ring1 < (sizeof(ringList) / sizeof(ringList[0])); ring1++)
         for (int ring2 = ring1 + 1; ring2 < (sizeof(ringList) / sizeof(ringList[0])); ring2++)
             DoForRings(player, cost, &ringList[ring1], &ringList[ring2]);
-    }
+}
 
-    static void DoForWeapon(State player, const Item *weapon)
-    {
-        auto cost = weapon->cost;
-        player += *weapon;
+static void DoForWeapon(State player, const Item *weapon)
+{
+    auto cost = weapon->cost;
+    player += *weapon;
 
-        // Try with no armor first
-        DoForArmor(player, cost);
+    // Try with no armor first
+    DoForArmor(player, cost);
 
-        // Now try with each possible armor
-        for (auto armor : armorList)
-            DoForArmor(player, cost, &armor);
-    }
+    // Now try with each possible armor
+    for (auto armor : armorList)
+        DoForArmor(player, cost, &armor);
+}
 
-    static void Solve(State player)
-    {
-        for (auto weapon : weaponList)
-            DoForWeapon(player, &weapon);
-    }
-};
+static void Solve(const State &player)
+{
+    for (auto weapon : weaponList)
+        DoForWeapon(player, &weapon);
+}
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    State player{ 100, 0, 0 };
-
-    Solver::Solve(player);
+    Solve(State{ 100, 0, 0 });
 
     cout << "part one: " << minCostToWin << endl;
     cout << "part two: " << maxCostToLose << endl;
