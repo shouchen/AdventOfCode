@@ -6,6 +6,7 @@
 #include <memory>
 #include <queue>
 #include <cassert>
+#include <string>
 
 using namespace std;
 
@@ -22,68 +23,85 @@ public:
     {
     }
 
-    bool DoMagicMissile()
+    void DoMagicMissile()
     {
-        if (player.mana < 53) return false;
         player.mana -= 53;
         playerHasSpent += 53;
 
         DoEffects();
         enemy.hits -= 4;
-        return true;
     }
 
-    bool DoDrain()
+    bool CanDoMagicMissile()
     {
-        if (player.mana < 73) return false;
+        return player.mana >= 53;
+    }
+
+    void DoDrain()
+    {
         player.mana -= 73;
         playerHasSpent += 73;
 
         DoEffects();
         enemy.hits -= 2;
         player.hits += 2;
-        return true;
     }
 
-    bool DoShield()
+    bool CanDoDrain()
     {
-        if (player.mana < 113 || shieldTimer) return false;
+        return player.mana >= 73;
+    }
+
+    void DoShield()
+    {
         player.mana -= 113;
         playerHasSpent += 113;
 
         DoEffects();
         player.armor += 7;
         shieldTimer = 6;
-        return true;
     }
 
-    bool DoPoison()
+    bool CanDoShield()
     {
-        if (player.mana < 173 || poisonTimer) return false;
+        return player.mana >= 113 && !shieldTimer;
+    }
+
+    void DoPoison()
+    {
         player.mana -= 173;
         playerHasSpent += 173;
 
         DoEffects();
         player.damage += 3;
         poisonTimer = 6;
-        return true;
     }
 
-    bool DoRecharge()
+    bool CanDoPoison()
     {
-        if (player.mana < 229 || rechargeTimer) return false;
+        return player.mana >= 173 && !poisonTimer;
+    }
+
+    void DoRecharge()
+    {
         player.mana -= 229;
         playerHasSpent += 229;
 
         DoEffects();
         rechargeTimer = 5;
-        return true;
+    }
+
+    bool CanDoRecharge()
+    {
+        return player.mana >= 229 && !rechargeTimer;
     }
 
     void DoEnemyTurn()
     {
         DoEffects();
-        player.hits -= max(enemy.damage - player.armor, 1);
+
+        if (!PlayerHasWon())
+            player.hits -= max(enemy.damage - player.armor, 1);
     }
 
     bool PlayerHasWon() const
@@ -91,7 +109,7 @@ public:
         return enemy.hits <= 0;
     }
 
-    bool EnemyHasWon() const
+    bool PlayerHasLost() const
     {
         return player.hits <= 0;
     }
@@ -126,7 +144,6 @@ private:
 
     State player, enemy;
     int shieldTimer = 0, poisonTimer = 0, rechargeTimer = 0;
-    bool playerHasWon = false, playerHasLost = false;
     unsigned playerHasSpent = 0;
 
     friend void DoTest1();
@@ -219,75 +236,125 @@ void _tmain(int argc, _TCHAR *argv[])
     priority_queue<Game, vector<Game>, MyComparison> queue;
     unsigned leastCostToWin = UINT_MAX;
 
-    // Put initial state into priority queue (based on cost so far)
-    queue.push(Game(State{ 10, 0, 0, 250 }, State{ 14, 8, 0, 0 }));
-
-    // Pop the cheapest path so far, expand all allowed paths. For wins, check for record
-    // and discard if not. For losses, just discard. If cost is already more than record,
-    // just discard. If still in play, re-insert node to the priority queue.
+//    Game game(State{ 10, 0, 0, 250 }, State{ 13, 8, 0, 0 });
+//    Game game(State{ 10, 0, 0, 250 }, State{ 14, 8, 0, 0 });
+    Game game(State{ 50, 0, 0, 500 }, State{ 58, 9, 0, 0 });
+    queue.push(game);
 
     while (!queue.empty())
     {
-        cout << queue.size() << endl;
-
         Game game = queue.top();
         queue.pop();
 
-        // See if terminal case
-        if (game.PlayerHasWon())
+//        cout << game.PlayerHasSpent() << "(" << queue.size() << ")" << endl;
+
+        // Try all possible moves
+        if (game.CanDoMagicMissile())
         {
-            leastCostToWin = min(game.PlayerHasSpent(), leastCostToWin);
-        }
-        else if (!game.EnemyHasWon() && game.PlayerHasSpent() < leastCostToWin)
-        {
-            // Expand all games and re-insert
             auto nextGame = game;
-            if (nextGame.DoMagicMissile())
+            nextGame.DoMagicMissile();
+
+            if (nextGame.PlayerHasSpent() < leastCostToWin)
             {
-                if (!nextGame.PlayerHasWon())
+                if (nextGame.PlayerHasWon())
+                    leastCostToWin = nextGame.PlayerHasSpent();
+                else if (!nextGame.PlayerHasLost())
+                {
                     nextGame.DoEnemyTurn();
 
-                queue.push(nextGame);
+                    if (nextGame.PlayerHasWon())
+                        leastCostToWin = nextGame.PlayerHasSpent();
+                    else if (!nextGame.PlayerHasLost())
+                        queue.push(nextGame);
+                }
             }
+        }
 
-            nextGame = game;
-            if (nextGame.DoDrain())
+        if (game.CanDoDrain())
+        {
+            auto nextGame = game;
+            nextGame.DoDrain();
+
+            if (nextGame.PlayerHasSpent() < leastCostToWin)
             {
-                if (!nextGame.PlayerHasWon())
+                if (nextGame.PlayerHasWon())
+                    leastCostToWin = nextGame.PlayerHasSpent();
+                else if (!nextGame.PlayerHasLost())
+                {
                     nextGame.DoEnemyTurn();
 
-                queue.push(nextGame);
+                    if (nextGame.PlayerHasWon())
+                        leastCostToWin = nextGame.PlayerHasSpent();
+                    else if (!nextGame.PlayerHasLost())
+                        queue.push(nextGame);
+                }
             }
+        }
 
-            nextGame = game;
-            if (nextGame.DoShield())
+        if (game.CanDoShield())
+        {
+            auto nextGame = game;
+            nextGame.DoShield();
+
+            if (nextGame.PlayerHasSpent() < leastCostToWin)
             {
-                if (!nextGame.PlayerHasWon())
+                if (nextGame.PlayerHasWon())
+                    leastCostToWin = nextGame.PlayerHasSpent();
+                else if (!nextGame.PlayerHasLost())
+                {
                     nextGame.DoEnemyTurn();
 
-                queue.push(nextGame);
+                    if (nextGame.PlayerHasWon())
+                        leastCostToWin = nextGame.PlayerHasSpent();
+                    else if (!nextGame.PlayerHasLost())
+                        queue.push(nextGame);
+                }
             }
+        }
 
-            nextGame = game;
-            if (nextGame.DoPoison())
+        if (game.CanDoPoison())
+        {
+            auto nextGame = game;
+            nextGame.DoPoison();
+
+            if (nextGame.PlayerHasSpent() < leastCostToWin)
             {
-                if (!nextGame.PlayerHasWon())
+                if (nextGame.PlayerHasWon())
+                    leastCostToWin = nextGame.PlayerHasSpent();
+                else if (!nextGame.PlayerHasLost())
+                {
                     nextGame.DoEnemyTurn();
 
-                queue.push(nextGame);
+                    if (nextGame.PlayerHasWon())
+                        leastCostToWin = nextGame.PlayerHasSpent();
+                    else if (!nextGame.PlayerHasLost())
+                        queue.push(nextGame);
+                }
             }
+        }
 
-            nextGame = game;
-            if (nextGame.DoRecharge())
+        if (game.CanDoRecharge())
+        {
+            auto nextGame = game;
+            nextGame.DoRecharge();
+
+            if (nextGame.PlayerHasSpent() < leastCostToWin)
             {
-                if (!nextGame.PlayerHasWon())
+                if (nextGame.PlayerHasWon())
+                    leastCostToWin = nextGame.PlayerHasSpent();
+                else if (!nextGame.PlayerHasLost())
+                {
                     nextGame.DoEnemyTurn();
 
-                queue.push(nextGame);
+                    if (nextGame.PlayerHasWon())
+                        leastCostToWin = nextGame.PlayerHasSpent();
+                    else if (!nextGame.PlayerHasLost())
+                        queue.push(nextGame);
+                }
             }
         }
     }
 
-    assert(leastCostToWin > 641);
+    //assert(leastCostToWin > 641);
     cout << "part one: " << leastCostToWin << endl;
 }
