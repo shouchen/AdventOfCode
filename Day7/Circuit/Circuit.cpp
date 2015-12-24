@@ -13,12 +13,11 @@ using namespace std;
 
 map<string, string> wires;
 
+map<string, unsigned short> cache;
 
-int depth;
 unsigned short Evaluate(const string &expr)
 {
     assert(expr.length());
-//    cout << expr << " (depth " << ++depth << ")" << endl;
 
     auto andPos = expr.find(" AND ");
     auto orPos = expr.find(" OR ");
@@ -42,17 +41,25 @@ unsigned short Evaluate(const string &expr)
         retval = atoi(expr.c_str());
     else
     {
-        auto val = wires.find(expr);
-        assert(val != wires.end());
+        auto cached = cache.find(expr);
+        if (cached == cache.end())
+        {
+            auto val = wires.find(expr);
+            assert(val != wires.end());
 
-        retval = Evaluate(val->second);
+            retval = Evaluate(val->second);
+            cache[expr] = retval;
+        }
+        else
+        {
+            retval = cache[expr];
+        }
     }
 
-    --depth;
     return retval;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+void _tmain(int argc, _TCHAR *argv[])
 {
     ifstream f("Input.txt");
     for (string line; getline(f, line);)
@@ -61,10 +68,9 @@ int _tmain(int argc, _TCHAR* argv[])
         wires[line.substr(arrow + 4)] = line.substr(0, arrow);
     }
 
-    assert(wires.size() == 339);
-
     unsigned short a = Evaluate("a");
 
-    cout << a;
-    return a; // 8192 is too high
+    cout << "part one: " << a << endl;
+
+    assert(a == 3176);
 }
