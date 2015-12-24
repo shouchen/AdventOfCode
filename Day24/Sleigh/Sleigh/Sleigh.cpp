@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <cassert>
 
-#define NUM_GROUPS 4
+#define NUM_GROUPS 3
 
 using namespace std;
 
@@ -90,17 +90,21 @@ void Dump(const vector<Package> &pkgs)
     cout << ")" << endl;
 }
 
-bool CheckWayForGroupFour(vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
+bool CheckWayForGroupFour(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
 {
-    bool retval = groups[NUM_GROUPS].count >= minPackages;
-    if (retval)
-        AddSolution(packages);
-    return retval;
+    if (NUM_GROUPS == 4)
+    {
+        bool retval = groups[NUM_GROUPS].count >= minPackages;
+        if (retval)
+            AddSolution(packages);
+        return retval;
+    }
 }
 
-bool CheckWayForGroupThree(vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
+// TODO: Code is same; make a single CheckWayForGroupN function
+bool CheckWayForGroupThree(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
 {
-    if (NUM_GROUPS == 3)
+    if (NUM_GROUPS == n)
     {
         bool retval = groups[NUM_GROUPS].count >= minPackages;
         if (retval)
@@ -108,21 +112,21 @@ bool CheckWayForGroupThree(vector<Package>::iterator from, vector<Package>::iter
         return retval;
     }
 
-    if (from == to || groups[3].weight > weightPerGroup) return false;
+    if (from == to || groups[n].weight > weightPerGroup) return false;
 
-    if (groups[3].weight == weightPerGroup)
+    if (groups[n].weight == weightPerGroup)
     {
-        if (groups[3].count < minPackages) return false;
+        if (groups[n].count < minPackages) return false;
 
-        return CheckWayForGroupFour(packages.begin(), packages.end(), minPackages);
+        return CheckWayForGroupFour(n + 1, packages.begin(), packages.end(), minPackages);
     }
 
     for (auto curr = from; curr != to; curr++)
     {
         if (curr->group == NUM_GROUPS)
         {
-            AssignPackage(*curr, 3);
-            bool retval = CheckWayForGroupThree(curr + 1, to, minPackages);
+            AssignPackage(*curr, n);
+            bool retval = CheckWayForGroupThree(n, curr + 1, to, minPackages);
             AssignPackage(*curr, NUM_GROUPS);
 
             if (retval) return true;
@@ -132,23 +136,31 @@ bool CheckWayForGroupThree(vector<Package>::iterator from, vector<Package>::iter
     return false;
 }
 
-bool CheckWayForGroupTwo(vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
+bool CheckWayForGroupTwo(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
 {
-    if (from == to || groups[2].weight > weightPerGroup) return false;
-
-    if (groups[2].weight == weightPerGroup)
+    if (NUM_GROUPS == n)
     {
-        if (groups[2].count < minPackages) return false;
+        bool retval = groups[NUM_GROUPS].count >= minPackages;
+        if (retval)
+            AddSolution(packages);
+        return retval;
+    }
 
-        return CheckWayForGroupThree(packages.begin(), packages.end(), minPackages);
+    if (from == to || groups[n].weight > weightPerGroup) return false;
+
+    if (groups[n].weight == weightPerGroup)
+    {
+        if (groups[n].count < minPackages) return false;
+
+        return CheckWayForGroupThree(n + 1, packages.begin(), packages.end(), minPackages);
     }
 
     for (auto curr = from; curr != to; curr++)
     {
         if (curr->group == NUM_GROUPS)
         {
-            AssignPackage(*curr, 2);
-            bool retval = CheckWayForGroupTwo(curr + 1, to, minPackages);
+            AssignPackage(*curr, n);
+            bool retval = CheckWayForGroupTwo(n, curr + 1, to, minPackages);
             AssignPackage(*curr, NUM_GROUPS);
 
             if (retval) return true;
@@ -166,7 +178,7 @@ void PopulateGroup1Recurse(vector<Package>::iterator from, vector<Package>::iter
     {
         Dump(packages);
 
-        CheckWayForGroupTwo(packages.begin(), packages.end(), groups[1].count);
+        CheckWayForGroupTwo(2, packages.begin(), packages.end(), groups[1].count);
         return;
     }
 
@@ -199,7 +211,7 @@ void _tmain(int argc, _TCHAR *argv[])
     while (f >> weight)
         packages.push_back(Package{ weight, NUM_GROUPS });
 
-    // This should really be a reverse sort
+    // TODO: This should really be a reverse sort
     std::reverse(packages.begin(), packages.end());
 
     // Everything starts in last group by default
@@ -208,9 +220,6 @@ void _tmain(int argc, _TCHAR *argv[])
     weightPerGroup = groups[NUM_GROUPS].weight / NUM_GROUPS;
 
     PopulateGroup1Recurse(packages.begin(), packages.end());
-
-    cout << "SOLUTIONS WITH LOWEST GROUP ONE COUNT: " << endl;
-    for (auto &s : solutions) Dump(s);
 
     auto qe = GetLowestQe();
     assert((qe == 11266889531 && NUM_GROUPS == 3) || (qe = 77387711 && NUM_GROUPS == 4));
