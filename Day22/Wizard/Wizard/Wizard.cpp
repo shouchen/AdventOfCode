@@ -148,6 +148,7 @@ private:
 
     friend void DoTest1();
     friend void DoTest2();
+    friend struct MyComparison;
 };
 
 void DoTest1()
@@ -224,7 +225,10 @@ struct MyComparison
 {
     bool operator()(const Game &lhs, const Game &rhs) const
     {
-        return lhs.PlayerHasSpent() > rhs.PlayerHasSpent();
+//        if (lhs.PlayerHasSpent() == rhs.PlayerHasSpent())
+            return (lhs.player.hits - lhs.enemy.hits) < (rhs.player.hits - rhs.enemy.hits);
+        
+//        return lhs.PlayerHasSpent() > rhs.PlayerHasSpent();
     }
 };
 
@@ -241,12 +245,14 @@ void _tmain(int argc, _TCHAR *argv[])
     Game game(State{ 50, 0, 0, 500 }, State{ 58, 9, 0, 0 });
     queue.push(game);
 
+    unsigned temp = -1;
     while (!queue.empty())
     {
         Game game = queue.top();
         queue.pop();
 
 //        cout << game.PlayerHasSpent() << "(" << queue.size() << ")" << endl;
+        if (leastCostToWin != temp) cout << (temp = leastCostToWin) << endl;
 
         // Try all possible moves
         if (game.CanDoMagicMissile())
@@ -355,6 +361,6 @@ void _tmain(int argc, _TCHAR *argv[])
         }
     }
 
-    //assert(leastCostToWin > 641);
+    assert(leastCostToWin > 641 && leastCostToWin != 1415);
     cout << "part one: " << leastCostToWin << endl;
 }

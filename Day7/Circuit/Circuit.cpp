@@ -4,21 +4,16 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <map>
 #include <string>
 #include <cassert>
 
-using namespace std;
 
-map<string, string> wires;
+std::map<std::string, std::string> wires;
+std::map<std::string, unsigned short> cache;
 
-map<string, unsigned short> cache;
-
-unsigned short Evaluate(const string &expr)
+unsigned short Evaluate(const std::string &expr)
 {
-    assert(expr.length());
-
     auto andPos = expr.find(" AND ");
     auto orPos = expr.find(" OR ");
     auto notPos = expr.find("NOT ");
@@ -41,36 +36,42 @@ unsigned short Evaluate(const string &expr)
         retval = atoi(expr.c_str());
     else
     {
-        auto cached = cache.find(expr);
-        if (cached == cache.end())
-        {
-            auto val = wires.find(expr);
-            assert(val != wires.end());
-
-            retval = Evaluate(val->second);
-            cache[expr] = retval;
-        }
-        else
-        {
-            retval = cache[expr];
-        }
+        retval = cache.find(expr) == cache.end() ? (cache[expr] = Evaluate(wires[expr])) : cache[expr];
     }
 
     return retval;
 }
 
-void _tmain(int argc, _TCHAR *argv[])
+void ReadInput(const char *filename)
 {
-    ifstream f("Input.txt");
-    for (string line; getline(f, line);)
+    std::ifstream f(filename);
+    for (std::string line; getline(f, line);)
     {
         auto arrow = line.find(" -> ");
         wires[line.substr(arrow + 4)] = line.substr(0, arrow);
     }
+}
+
+void DoPart1()
+{
+    unsigned short a = Evaluate("a");
+    std::cout << "part one: " << a << std::endl;
+    assert(a == 3176);
+}
+
+void DoPart2()
+{
+    cache.clear();
+    wires["b"] = "3176";
 
     unsigned short a = Evaluate("a");
+    std::cout << "part two: " << a << std::endl;
+    assert(a == 14710);
+}
 
-    cout << "part one: " << a << endl;
-
-    assert(a == 3176);
+void _tmain(int argc, _TCHAR *argv[])
+{
+    ReadInput("Input.txt");
+    DoPart1();
+    DoPart2();
 }
