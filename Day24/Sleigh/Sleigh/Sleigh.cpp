@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cassert>
 
+#define NUM_GROUPS 4
+
 using namespace std;
 
 struct Package
@@ -23,7 +25,7 @@ struct Group
 };
 
 vector<Package> packages;
-Group groups[4];
+Group groups[NUM_GROUPS + 1];
 
 unsigned weightPerGroup;
 vector<vector<Package>> solutions;
@@ -38,18 +40,9 @@ unsigned GetWeight(unsigned group)
     return weight;
 }
 
-unsigned GetCount(unsigned group, const vector<Package> pkgs)
-{
-    unsigned count = 0;
-    for (auto p : pkgs)
-        if (p.group == group)
-            count++;
-    return count;
-}
-
 unsigned long long GetQE(const vector<Package> &pkgs)
 {
-    unsigned long long qe = 1;
+    auto qe = 1ULL;
     for (auto p : pkgs)
         if (p.group == 1)
             qe *= p.weight;
@@ -58,14 +51,18 @@ unsigned long long GetQE(const vector<Package> &pkgs)
 
 void AssignPackage(Package &pkg, unsigned group)
 {
+    assert(pkg.group != group);
+
     groups[pkg.group].weight -= pkg.weight;
+    groups[pkg.group].count--;
     pkg.group = group;
     groups[pkg.group].weight += pkg.weight;
+    groups[pkg.group].count++;
 }
 
 void AddSolution(const vector<Package> &pkgs)
 {
-    unsigned size = GetCount(1, pkgs);
+    unsigned size = groups[1].count;
     if (size > minSizeGroupOne) return;
 
     if (size < minSizeGroupOne)
@@ -93,29 +90,66 @@ void Dump(const vector<Package> &pkgs)
     cout << ")" << endl;
 }
 
-// Arrange all packages into three equal groups
-// Group 1 needs minimal # packages
-// For tiebreaker, minimize product in group 1. Only apply this if 
-
-bool CheckWayForGroupsTwoAndThreeRecurse(vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
+bool CheckWayForGroupFour(vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
 {
-    if (from == to || groups[2].weight > weightPerGroup) return false;
+    bool retval = groups[NUM_GROUPS].count >= minPackages;
+    if (retval)
+        AddSolution(packages);
+    return retval;
+}
 
-    if (groups[2].weight == weightPerGroup)
+bool CheckWayForGroupThree(vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
+{
+    if (NUM_GROUPS == 3)
     {
-        bool retval = GetCount(2, packages) >= minPackages && GetCount(3, packages) >= minPackages;
+        bool retval = groups[NUM_GROUPS].count >= minPackages;
         if (retval)
             AddSolution(packages);
         return retval;
     }
 
+    if (from == to || groups[3].weight > weightPerGroup) return false;
+
+    if (groups[3].weight == weightPerGroup)
+    {
+        if (groups[3].count < minPackages) return false;
+
+        return CheckWayForGroupFour(packages.begin(), packages.end(), minPackages);
+    }
+
     for (auto curr = from; curr != to; curr++)
     {
-        if (curr->group == 3)
+        if (curr->group == NUM_GROUPS)
+        {
+            AssignPackage(*curr, 3);
+            bool retval = CheckWayForGroupThree(curr + 1, to, minPackages);
+            AssignPackage(*curr, NUM_GROUPS);
+
+            if (retval) return true;
+        }
+    }
+
+    return false;
+}
+
+bool CheckWayForGroupTwo(vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
+{
+    if (from == to || groups[2].weight > weightPerGroup) return false;
+
+    if (groups[2].weight == weightPerGroup)
+    {
+        if (groups[2].count < minPackages) return false;
+
+        return CheckWayForGroupThree(packages.begin(), packages.end(), minPackages);
+    }
+
+    for (auto curr = from; curr != to; curr++)
+    {
+        if (curr->group == NUM_GROUPS)
         {
             AssignPackage(*curr, 2);
-            bool retval = CheckWayForGroupsTwoAndThreeRecurse(curr + 1, to, minPackages);
-            AssignPackage(*curr, 3);
+            bool retval = CheckWayForGroupTwo(curr + 1, to, minPackages);
+            AssignPackage(*curr, NUM_GROUPS);
 
             if (retval) return true;
         }
@@ -132,23 +166,23 @@ void PopulateGroup1Recurse(vector<Package>::iterator from, vector<Package>::iter
     {
         Dump(packages);
 
-        CheckWayForGroupsTwoAndThreeRecurse(packages.begin(), packages.end(), GetCount(1, packages));
+        CheckWayForGroupTwo(packages.begin(), packages.end(), groups[1].count);
         return;
     }
 
-    if (GetCount(1, packages) > minSizeGroupOne) return;
+    if (groups[1].count > minSizeGroupOne) return;
 
     for (auto curr = from; curr != to; curr++)
     {
         AssignPackage(*curr, 1);
         PopulateGroup1Recurse(curr + 1, to);
-        AssignPackage(*curr, 3);
+        AssignPackage(*curr, NUM_GROUPS);
     }
 }
 
 unsigned long long GetLowestQe()
 {
-    unsigned long long minQe = ULLONG_MAX;
+    auto minQe = ULLONG_MAX;
     for (auto &s : solutions)
     {
         unsigned long long qe = GetQE(s);
@@ -163,15 +197,15 @@ void _tmain(int argc, _TCHAR *argv[])
     ifstream f("Input.txt");
     unsigned weight;
     while (f >> weight)
-        packages.push_back(Package{ weight, 3 });
+        packages.push_back(Package{ weight, NUM_GROUPS });
 
     // This should really be a reverse sort
     std::reverse(packages.begin(), packages.end());
 
-    // Everything starts in group 3 by default
+    // Everything starts in last group by default
     for (auto p : packages)
-        groups[3].weight += p.weight;
-    weightPerGroup = groups[3].weight / 3;
+        groups[NUM_GROUPS].weight += p.weight;
+    weightPerGroup = groups[NUM_GROUPS].weight / NUM_GROUPS;
 
     PopulateGroup1Recurse(packages.begin(), packages.end());
 
@@ -179,6 +213,6 @@ void _tmain(int argc, _TCHAR *argv[])
     for (auto &s : solutions) Dump(s);
 
     auto qe = GetLowestQe();
-    assert(qe == 11266889531);
-    cout << "part one: " << qe << endl;
+    assert((qe == 11266889531 && NUM_GROUPS == 3) || (qe = 77387711 && NUM_GROUPS == 4));
+    cout << "part one/two: " << qe << endl;
 }
