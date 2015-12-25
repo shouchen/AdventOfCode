@@ -9,7 +9,7 @@
 #include <cassert>
 
 // Define this to 3 for Part 1, and 4 for Part 2
-#define NUM_GROUPS 4
+#define NUM_GROUPS 3
 
 using namespace std;
 
@@ -68,27 +68,11 @@ void AddSolution(const vector<Package> &pkgs)
 
     if (size < minSizeGroupOne)
     {
-        // I think this should only ever happen once if reverse sorted
-        cout << "NEW SOLUTION OF SIZE " << size << endl;
         minSizeGroupOne = size;
         solutions.clear();
     }
 
     solutions.push_back(pkgs);
-}
-
-void Dump(const vector<Package> &pkgs)
-{
-    cout << GetQE(pkgs) << " ( ";
-    for (auto p : pkgs)
-        if (p.group == 1) cout << p.weight << " ";
-        cout << ") ( ";
-        for (auto p : pkgs)
-        if (p.group == 2) cout << p.weight << " ";
-    cout << ") ( ";
-    for (auto p : pkgs)
-        if (p.group == 3) cout << p.weight << " ";
-    cout << ")" << endl;
 }
 
 bool CheckWayForGroupN(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
@@ -131,8 +115,6 @@ void PopulateGroup1Recurse(vector<Package>::iterator from, vector<Package>::iter
 
     if (groups[1].weight == weightPerGroup)
     {
-        Dump(packages);
-
         CheckWayForGroupN(2, packages.begin(), packages.end(), groups[1].count);
         return;
     }
@@ -177,6 +159,6 @@ void _tmain(int argc, _TCHAR *argv[])
     PopulateGroup1Recurse(packages.begin(), packages.end());
 
     auto qe = GetLowestQe();
-    assert((qe == 11266889531 && NUM_GROUPS == 3) || (qe = 77387711 && NUM_GROUPS == 4));
+    assert((qe == 11266889531 && NUM_GROUPS == 3) || (qe == 77387711 && NUM_GROUPS == 4));
     cout << "part one/two: " << qe << endl;
 }
