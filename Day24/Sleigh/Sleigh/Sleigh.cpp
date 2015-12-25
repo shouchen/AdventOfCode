@@ -8,7 +8,8 @@
 #include <algorithm>
 #include <cassert>
 
-#define NUM_GROUPS 3
+// Define this to 3 for Part 1, and 4 for Part 2
+#define NUM_GROUPS 4
 
 using namespace std;
 
@@ -90,19 +91,7 @@ void Dump(const vector<Package> &pkgs)
     cout << ")" << endl;
 }
 
-bool CheckWayForGroupFour(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
-{
-    if (NUM_GROUPS == 4)
-    {
-        bool retval = groups[NUM_GROUPS].count >= minPackages;
-        if (retval)
-            AddSolution(packages);
-        return retval;
-    }
-}
-
-// TODO: Code is same; make a single CheckWayForGroupN function
-bool CheckWayForGroupThree(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
+bool CheckWayForGroupN(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
 {
     if (NUM_GROUPS == n)
     {
@@ -118,7 +107,7 @@ bool CheckWayForGroupThree(unsigned n, vector<Package>::iterator from, vector<Pa
     {
         if (groups[n].count < minPackages) return false;
 
-        return CheckWayForGroupFour(n + 1, packages.begin(), packages.end(), minPackages);
+        return CheckWayForGroupN(n + 1, packages.begin(), packages.end(), minPackages);
     }
 
     for (auto curr = from; curr != to; curr++)
@@ -126,41 +115,7 @@ bool CheckWayForGroupThree(unsigned n, vector<Package>::iterator from, vector<Pa
         if (curr->group == NUM_GROUPS)
         {
             AssignPackage(*curr, n);
-            bool retval = CheckWayForGroupThree(n, curr + 1, to, minPackages);
-            AssignPackage(*curr, NUM_GROUPS);
-
-            if (retval) return true;
-        }
-    }
-
-    return false;
-}
-
-bool CheckWayForGroupTwo(unsigned n, vector<Package>::iterator from, vector<Package>::iterator to, unsigned minPackages)
-{
-    if (NUM_GROUPS == n)
-    {
-        bool retval = groups[NUM_GROUPS].count >= minPackages;
-        if (retval)
-            AddSolution(packages);
-        return retval;
-    }
-
-    if (from == to || groups[n].weight > weightPerGroup) return false;
-
-    if (groups[n].weight == weightPerGroup)
-    {
-        if (groups[n].count < minPackages) return false;
-
-        return CheckWayForGroupThree(n + 1, packages.begin(), packages.end(), minPackages);
-    }
-
-    for (auto curr = from; curr != to; curr++)
-    {
-        if (curr->group == NUM_GROUPS)
-        {
-            AssignPackage(*curr, n);
-            bool retval = CheckWayForGroupTwo(n, curr + 1, to, minPackages);
+            bool retval = CheckWayForGroupN(n, curr + 1, to, minPackages);
             AssignPackage(*curr, NUM_GROUPS);
 
             if (retval) return true;
@@ -178,7 +133,7 @@ void PopulateGroup1Recurse(vector<Package>::iterator from, vector<Package>::iter
     {
         Dump(packages);
 
-        CheckWayForGroupTwo(2, packages.begin(), packages.end(), groups[1].count);
+        CheckWayForGroupN(2, packages.begin(), packages.end(), groups[1].count);
         return;
     }
 
