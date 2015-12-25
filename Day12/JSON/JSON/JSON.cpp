@@ -5,85 +5,55 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <map>
-#include <vector>
 #include <cassert>
-#include "JsonParser.h"
 
-using namespace std;
 
-/*
-- [1, 2, 3] and { "a":2, "b" : 4 } both have a sum of 6.
-- [[[3]]] and { "a":{"b":4}, "c" : -1 } both have a sum of 3.
-- {"a":[-1, 1]} and [-1, { "a":1 }] both have a sum of 0.
-- [] and{} both have a sum of 0.
-
-object, array, value, string, number
-http://json.org/
-*/
-
-string ExciseRedObjects(string str)
+unsigned GetStartOfObject(const std::string &str, unsigned pos)
 {
-    // Find :"red"
+    auto depth = 0;
+
+    for (;;)
+    {
+        switch (str[--pos])
+        {
+        case '{': if (depth-- == 0) return pos; break;
+        case '}': depth++; break;
+        }
+    }
+}
+
+unsigned GetEndOfObject(const std::string &str, unsigned pos)
+{
+    auto depth = 0;
+
+    for (;;)
+    {
+        switch (str[++pos])
+        {
+        case '}': if (depth-- == 0) return pos; break;
+        case '{': depth++; break;
+        }
+    }
+}
+
+std::string ExciseRedObjects(std::string str)
+{
     auto red = 0;
     while ((red = str.find(":\"red\"")) > 0)
     {
-        // Back up to prev open brace
-        unsigned depth = 0;
+        // Cut out any entire object that has red in it
+        auto openBrace = GetStartOfObject(str, red);
+        auto closeBrace = GetEndOfObject(str, openBrace);
 
-        red--;
-        for (;;)
-        {
-            auto c = str[red];
-
-            if (depth == 0 && c == '{')
-                break;
-
-            if (c == '}')
-                depth++;
-            if (c == '{')
-                depth--;
-
-            red--;
-        }
-
-        auto openBrace = red;
-
-        // Find corresponding close brace
-        depth = 0; // already zero?
-
-        red++;
-        for (;;)
-        {
-            auto c = str[red];
-
-            if (depth == 0 && c == '}')
-                break;
-
-            if (c == '{')
-                depth++;
-            if (c == '}')
-                depth--;
-
-            red++;
-        }
-
-        auto closeBrace = red;
-
-        // Cut out everything between braces
-        auto temp1 = str.substr(0, openBrace + 1);
-        auto temp2 = str.substr(closeBrace);
-
-        str = temp1 + temp2;
+        str = str.substr(0, openBrace + 1) + str.substr(closeBrace);
     }
 
     return str;
 }
 
-unsigned CountNumbers(const string &line)
+unsigned CountNumbers(const std::string &line)
 {
     unsigned total = 0;
-
     auto numberStart = line.end();
 
     for (auto curr = line.begin(); curr != line.end(); curr++)
@@ -93,14 +63,10 @@ unsigned CountNumbers(const string &line)
             if (numberStart == line.end())
                 numberStart = curr;
         }
-        else
+        else if (numberStart != line.end())
         {
-            if (numberStart != line.end())
-            {
-                auto number = atoi(std::string(numberStart, curr).c_str());
-                total += number;
-                numberStart = line.end();
-            }
+            total += atoi(std::string(numberStart, curr).c_str());
+            numberStart = line.end();
         }
     }
 
@@ -110,7 +76,7 @@ unsigned CountNumbers(const string &line)
 void _tmain(int argc, _TCHAR *argv[])
 {
     std::ifstream f("Input.txt");
-    string line;
+    std::string line;
     if (!(f >> line)) return;
 
     auto total = CountNumbers(line);
