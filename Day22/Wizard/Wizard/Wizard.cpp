@@ -10,15 +10,20 @@
 
 using namespace std;
 
-struct State
+struct PlayerState
 {
-    int hits, damage, armor, mana;
+    int hits, armor, mana;
+};
+
+struct EnemyState
+{
+    int hits, damage;
 };
 
 class Game
 {
 public:
-    Game(State player, State enemy) :
+    Game(PlayerState player, EnemyState enemy) :
         player(player), enemy(enemy)
     {
     }
@@ -62,7 +67,6 @@ public:
         playerHasSpent += 173;
 
         DoEffects();
-        player.damage += 3;
         poisonTimer = 6;
     }
 
@@ -105,9 +109,8 @@ private:
 
         if (poisonTimer)
         {
-            enemy.hits -= max(player.damage - enemy.armor, 1);
-            if (--poisonTimer == 0)
-                player.damage -= 3;
+            enemy.hits -= 3;
+            --poisonTimer;
         }
 
         if (rechargeTimer)
@@ -117,7 +120,8 @@ private:
         }
     }
 
-    State player, enemy;
+    PlayerState player;
+    EnemyState enemy;
     int shieldTimer = 0, poisonTimer = 0, rechargeTimer = 0;
     unsigned playerHasSpent = 0;
 
@@ -130,6 +134,7 @@ public:
 };
 
 #include "Tests.h"
+
 struct MyComparison
 {
     bool operator()(const Game &lhs, const Game &rhs) const
@@ -172,9 +177,9 @@ void _tmain(int argc, _TCHAR *argv[])
     DoTest1();
     DoTest2();
 
-//    Game game(State{ 10, 0, 0, 250 }, State{ 13, 8, 0, 0 });
-//  Game game(State{ 10, 0, 0, 250 }, State{ 14, 8, 0, 0 });
-    Game game(State{ 50, 0, 0, 500 }, State{ 58, 9, 0, 0 });
+//    Game game(PlayerState{ 10, 0, 0, 250 }, EnemyState{ 13, 8 });
+//  Game game(PlayerState{ 10, 0, 0, 250 }, EnemyState{ 14, 8 });
+    Game game(PlayerState{ 50, 0, 500 }, EnemyState{ 58, 9 });
     ::queue.push(game);
 
     while (!::queue.empty())
@@ -223,6 +228,6 @@ void _tmain(int argc, _TCHAR *argv[])
         }
     }
 
-//    assert(leastCostToWin > 641 && leastCostToWin != 1415);
+    assert(leastCostToWin == 1269); // part 2 = 1309
     cout << "part one: " << leastCostToWin << endl;
 }

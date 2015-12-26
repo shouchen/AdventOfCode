@@ -1,6 +1,6 @@
 void DoTest1()
 {
-    Game game(State{ 10, 0, 0, 250 }, State{ 13, 8, 0, 0 });
+    Game game(PlayerState{ 10, 0, 250 }, EnemyState{ 13, 8 });
 
     assert(game.player.hits == 10 && game.player.armor == 0 && game.player.mana == 250);
     assert(game.enemy.hits == 13);
@@ -23,7 +23,7 @@ void DoTest1()
 
 void DoTest2()
 {
-    Game game(State{ 10, 0, 0, 250 }, State{ 14, 8, 0, 0 });
+    Game game(PlayerState{ 10, 0, 250 }, EnemyState{ 14, 8 });
 
     assert(game.player.hits == 10 && game.player.armor == 0 && game.player.mana == 250);
     assert(game.enemy.hits == 14);
