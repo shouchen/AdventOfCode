@@ -47,9 +47,6 @@ struct MyComparison
     bool operator()(const State &lhs, const State &rhs) const
     {
         return lhs.formula.length() > rhs.formula.length();
-
-        // Also look at steps?
-        return false;
     }
 };
 
