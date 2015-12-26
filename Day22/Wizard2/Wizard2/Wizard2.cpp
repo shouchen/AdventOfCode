@@ -3,58 +3,58 @@
 
 #include "stdafx.h"
 #include <stdlib.h>
-#include <stdio.h>
+#include <iostream>
+#include <chrono>
+#include <ctime>
+#include <cassert>
 
-#define HARDMODE true
+using namespace std;
 
-int bossdam = 9;
-int best = INT_MAX;
+enum class Spell { MagicMissile, Drain, Shield, Poison, Recharge };
 
-enum Spell
-{
-    MagicMissile, Drain, Shield, Poison, Recharge
-};
+int bossdam, best, hardmode;
 
-int spellcost[5] = { 53, 73, 113, 173, 229 };
-
-bool round(int bosshp, int playerhp, int mana, int cost, int s_shield, int s_poison, int s_recharge, Spell spell)
+bool Round(int bosshp, int playerhp, int mana, int cost, int s_shield, int s_poison, int s_recharge, Spell spell)
 {
     int armor;
+
     // player turn action
     switch (spell)
     {
-    case MagicMissile:
+    case Spell::MagicMissile:
         bosshp -= 4;
+        mana -= 53;
+        cost += 53;
         break;
-    case Drain:
+    case Spell::Drain:
         bosshp -= 2;
         playerhp += 2;
+        mana -= 73;
+        cost += 73;
         break;
-    case Shield:
-        if (s_shield == 0)
-            s_shield = 6;
-        else
-            return false;
+    case Spell::Shield:
+        if (s_shield > 0) return false;
+        s_shield = 6;
+        mana -= 113;
+        cost += 113;
         break;
-    case Poison:
-        if (s_poison == 0)
-            s_poison = 6;
-        else
-            return false;
+    case Spell::Poison:
+        if (s_poison > 0) return false;
+        s_poison = 6;
+        mana -= 173;
+        cost += 173;
         break;
-    case Recharge:
-        if (s_recharge == 0)
-            s_recharge = 5;
-        else
-            return false;
+    case Spell::Recharge:
+        if (s_recharge > 0) return false;
+        s_recharge = 5;
+        mana -= 229;
+        cost += 229;
         break;
     }
-    mana -= spellcost[spell];
-    cost += spellcost[spell];
+
     if (bosshp <= 0)
     {
-        if (cost < best)
-            best = cost;
+        if (cost < best) best = cost;
         return true;
     }
 
@@ -76,6 +76,7 @@ bool round(int bosshp, int playerhp, int mana, int cost, int s_shield, int s_poi
     }
     else
         armor = 0;
+
     if (bosshp > 0)
     {
         if ((bossdam - armor) < 1)
@@ -85,19 +86,15 @@ bool round(int bosshp, int playerhp, int mana, int cost, int s_shield, int s_poi
     }
     else
     {
-        if (cost < best)
-            best = cost;
+        if (cost < best) best = cost;
         return true;
     }
 
-    if (HARDMODE) playerhp--;  // hard mode bleed effect
-    if (playerhp <= 0)
-        return false;
-
+    if (hardmode) playerhp--;
+    if (playerhp <= 0) return false;
 
     // player turn begin
-    if (s_shield > 0)
-        s_shield--;
+    if (s_shield > 0) s_shield--;
     if (s_recharge > 0)
     {
         mana += 101;
@@ -110,27 +107,51 @@ bool round(int bosshp, int playerhp, int mana, int cost, int s_shield, int s_poi
     }
     if (bosshp <= 0)
     {
-        if (cost < best)
-            best = cost;
+        if (cost < best) best = cost;
         return true;
     }
-    for (int nextspell = 0; nextspell < 5; nextspell++)
-    {
-        if (mana >= spellcost[nextspell])
-            round(bosshp, playerhp, mana, cost, s_shield, s_poison, s_recharge, static_cast<Spell>(nextspell));
-    }
+
+    if (mana >= 53) Round(bosshp, playerhp, mana, cost, s_shield, s_poison, s_recharge, Spell::MagicMissile);
+    if (mana >= 73) Round(bosshp, playerhp, mana, cost, s_shield, s_poison, s_recharge, Spell::Drain);
+    if (mana >= 113) Round(bosshp, playerhp, mana, cost, s_shield, s_poison, s_recharge, Spell::Shield);
+    if (mana >= 173) Round(bosshp, playerhp, mana, cost, s_shield, s_poison, s_recharge, Spell::Poison);
+    if (mana >= 229) Round(bosshp, playerhp, mana, cost, s_shield, s_poison, s_recharge, Spell::Recharge);
+
     return false;
 }
 
-
-int main(void)
+int Solve(int bosshp, int bossdam, int playerhp, int mana, bool hardmode)
 {
-    for (int firstspell = 0; firstspell < 5; firstspell++)
-    {
-        printf("(%d) ", firstspell);
-        int start = HARDMODE ? (50 - 1) : 50;   // -1 starting hp for hard mode
-        round(58, start, 500, 0, 0, 0, 0, static_cast<Spell>(firstspell));
-    }
-    printf("\n Lowest cost: %d \n", best);
-    return 0;
+    ::bossdam = bossdam;
+    ::hardmode = hardmode;
+    ::best = INT_MAX;
+
+    if (hardmode) playerhp--;
+
+    Round(bosshp, playerhp, mana, 0, 0, 0, 0, Spell::MagicMissile);
+    Round(bosshp, playerhp, mana, 0, 0, 0, 0, Spell::Drain);
+    Round(bosshp, playerhp, mana, 0, 0, 0, 0, Spell::Shield);
+    Round(bosshp, playerhp, mana, 0, 0, 0, 0, Spell::Poison);
+    Round(bosshp, playerhp, mana, 0, 0, 0, 0, Spell::Recharge);
+
+    return ::best;
+}
+
+void main(int argc, char *argv[])
+{
+    auto start = chrono::system_clock::now();
+    auto answer = Solve(58, 9, 50, 500, false);
+    auto end = chrono::system_clock::now();
+
+    chrono::duration<double> seconds = end - start;
+    cout << "part one: " << answer << " found in " << seconds.count() << " seconds" << endl;
+    assert(answer == 1269);
+
+    start = chrono::system_clock::now();
+    answer = Solve(58, 9, 50, 500, true);
+    end = chrono::system_clock::now();
+
+    seconds = end - start;
+    cout << "part two: " << answer << " found in " << seconds.count() << " seconds" << endl;
+    assert(answer == 1309);
 }
