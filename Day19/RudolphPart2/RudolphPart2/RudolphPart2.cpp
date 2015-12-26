@@ -48,15 +48,18 @@ struct MyComparison
     {
         return lhs.formula.length() > rhs.formula.length();
 
-        // Also look at steps
+        // Also look at steps?
         return false;
     }
 };
 
 priority_queue<State, vector<State>, MyComparison> queue;
 
-unsigned Solve(State state)
+unsigned Solve(string medicine)
 {
+    State state{ medicine, 0 };
+    ::queue.push(state);
+
     while (!::queue.empty())
     {
         State state = ::queue.top();
@@ -73,8 +76,8 @@ unsigned Solve(State state)
             int pos = state.formula.find(replacement.from);
             if (pos > -1)
             {
-                State newState{ state.formula.substr(0, pos) + replacement.to + state.formula.substr(pos + replacement.from.length()), state.stepsSoFar + 1 };
-                ::queue.push(newState);
+                auto newFormula = state.formula.substr(0, pos) + replacement.to + state.formula.substr(pos + replacement.from.length());
+                ::queue.push(State{ newFormula, state.stepsSoFar + 1 });
                 break;
             }
         }
@@ -86,12 +89,10 @@ void _tmain(int argc, _TCHAR *argv[])
     ifstream f("Input.txt");
     BuildReplacements(f);
 
-    string med;
-    f >> med;
+    string medicine;
+    f >> medicine;
 
-    State state{ med, 0 };
-    ::queue.push(state);
-    unsigned steps = Solve(state);
-    cout << "part one: " << steps << endl;
+    unsigned steps = Solve(medicine);
+    cout << "part two: " << steps << endl;
     assert(steps == 212);
 }
