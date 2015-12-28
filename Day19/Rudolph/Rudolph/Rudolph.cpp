@@ -8,11 +8,24 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <queue>
 #include <cassert>
 
 using namespace std;
 
-map<string, vector<string>> replacements;
+struct Replacement2
+{
+    string from, to;
+};
+
+struct State
+{
+    string formula;
+    unsigned stepsSoFar;
+};
+
+map<string, vector<string>> replacements1;
+vector<Replacement2> replacements2;
 
 void BuildReplacements(ifstream &f)
 {
@@ -22,10 +35,8 @@ void BuildReplacements(ifstream &f)
             break;
 
         auto arrow = line.find(" => ");
-        auto from = line.substr(0, arrow);
-        auto to = line.substr(arrow + 4);
-
-        replacements[from].push_back(to);
+        replacements1[line.substr(0, arrow)].push_back(line.substr(arrow + 4));
+        replacements2.push_back(Replacement2{ line.substr(arrow + 4), line.substr(0, arrow) });
     }
 }
 
@@ -53,7 +64,7 @@ unsigned CountDistinctPart1(const string &line)
 {
     set<string> newLines;
 
-    for (auto curr = replacements.begin(); curr != replacements.end(); curr++)
+    for (auto curr = replacements1.begin(); curr != replacements1.end(); curr++)
     {
         auto newStrings = GenerateNewStringsByApplyingReplacement(line, curr->first, curr->second);
 
@@ -64,22 +75,43 @@ unsigned CountDistinctPart1(const string &line)
     return newLines.size();
 }
 
-void PartTwoAddStep(set<string> &all)
+struct MyComparison
 {
-    set<string> next;
-
-    for (auto currString = all.begin(); currString != all.end(); currString++)
+    bool operator()(const State &lhs, const State &rhs) const
     {
-        for (auto curr = replacements.begin(); curr != replacements.end(); curr++)
-        {
-            auto newStrings = GenerateNewStringsByApplyingReplacement(*currString, curr->first, curr->second);
+        return lhs.formula.length() > rhs.formula.length();
+    }
+};
 
-            for (auto s : newStrings)
-                next.insert(s);
+priority_queue<State, vector<State>, MyComparison> queue;
+
+unsigned Solve(string medicine)
+{
+    State state{ medicine, 0 };
+    ::queue.push(state);
+
+    while (!::queue.empty())
+    {
+        State state = ::queue.top();
+        ::queue.pop();
+
+        if (state.formula == "e")
+            return state.stepsSoFar;
+
+        // Find a replacement and make it
+        for (auto &replacement : replacements2)
+        {
+            int pos = state.formula.find(replacement.from);
+            if (pos > -1)
+            {
+                auto newFormula = state.formula.substr(0, pos) + replacement.to + state.formula.substr(pos + replacement.from.length());
+                ::queue.push(State{ newFormula, state.stepsSoFar + 1 });
+                break;
+            }
         }
     }
 
-    all = next;
+    return UINT_MAX;
 }
 
 void _tmain(int argc, _TCHAR *argv[])
@@ -93,4 +125,8 @@ void _tmain(int argc, _TCHAR *argv[])
     unsigned part1 = CountDistinctPart1(medicine);
     assert(part1 == 535);
     cout << "part one: " << part1 << endl;
+
+    unsigned part2 = Solve(medicine);
+    cout << "part two: " << part2 << endl;
+    assert(part2 == 212);
 }
