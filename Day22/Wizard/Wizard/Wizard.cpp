@@ -12,9 +12,9 @@ using namespace std;
 // highly optimized since this brute force algorithm takes awhile to run.
 
 #define DoEffects() { \
-if (shieldTimer) { shieldTimer--; armor = 7; } \
-if (poisonTimer) { hpBoss -= 3; poisonTimer--; } \
-if (rechargeTimer) { mana += 101; rechargeTimer--; } \
+    if (shieldTimer) { shieldTimer--; armor = 7; } \
+    if (poisonTimer) { hpBoss -= 3; poisonTimer--; } \
+    if (rechargeTimer) { mana += 101; rechargeTimer--; } \
 }
 
 #define DoBossDamageAgainstPlayer() { \
@@ -23,24 +23,24 @@ if (rechargeTimer) { mana += 101; rechargeTimer--; } \
 }
 
 #define ReturnIfPlayerWonAndUpdateBestCost() { \
-if (hpBoss <= 0) { if (cost < s_lowestCost) s_lowestCost = cost; return; } \
+    if (hpBoss <= 0) { if (cost < s_lowestCost) s_lowestCost = cost; return; } \
 }
 
 #define ApplyHardModePointsAndReturnIfPlayerLost() { \
-if ((hpPlayer -= s_hardModePoints) <= 0) return; \
+    if ((hpPlayer -= s_hardModePoints) <= 0) return; \
 }
 
 #define ForkNewRoundForEachPossibleSpell() { \
-if (mana >= 53) \
-    Round(hpBoss - 4, hpPlayer, mana - 53, cost + 53, shieldTimer, poisonTimer, rechargeTimer); \
-if (mana >= 73) \
-    Round(hpBoss - 2, hpPlayer + 2, mana - 73, cost + 73, shieldTimer, poisonTimer, rechargeTimer); \
-if (mana >= 113 && !shieldTimer) \
-    Round(hpBoss, hpPlayer, mana - 113, cost + 113, 6, poisonTimer, rechargeTimer); \
-if (mana >= 173 && !poisonTimer) \
-    Round(hpBoss, hpPlayer, mana - 173, cost + 173, shieldTimer, 6, rechargeTimer); \
-if (mana >= 229 && !rechargeTimer) \
-    Round(hpBoss, hpPlayer, mana - 229, cost + 229, shieldTimer, poisonTimer, 5); \
+    if (mana >= 53) \
+        Round(hpBoss - 4, hpPlayer, mana - 53, cost + 53, shieldTimer, poisonTimer, rechargeTimer); \
+    if (mana >= 73) \
+        Round(hpBoss - 2, hpPlayer + 2, mana - 73, cost + 73, shieldTimer, poisonTimer, rechargeTimer); \
+    if (mana >= 113 && !shieldTimer) \
+        Round(hpBoss, hpPlayer, mana - 113, cost + 113, 6, poisonTimer, rechargeTimer); \
+    if (mana >= 173 && !poisonTimer) \
+        Round(hpBoss, hpPlayer, mana - 173, cost + 173, shieldTimer, 6, rechargeTimer); \
+    if (mana >= 229 && !rechargeTimer) \
+        Round(hpBoss, hpPlayer, mana - 229, cost + 229, shieldTimer, poisonTimer, 5); \
 }
 
 class Solver
