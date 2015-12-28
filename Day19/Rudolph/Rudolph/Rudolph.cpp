@@ -13,19 +13,7 @@
 
 using namespace std;
 
-struct Replacement2
-{
-    string from, to;
-};
-
-struct State
-{
-    string formula;
-    unsigned stepsSoFar;
-};
-
-map<string, vector<string>> replacements1;
-vector<Replacement2> replacements2;
+map<string, vector<string>> replacements;
 
 void BuildReplacements(ifstream &f)
 {
@@ -35,8 +23,7 @@ void BuildReplacements(ifstream &f)
             break;
 
         auto arrow = line.find(" => ");
-        replacements1[line.substr(0, arrow)].push_back(line.substr(arrow + 4));
-        replacements2.push_back(Replacement2{ line.substr(arrow + 4), line.substr(0, arrow) });
+        replacements[line.substr(0, arrow)].push_back(line.substr(arrow + 4));
     }
 }
 
@@ -64,7 +51,7 @@ unsigned CountDistinctPart1(const string &line)
 {
     set<string> newLines;
 
-    for (auto curr = replacements1.begin(); curr != replacements1.end(); curr++)
+    for (auto curr = replacements.begin(); curr != replacements.end(); curr++)
     {
         auto newStrings = GenerateNewStringsByApplyingReplacement(line, curr->first, curr->second);
 
@@ -75,38 +62,46 @@ unsigned CountDistinctPart1(const string &line)
     return newLines.size();
 }
 
-struct MyComparison
+unsigned GetStepsForPart2(string medicine)
 {
-    bool operator()(const State &lhs, const State &rhs) const
+    struct State
     {
-        return lhs.formula.length() > rhs.formula.length();
-    }
-};
+        string formula;
+        unsigned stepsSoFar;
+    };
 
-priority_queue<State, vector<State>, MyComparison> queue;
+    struct ShortestFormulaComparator
+    {
+        bool operator()(const State &lhs, const State &rhs) const
+        { return lhs.formula.length() > rhs.formula.length(); }
+    };
 
-unsigned Solve(string medicine)
-{
+    priority_queue<State, vector<State>, ShortestFormulaComparator> queue;
+
+    // Start with the medicine formula and try to reduce it to "e".
     State state{ medicine, 0 };
-    ::queue.push(state);
+    queue.push(state);
 
-    while (!::queue.empty())
+    while (!queue.empty())
     {
-        State state = ::queue.top();
-        ::queue.pop();
+        State state = queue.top();
+        queue.pop();
 
         if (state.formula == "e")
             return state.stepsSoFar;
 
         // Find a replacement and make it
-        for (auto &replacement : replacements2)
+        for (auto &replacement : replacements)
         {
-            int pos = state.formula.find(replacement.from);
-            if (pos > -1)
+            for (auto &to : replacement.second)
             {
-                auto newFormula = state.formula.substr(0, pos) + replacement.to + state.formula.substr(pos + replacement.from.length());
-                ::queue.push(State{ newFormula, state.stepsSoFar + 1 });
-                break;
+                int pos = state.formula.find(to);
+                if (pos > -1)
+                {
+                    auto newFormula = state.formula.substr(0, pos) + replacement.first + state.formula.substr(pos + to.length());
+                    queue.push(State{ newFormula, state.stepsSoFar + 1 });
+                    break;
+                }
             }
         }
     }
@@ -126,7 +121,7 @@ void _tmain(int argc, _TCHAR *argv[])
     assert(part1 == 535);
     cout << "part one: " << part1 << endl;
 
-    unsigned part2 = Solve(medicine);
+    unsigned part2 = GetStepsForPart2(medicine);
     cout << "part two: " << part2 << endl;
     assert(part2 == 212);
 }
