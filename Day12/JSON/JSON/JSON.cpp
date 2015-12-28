@@ -53,7 +53,7 @@ std::string ExciseRedObjects(std::string str)
 
 unsigned CountNumbers(const std::string &line)
 {
-    unsigned total = 0;
+    auto total = 0U;
     auto numberStart = line.end();
 
     for (auto curr = line.begin(); curr != line.end(); curr++)
