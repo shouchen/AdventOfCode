@@ -90,22 +90,7 @@ void _tmain(int argc, _TCHAR *argv[])
     string medicine;
     f >> medicine;
 
-    //unsigned part1 = CountDistinctPart1(medicine);
-    //assert(part1 == 535);
-    //cout << "part one: " << part1 << endl;
-
-    set<string> all;
-    all.insert("e");
-    unsigned part2 = 0;
-
-    while (all.find(medicine) == all.end())
-    {
-        PartTwoAddStep(all);
-        part2++;
-
-        cout << "After " << part2 << " steps there are " << all.size() << endl;
-    }
-
-    //assert(part2 == 535);
-    cout << "part two: " << part2 << endl;
+    unsigned part1 = CountDistinctPart1(medicine);
+    assert(part1 == 535);
+    cout << "part one: " << part1 << endl;
 }
