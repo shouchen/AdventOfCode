@@ -8,8 +8,10 @@
 
 using namespace std;
 
-// Compiler ignoring requests to inline, so use this as a poor man's inline. Code needs to be
-// highly optimized since this brute force algorithm takes awhile to run.
+// Compiler ignoring requests to inline, so use this as a poor man's inline. Code needed to be
+// highly optimized since this brute force algorithm takes awhile to run. Update! By pruning
+// the game tree substantially, these inline hacks are now no longer needed, so they could be
+// removed in favor of more readable code.
 
 #define DoEffects() { \
     if (shieldTimer) { shieldTimer--; armor = 7; } \
@@ -31,26 +33,28 @@ using namespace std;
 }
 
 #define ForkNewRoundForEachPossibleSpell() { \
-    if (mana >= 53) \
+    if (mana >= 53 && cost + 53 < s_lowestCost) { \
         Round(hpBoss - 4, hpPlayer, mana - 53, cost + 53, shieldTimer, poisonTimer, rechargeTimer); \
-    if (mana >= 73) \
-        Round(hpBoss - 2, hpPlayer + 2, mana - 73, cost + 73, shieldTimer, poisonTimer, rechargeTimer); \
-    if (mana >= 113 && !shieldTimer) \
-        Round(hpBoss, hpPlayer, mana - 113, cost + 113, 6, poisonTimer, rechargeTimer); \
-    if (mana >= 173 && !poisonTimer) \
-        Round(hpBoss, hpPlayer, mana - 173, cost + 173, shieldTimer, 6, rechargeTimer); \
-    if (mana >= 229 && !rechargeTimer) \
-        Round(hpBoss, hpPlayer, mana - 229, cost + 229, shieldTimer, poisonTimer, 5); \
+        if (mana >= 73 && cost + 73 < s_lowestCost) { \
+            Round(hpBoss - 2, hpPlayer + 2, mana - 73, cost + 73, shieldTimer, poisonTimer, rechargeTimer); \
+            if (mana >= 113 && cost + 113 < s_lowestCost) { \
+                if (!shieldTimer) Round(hpBoss, hpPlayer, mana - 113, cost + 113, 6, poisonTimer, rechargeTimer); \
+                if (mana >= 173 && cost + 173 < s_lowestCost) { \
+                    if (!poisonTimer) Round(hpBoss, hpPlayer, mana - 173, cost + 173, shieldTimer, 6, rechargeTimer); \
+                    if (mana >= 229 && cost + 229 < s_lowestCost) { \
+                        if (!rechargeTimer) Round(hpBoss, hpPlayer, mana - 229, cost + 229, shieldTimer, poisonTimer, 5); \
+                    } \
+                } \
+            } \
+        } \
+    } \
 }
 
 class Solver
 {
 public:
-    static int Solve(int hpBoss, int damageBoss, int hpPlayer, int mana, bool hardMode, double &time)
+    static int Solve(int hpBoss, int damageBoss, int hpPlayer, int mana, bool hardMode)
     {
-        // Record time taken to solve (useful for performance tuning this algorithm).
-        auto start = chrono::system_clock::now();
-
         // Save parameters that don't need to be on the stack (are constant the whole puzzle).
         s_damageBoss = damageBoss;
         s_hardModePoints = hardMode ? 1 : 0;
@@ -63,11 +67,6 @@ public:
         // First spell.
         const auto shieldTimer = 0, poisonTimer = 0, rechargeTimer = 0, cost = 0;
         ForkNewRoundForEachPossibleSpell();
-
-        // Figure out how long the whole thing took so we can report it out.
-        auto end = chrono::system_clock::now();
-        chrono::duration<double> seconds = end - start;
-        time = seconds.count();
 
         return s_lowestCost;
     }
@@ -103,13 +102,12 @@ int Solver::s_damageBoss, Solver::s_lowestCost, Solver::s_hardModePoints;
 void main(int argc, char *argv[])
 {
     const int hpPlayer = 50, mana = 500, hpBoss = 58, damageBoss = 9;
-    double seconds = 0;
 
-    auto answer = Solver::Solve(hpBoss, damageBoss, hpPlayer, mana, false, seconds);
-    cout << "part one: " << answer << " found in " << seconds << " seconds" << endl;
+    auto answer = Solver::Solve(hpBoss, damageBoss, hpPlayer, mana, false);
+    cout << "part one: " << answer << endl;
     assert(answer == 1269);
 
-    answer = Solver::Solve(hpBoss, damageBoss, hpPlayer, mana, true, seconds);
-    cout << "part two: " << answer << " found in " << seconds << " seconds" << endl;
+    answer = Solver::Solve(hpBoss, damageBoss, hpPlayer, mana, true);
+    cout << "part two: " << answer << endl;
     assert(answer == 1309);
 }
