@@ -8,48 +8,6 @@
 
 using namespace std;
 
-// Compiler ignoring requests to inline, so use this as a poor man's inline. Code needed to be
-// highly optimized since this brute force algorithm takes awhile to run. Update! By pruning
-// the game tree substantially, these inline hacks are now no longer needed, so they could be
-// removed in favor of more readable code.
-
-#define DoEffects() { \
-    if (shieldTimer) { shieldTimer--; armor = 7; } \
-    if (poisonTimer) { hpBoss -= 3; poisonTimer--; } \
-    if (rechargeTimer) { mana += 101; rechargeTimer--; } \
-}
-
-#define DoBossDamageAgainstPlayer() { \
-    auto diff = s_damageBoss - armor; \
-    hpPlayer -= (diff > 1) ? diff : 1; \
-}
-
-#define ReturnIfPlayerWonAndUpdateBestCost() { \
-    if (hpBoss <= 0) { if (cost < s_lowestCost) s_lowestCost = cost; return; } \
-}
-
-#define ApplyHardModePointsAndReturnIfPlayerLost() { \
-    if ((hpPlayer -= s_hardModePoints) <= 0) return; \
-}
-
-#define ForkNewRoundForEachPossibleSpell() { \
-    if (mana >= 53 && cost + 53 < s_lowestCost) { \
-        Round(hpBoss - 4, hpPlayer, mana - 53, cost + 53, shieldTimer, poisonTimer, rechargeTimer); \
-        if (mana >= 73 && cost + 73 < s_lowestCost) { \
-            Round(hpBoss - 2, hpPlayer + 2, mana - 73, cost + 73, shieldTimer, poisonTimer, rechargeTimer); \
-            if (mana >= 113 && cost + 113 < s_lowestCost) { \
-                if (!shieldTimer) Round(hpBoss, hpPlayer, mana - 113, cost + 113, 6, poisonTimer, rechargeTimer); \
-                if (mana >= 173 && cost + 173 < s_lowestCost) { \
-                    if (!poisonTimer) Round(hpBoss, hpPlayer, mana - 173, cost + 173, shieldTimer, 6, rechargeTimer); \
-                    if (mana >= 229 && cost + 229 < s_lowestCost) { \
-                        if (!rechargeTimer) Round(hpBoss, hpPlayer, mana - 229, cost + 229, shieldTimer, poisonTimer, 5); \
-                    } \
-                } \
-            } \
-        } \
-    } \
-}
-
 class Solver
 {
 public:
@@ -61,36 +19,78 @@ public:
         s_lowestCost = INT_MAX;
 
         // Player's first turn--deduct hit points if hard mode, and check if it killed player.
-        hpPlayer -= s_hardModePoints;
-        if (hpPlayer <= 0) return s_lowestCost;
+        if (ApplyHardModePointsAndCheckIfPlayerLost(hpPlayer)) return s_lowestCost;
 
         // First spell.
-        const auto shieldTimer = 0, poisonTimer = 0, rechargeTimer = 0, cost = 0;
-        ForkNewRoundForEachPossibleSpell();
+        ForkNewRoundForEachPossibleSpell(hpBoss, hpPlayer, mana, 0, 0, 0, 0);
 
         return s_lowestCost;
     }
 
 private:
+    inline static void DoEffects(int &shieldTimer, int &poisonTimer, int &rechargeTimer, int &armor, int &hpBoss, int &mana)
+    {
+        if (shieldTimer) { shieldTimer--; armor = 7; } \
+        if (poisonTimer) { hpBoss -= 3; poisonTimer--; } \
+        if (rechargeTimer) { mana += 101; rechargeTimer--; } \
+    }
+
+    inline static bool CheckIfPlayerWonAndUpdateLowestCost(int hpBoss, int cost)
+    {
+        if (hpBoss > 0) return false;
+
+        if (cost < s_lowestCost) s_lowestCost = cost; 
+        return true;
+    }
+
+    inline static void DoBossDamageAgainstPlayer(int armor, int &hpPlayer)
+    {
+        auto diff = s_damageBoss - armor;
+        hpPlayer -= (diff > 1) ? diff : 1;
+    }
+
+    inline static bool ApplyHardModePointsAndCheckIfPlayerLost(int &hpPlayer)
+    {
+        return ((hpPlayer -= s_hardModePoints) <= 0);
+    }
+
+    inline static void ForkNewRoundForEachPossibleSpell(int hpBoss, int hpPlayer, int mana, int cost, int shieldTimer, int poisonTimer, int rechargeTimer)
+    {
+        if (mana < 53 || cost + 53 >= s_lowestCost) return;
+        Round(hpBoss - 4, hpPlayer, mana - 53, cost + 53, shieldTimer, poisonTimer, rechargeTimer);
+
+        if (mana < 73 || cost + 73 >= s_lowestCost) return;
+        Round(hpBoss - 2, hpPlayer + 2, mana - 73, cost + 73, shieldTimer, poisonTimer, rechargeTimer);
+
+        if (mana < 113 || cost + 113 >= s_lowestCost) return;
+        if (!shieldTimer) Round(hpBoss, hpPlayer, mana - 113, cost + 113, 6, poisonTimer, rechargeTimer);
+
+        if (mana < 173 || cost + 173 >= s_lowestCost) return;
+        if (!poisonTimer) Round(hpBoss, hpPlayer, mana - 173, cost + 173, shieldTimer, 6, rechargeTimer);
+
+        if (mana < 229 || cost + 229 >= s_lowestCost) return;
+        if (!rechargeTimer) Round(hpBoss, hpPlayer, mana - 229, cost + 229, shieldTimer, poisonTimer, 5);
+    }
+
     static void Round(int hpBoss, int hpPlayer, int mana, int cost, int shieldTimer, int poisonTimer, int rechargeTimer)
     {
-        ReturnIfPlayerWonAndUpdateBestCost();
+        if (CheckIfPlayerWonAndUpdateLowestCost(hpBoss, cost)) return;
 
         // Start of Boss's turn--apply efects and see if that killed him.
         int armor = 0;
-        DoEffects();
-        ReturnIfPlayerWonAndUpdateBestCost();
+        DoEffects(shieldTimer, poisonTimer, rechargeTimer, armor, hpBoss, mana);
+        if (CheckIfPlayerWonAndUpdateLowestCost(hpBoss, cost)) return;
 
         // Boss does his turn; check if it killed Player.
-        DoBossDamageAgainstPlayer();
-        ApplyHardModePointsAndReturnIfPlayerLost();
+        DoBossDamageAgainstPlayer(armor, hpPlayer);
+        if (ApplyHardModePointsAndCheckIfPlayerLost(hpPlayer)) return;
 
         // Player's turn starting--first do effects and see if Boss gets killed.
-        DoEffects();
-        ReturnIfPlayerWonAndUpdateBestCost();
+        DoEffects(shieldTimer, poisonTimer, rechargeTimer, armor, hpBoss, mana);
+        if (CheckIfPlayerWonAndUpdateLowestCost(hpBoss, cost)) return;
 
         // Now fork for each possible spell the Player could choose, and try those, etc...
-        ForkNewRoundForEachPossibleSpell();
+        ForkNewRoundForEachPossibleSpell(hpBoss, hpPlayer, mana, cost, shieldTimer, poisonTimer, rechargeTimer);
     }
 
     static int s_damageBoss, s_hardModePoints, s_lowestCost;
