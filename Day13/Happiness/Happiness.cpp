@@ -41,7 +41,7 @@ int GetHappinessOfPerson1NextToPerson2(const std::string &person1, const std::st
 
 int EvaluateHappinessOfPermutation(const std::vector<std::string> &people)
 {
-    int happiness = 0;
+    auto happiness = 0;
 
     for (auto i = 0U; i < people.size(); i++)
     {
@@ -82,8 +82,14 @@ void _tmain(int argc, _TCHAR *argv[])
     ReadInputFile("Input.txt");
 
     SeatAllPeopleAtTable();
-    std::cout << "part one: " << FindHappiestPermutation() << std::endl;
+
+    auto part1 = FindHappiestPermutation();
+    std::cout << "part one: " << part1 << std::endl;
+    assert(part1 == 664);
 
     AddSelfToTable();
-    std::cout << "part two: " << FindHappiestPermutation() << std::endl;
+
+    auto part2 = FindHappiestPermutation();
+    std::cout << "part two: " << part2 << std::endl;
+    assert(part2 == 640);
 }

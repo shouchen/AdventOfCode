@@ -17,12 +17,8 @@ struct Reindeer
             distance += speed;
     }
 
-    const unsigned speed;
-    const unsigned endurance;
-    const unsigned rest;
-
-    unsigned distance;
-    unsigned points;
+    const unsigned speed, endurance, rest;
+    unsigned distance, points;
 };
 
 std::vector<Reindeer> reindeer;
@@ -44,7 +40,7 @@ void ReadInputFile(const std::string filename)
         auto endurance = atoi(sm[2].str().c_str());
         auto rest = atoi(sm[3].str().c_str());
 
-        reindeer.push_back(Reindeer { speed, endurance, rest, 0, 0 });
+        reindeer.push_back(Reindeer{ speed, endurance, rest, 0, 0 });
     }
 }
 
@@ -76,9 +72,12 @@ void _tmain(int argc, _TCHAR *argv[])
 {
     ReadInputFile("Input.txt");
 
-    unsigned maxDistance, maxPoints;
+    auto maxDistance = 0U, maxPoints = 0U;
     Solve(2503, maxDistance, maxPoints);
 
     std::cout << "part one: " << maxDistance << std::endl;
+    assert(maxDistance == 2696);
+
     std::cout << "part two: " << maxPoints << std::endl;
+    assert(maxPoints == 1084);
 }

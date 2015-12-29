@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include <iostream>
+#include <cassert>
 
 typedef char Password[8];
 
@@ -77,7 +78,12 @@ const char *FindNextPassword(Password password)
 void _tmain(int argc, _TCHAR *argv[])
 {
     char password[] { "hxbxwxba" };
+    
+    FindNextPassword(password);
+    std::cout << "part 1: " << password << std::endl;
+    assert(strcmp(password, "hxbxxyzz") == 0);
 
-    std::cout << "part 1: " << FindNextPassword(password) << std::endl;
-    std::cout << "part 2: " << FindNextPassword(password) << std::endl;
+    FindNextPassword(password);
+    std::cout << "part 2: " << password << std::endl;
+    assert(strcmp(password, "hxcaabcc") == 0);
 }

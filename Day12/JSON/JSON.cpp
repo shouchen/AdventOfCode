@@ -7,7 +7,6 @@
 #include <string>
 #include <cassert>
 
-
 unsigned GetStartOfObject(const std::string &str, unsigned pos)
 {
     auto depth = 0;
@@ -39,6 +38,7 @@ unsigned GetEndOfObject(const std::string &str, unsigned pos)
 std::string ExciseRedObjects(std::string str)
 {
     auto red = 0;
+
     while ((red = str.find(":\"red\"")) > 0)
     {
         // Cut out any entire object that has red in it

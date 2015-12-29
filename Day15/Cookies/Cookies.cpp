@@ -82,9 +82,11 @@ void _tmain(int argc, _TCHAR *argv[])
 {
     ReadInputFile();
 
-    assert(Solve(100, 0) == 21367368);
-    assert(Solve(100, 500) == 1766400);
+    auto part1 = Solve(100);
+    std::cout << "part one: " << part1 << std::endl;
+    assert(part1 == 21367368);
 
-    std::cout << "part one: " << Solve(100) << std::endl;
-    std::cout << "part two: " << Solve(100, 500) << std::endl;
+    auto part2 = Solve(100, 500);
+    std::cout << "part two: " << part2 << std::endl;
+    assert(part2 == 1766400);
 }
