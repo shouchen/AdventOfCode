@@ -6,8 +6,6 @@
 #include <algorithm>
 #include <cassert>
 
-using namespace std;
-
 struct Item
 {
     const char *name;
@@ -64,9 +62,9 @@ static void DoForRings(State player, unsigned cost, const Item *ring1 = nullptr,
     }
 
     if (DoesPlayerWin(player, enemy))
-        minCostToWin = min(minCostToWin, cost);
+        minCostToWin = std::min(minCostToWin, cost);
     else
-        maxCostToLose = max(maxCostToLose, cost);
+        maxCostToLose = std::max(maxCostToLose, cost);
 }
 
 static void DoForArmor(State player, unsigned cost, const Item *armor = nullptr)
@@ -85,8 +83,8 @@ static void DoForArmor(State player, unsigned cost, const Item *armor = nullptr)
         DoForRings(player, cost, &ring);
 
     // Try with two rings
-    for (int ring1 = 0; ring1 < (sizeof(ringList) / sizeof(ringList[0])); ring1++)
-        for (int ring2 = ring1 + 1; ring2 < (sizeof(ringList) / sizeof(ringList[0])); ring2++)
+    for (auto ring1 = 0; ring1 < (sizeof(ringList) / sizeof(ringList[0])); ring1++)
+        for (auto ring2 = ring1 + 1; ring2 < (sizeof(ringList) / sizeof(ringList[0])); ring2++)
             DoForRings(player, cost, &ringList[ring1], &ringList[ring2]);
 }
 
@@ -113,9 +111,9 @@ void _tmain(int argc, _TCHAR *argv[])
 {
     Solve(State{ 100, 0, 0 });
 
-    cout << "part one: " << minCostToWin << endl;
-    cout << "part two: " << maxCostToLose << endl;
+    std::cout << "part one: " << minCostToWin << std::endl;
+    assert(maxCostToLose == 201);
 
-    assert(minCostToWin == 121);
+    std::cout << "part two: " << maxCostToLose << std::endl;
     assert(maxCostToLose == 201);
 }

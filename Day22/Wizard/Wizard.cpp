@@ -95,7 +95,7 @@ int Solver::s_damageBoss, Solver::s_lowestCost, Solver::s_hardModePoints;
 
 void main(int argc, char *argv[])
 {
-    const int hpPlayer = 50, mana = 500, hpBoss = 58, damageBoss = 9;
+    const auto hpPlayer = 50, mana = 500, hpBoss = 58, damageBoss = 9;
 
     auto answer = Solver::Solve(hpBoss, damageBoss, hpPlayer, mana, false);
     std::cout << "part one: " << answer << std::endl;

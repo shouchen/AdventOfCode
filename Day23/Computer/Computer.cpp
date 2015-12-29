@@ -64,14 +64,13 @@ void _tmain(int argc, _TCHAR *argv[])
 
     Computer computer1;
     computer1.ExecuteProgram(program);
-    unsigned b1 = computer1.GetB();
-    std::cout << "part one: " << b1 << std::endl;
+    unsigned b = computer1.GetB();
+    std::cout << "part one: " << b << std::endl;
+    assert(b == 255);
 
     Computer computer2(1);
     computer2.ExecuteProgram(program);
-    unsigned b2 = computer2.GetB();
-    std::cout << "part two: " << b2 << std::endl;
-
-    assert(b1 == 255);
-    assert(b2 == 334);
+    b = computer2.GetB();
+    std::cout << "part two: " << b << std::endl;
+    assert(b == 334);
 }
