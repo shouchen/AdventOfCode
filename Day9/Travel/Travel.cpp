@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <cassert>
 
 std::map<std::string, std::map<std::string, unsigned>> distances;
 
@@ -55,5 +56,8 @@ void _tmain(int argc, _TCHAR* argv[])
     FindMinimumAndMaximum(minimum, maximum);
 
     std::cout << "minimum = " << minimum << std::endl;
+    assert(minimum == 141);
+
     std::cout << "maximum = " << maximum << std::endl;
+    assert(maximum == 736);
 }

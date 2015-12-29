@@ -6,17 +6,13 @@
 #include <fstream>
 #include <cassert>
 
-using namespace std;
-
 void _tmain(int argc, _TCHAR* argv[])
 {
-    auto floor = 0;
-    auto firstBasementStep = 0;
-    auto currentStep = 0;
-    char button;
-
-    ifstream f;
+    std::ifstream f;
     f.open("Input.txt");
+
+    auto floor = 0, firstBasementStep = 0, currentStep = 0;
+    char button;
 
     while (f >> button)
     {
@@ -33,6 +29,9 @@ void _tmain(int argc, _TCHAR* argv[])
             firstBasementStep = currentStep;
     }
 
-    cout << "floor " << floor << endl;
-    cout << "first basement step was " << firstBasementStep << endl;
+    std::cout << "part one: " << floor << std::endl;
+    assert(floor == 138);
+
+    std::cout << "part two: " << firstBasementStep << std::endl;
+    assert(firstBasementStep == 1771);
 }

@@ -5,8 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <set>
-
-using namespace std;
+#include <cassert>
 
 struct Address
 {
@@ -34,14 +33,14 @@ void ProcessMove(char move, Address &santa)
     }
 }
 
-unsigned ProcessFile(const string &filename, bool doubleSanta)
+unsigned ProcessFile(const std::string &filename, bool doubleSanta)
 {
-    set<const Address, LessAddress> visited;
+    std::set<const Address, LessAddress> visited;
 
     Address santa1, santa2;
     visited.insert(santa1);
 
-    ifstream f;
+    std::ifstream f;
     f.open("Input.txt");
 
     while (!f.eof())
@@ -65,6 +64,11 @@ unsigned ProcessFile(const string &filename, bool doubleSanta)
 
 void _tmain(int argc, _TCHAR* argv[])
 {
-    cout << "one santa = " << ProcessFile("Input.txt", false) << endl;
-    cout << "two santas = " << ProcessFile("Input.txt", true) << endl;
+    auto part1 = ProcessFile("Input.txt", false);
+    std::cout << "part one: " << part1 << std::endl;
+    assert(part1 == 2565);
+    
+    auto part2 = ProcessFile("Input.txt", true);
+    std::cout << "part two: " << part2 << std::endl;
+    assert(part2 == 2639);
 }

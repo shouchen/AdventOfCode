@@ -5,10 +5,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <cassert>
 
-using namespace std;
-
-bool IsNice1(const string &input)
+bool IsNice1(const std::string &input)
 {
     auto numVowels = 0;
     auto hasDouble = false;
@@ -32,10 +31,10 @@ bool IsNice1(const string &input)
     return hasDouble && (numVowels >= 3);
 }
 
-bool IsNice2(const string &input)
+bool IsNice2(const std::string &input)
 {
-    bool hasRepeatedPair = false;
-    bool hasRepeatedWithSpaceBetween = false;
+    auto hasRepeatedPair = false;
+    auto hasRepeatedWithSpaceBetween = false;
 
     for (auto curr = input.c_str(); *curr; curr++)
     {
@@ -60,18 +59,21 @@ void _tmain(int argc, _TCHAR *argv[])
 {
     auto count1 = 0, count2 = 0;
 
-    ifstream f;
+    std::ifstream f;
     f.open("input.txt");
 
     while (f.good())
     {
-        string word;
+        std::string word;
         f >> word;
 
         if (IsNice1(word)) count1++;
         if (IsNice2(word)) count2++;
     }
 
-    cout << "part one: " << count1 << endl;
-    cout << "part two: " << count2 << endl;
+    std::cout << "part one: " << count1 << std::endl;
+    assert(count1 == 238);
+
+    std::cout << "part two: " << count2 << std::endl;
+    assert(count2 == 69);
 }

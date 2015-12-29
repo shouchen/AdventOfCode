@@ -7,12 +7,10 @@
 #include <string>
 #include <cassert>
 
-using namespace std;
-
-unsigned ProcessLine1(const char *line)
+unsigned ProcessLinePart1(const char *line)
 {
     // literal start with two more for open + close quotes
-    unsigned totalDiff = 2;
+    auto totalDiff = 2U;
 
     // skip over opening quote
     assert(*line == '"');
@@ -22,7 +20,7 @@ unsigned ProcessLine1(const char *line)
     {
         if (*curr == '\\')
         {
-            unsigned diff = 0;
+            auto diff = 0U;
 
             if (curr[1] == '\\' || curr[1] == '"')
                 diff = 1;
@@ -37,10 +35,10 @@ unsigned ProcessLine1(const char *line)
     return totalDiff;
 }
 
-unsigned ProcessLine2(const char *line)
+unsigned ProcessLinePart2(const char *line)
 {
     // 2 is for open/close quotes
-    unsigned totalDiff = 2;
+    auto totalDiff = 2U;
 
     while (*line)
     {
@@ -56,16 +54,20 @@ unsigned ProcessLine2(const char *line)
 
 void _tmain(int argc, _TCHAR* argv[])
 {
-    ifstream f("Input.txt");
-    string line;
-    unsigned total1 = 0, total2 = 0;
+    std::ifstream f("Input.txt");
+
+    auto total1 = 0U, total2 = 0U;
+    std::string line;
 
     while (f >> line)
     {
-        total1 += ProcessLine1(line.c_str());
-        total2 += ProcessLine2(line.c_str());
+        total1 += ProcessLinePart1(line.c_str());
+        total2 += ProcessLinePart2(line.c_str());
     }
 
-    cout << "part one = " << total1 << endl;
-    cout << "part two = " << total2 << endl;
+    std::cout << "part one = " << total1 << std::endl;
+    assert(total1 == 1342);
+
+    std::cout << "part two = " << total2 << std::endl;
+    assert(total2 == 2074);
 }

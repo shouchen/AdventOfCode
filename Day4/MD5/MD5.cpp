@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cstdio>
+#include <cassert>
 
 std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize)
 {
@@ -40,52 +41,51 @@ std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSiz
     return oss.str();
 }
 
-unsigned GetLongestUnsignedLongLong()
+unsigned GetLengthLongestUnsignedLongLong()
 {
     std::ostringstream oss;
     oss << ULLONG_MAX;
     return oss.str().length();
 }
 
-void SolveForInput(const std::string &input)
+unsigned long long SolveForInput(const std::string &input, unsigned numZeros, unsigned long long start = 0ULL)
 {
+    auto curr = start;
+
     HCRYPTPROV hProv = NULL;
     if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
     {
-        std::vector<char> buffer(input.length() + GetLongestUnsignedLongLong() + 1);
+        std::vector<char> buffer(input.length() + GetLengthLongestUnsignedLongLong() + 1);
 
         auto inputLength = sprintf_s(&buffer[0], buffer.capacity(), "%s", input.c_str());
         auto remainingBufferSize = buffer.capacity() - inputLength;
         auto suffixStart = &buffer[0] + inputLength;
+        auto prefix = std::string(numZeros, '0');
 
-        auto foundFiveZeros = false;
-
-        for (unsigned long long i = 0; i < ULLONG_MAX; i++)
+        for (curr = start; curr < ULLONG_MAX; curr++)
         {
-            int numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", i);
+            int numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", curr);
 
             std::string hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
-            if (hashed[0] == '0' && hashed[1] == '0' && hashed[2] == '0' && hashed[3] == '0' && hashed[4] == '0')
-            {
-                if (!foundFiveZeros)
-                {
-                    std::cout << "five zeros: " << i << " (" << hashed << ")" << std::endl;
-                    foundFiveZeros = true;
-                }
-
-                if (hashed[5] == '0')
-                {
-                    std::cout << "six zeros: " << i << " (" << hashed << ")" << std::endl;
-                    break;
-                }
-            }
+            if (hashed.substr(0, numZeros) == prefix)
+                break;
         }
 
         CryptReleaseContext(hProv, 0);
     }
+
+    return curr;
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    SolveForInput("bgvyzdsv");
+    auto input = "bgvyzdsv";
+
+    auto part1 = SolveForInput(input, 5);
+    std::cout << "part one: " << part1 << std::endl;
+    assert(part1 == 254575);
+
+    auto part2 = SolveForInput(input, 6, part1);
+    std::cout << "part two: " << part2 << std::endl;
+    assert(part2 == 1038736);
 }

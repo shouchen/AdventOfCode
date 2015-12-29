@@ -4,10 +4,10 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <map>
 #include <string>
 #include <cassert>
-
 
 std::map<std::string, std::string> wires;
 std::map<std::string, unsigned short> cache;
@@ -52,26 +52,25 @@ void ReadInput(const char *filename)
     }
 }
 
-void DoPart1()
-{
-    unsigned short a = Evaluate("a");
-    std::cout << "part one: " << a << std::endl;
-    assert(a == 3176);
-}
-
-void DoPart2()
+unsigned Solve()
 {
     cache.clear();
-    wires["b"] = "3176";
-
-    unsigned short a = Evaluate("a");
-    std::cout << "part two: " << a << std::endl;
-    assert(a == 14710);
+    return Evaluate("a");
 }
 
 void _tmain(int argc, _TCHAR *argv[])
 {
     ReadInput("Input.txt");
-    DoPart1();
-    DoPart2();
+
+    auto a = Solve();
+    std::cout << "part one: " << a << std::endl;
+    assert(a == 3176);
+
+    std::ostringstream oss;
+    oss << a;
+    wires["b"] = oss.str();
+
+    a = Solve();
+    std::cout << "part two: " << a << std::endl;
+    assert(a == 14710);
 }

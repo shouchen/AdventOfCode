@@ -7,8 +7,7 @@
 #include <fstream>
 #include <cassert>
 #include <memory>
-
-using namespace std;
+#include <cassert>
 
 class Grid1
 {
@@ -49,11 +48,11 @@ public:
 
 int ProcessFile(Grid1 *grid)
 {
-    ifstream f("Input.txt");
+    std::ifstream f("Input.txt");
 
     while (f.good())
     {
-        string word;
+        std::string word;
         if (f >> word)
         {
             void (Grid1::*action)(int row, int col) = &Grid1::Toggle;
@@ -73,7 +72,7 @@ int ProcessFile(Grid1 *grid)
 
             int row1, col1, row2, col2;
             char comma;
-            string through;
+            std::string through;
             f >> col1 >> comma >> row1 >> through >> col2 >> comma >> row2;
 
             for (int row = row1; row <= row2; row++)
@@ -88,8 +87,12 @@ int ProcessFile(Grid1 *grid)
 void _tmain(int argc, _TCHAR *argv[])
 {
     auto grid1 = std::make_unique<Grid1>();
-    cout << "part 1: " << ProcessFile(grid1.get()) << endl;
+    auto part1 = ProcessFile(grid1.get());
+    std::cout << "part 1: " << part1 << std::endl;
+    assert(part1 == 400410);
 
     auto grid2 = std::make_unique<Grid2>();
-    cout << "part 2: " << ProcessFile(grid2.get()) << endl;
+    auto part2 = ProcessFile(grid2.get());
+    std::cout << "part 2: " << part2 << std::endl;
+    assert(part2 == 15343601);
 }

@@ -5,12 +5,11 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cassert>
 
-using namespace std;
-
-string ProcessString(const char *str)
+std::string ProcessString(const char *str)
 {
-    ostringstream out;
+    std::ostringstream out;
 
     while (*str)
     {
@@ -28,15 +27,19 @@ string ProcessString(const char *str)
 
 void _tmain(int argc, _TCHAR* argv[])
 {
-    string str = "3113322113";
+    std::string str = "3113322113";
 
     for (int i = 0; i < 40; i++)
         str = ProcessString(str.c_str());
 
-    cout << "Answer for 40x is " << str.length() << endl;
+    auto part1 = str.length();
+    std::cout << "part one: " << str.length() << std::endl;
+    assert(part1 == 329356);
 
     for (int i = 0; i < 10; i++)
         str = ProcessString(str.c_str());
 
-    cout << "Answer for 50x is " << str.length() << endl;
+    auto part2 = str.length();
+    std::cout << "part2: " << str.length() << std::endl;
+    assert(part2 == 4666278);
 }

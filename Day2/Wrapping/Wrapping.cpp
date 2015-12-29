@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <cassert>
 
 unsigned PaperNeeded(unsigned length, unsigned width, unsigned height)
 {
@@ -34,6 +35,9 @@ void _tmain(int argc, char *argv[])
         totalRibbon += RibbonNeeded(length, width, height);
     }
 
-    std::cout << "paper = " << totalPaper << std::endl;
-    std::cout << "ribbon = " << totalRibbon << std::endl;
+    std::cout << "part one: " << totalPaper << std::endl;
+    assert(totalPaper == 1588178);
+
+    std::cout << "part two: " << totalRibbon << std::endl;
+    assert(totalRibbon == 3783758);
 }
