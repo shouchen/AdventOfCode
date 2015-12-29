@@ -16,7 +16,7 @@ void Solver::Solve(const std::vector<unsigned> &containers, unsigned amount, uns
 
 unsigned Solver::Solve(std::vector<unsigned>::const_iterator begin, std::vector<unsigned>::const_iterator end, unsigned amount, unsigned numChosenSoFar)
 {
-    unsigned numCombinations = 0;
+    auto numCombinations = 0U;
 
     if (begin != end)
     {

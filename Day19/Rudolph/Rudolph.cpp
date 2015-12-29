@@ -37,9 +37,9 @@ set<string> GenerateNewStringsByApplyingReplacement(const string &original, cons
         place = original.find(from, place + 1);
         if (place == string::npos) break;
 
-        for (auto curr2 = to.begin(); curr2 != to.end(); curr2++)
+        for (auto curr = to.begin(); curr != to.end(); curr++)
         {
-            auto newLine = original.substr(0, place) + *curr2 + original.substr(place + from.length());
+            auto newLine = original.substr(0, place) + *curr + original.substr(place + from.length());
             strings.insert(newLine);
         }
     }
@@ -95,8 +95,8 @@ unsigned GetStepsForPart2(string medicine)
         {
             for (auto &to : replacement.second)
             {
-                int pos = state.formula.find(to);
-                if (pos > -1)
+                auto pos = state.formula.find(to);
+                if (pos != -1)
                 {
                     auto newFormula = state.formula.substr(0, pos) + replacement.first + state.formula.substr(pos + to.length());
                     queue.push(State{ newFormula, state.stepsSoFar + 1 });
@@ -118,8 +118,8 @@ void _tmain(int argc, _TCHAR *argv[])
     f >> medicine;
 
     unsigned part1 = CountDistinctPart1(medicine);
-    assert(part1 == 535);
     cout << "part one: " << part1 << endl;
+    assert(part1 == 535);
 
     unsigned part2 = GetStepsForPart2(medicine);
     cout << "part two: " << part2 << endl;

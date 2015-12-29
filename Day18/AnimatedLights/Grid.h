@@ -2,7 +2,6 @@
 
 #include "stdafx.h"
 
-
 template<int SIZE>
 class Grid
 {

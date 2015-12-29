@@ -7,13 +7,12 @@
 #include <numeric>
 #include <cassert>
 
-
 std::vector<unsigned> Factorize(unsigned number)
 {
     std::vector<unsigned> retval;
     unsigned mid = static_cast<unsigned>(sqrt(number));
 
-    for (unsigned i = 1; i <= mid; i++)
+    for (auto i = 1U; i <= mid; i++)
         if ((number % i) == 0)
         {
             retval.push_back(i);
@@ -36,7 +35,7 @@ void Solve(int input, unsigned &part1, unsigned &part2)
 
     for (auto house = 0U; house < UINT_MAX; house++)
     {
-        const std::vector<unsigned> factors = Factorize(house);
+        auto factors = Factorize(house);
 
         if (!part1 && std::accumulate(factors.begin(), factors.end(), 0) * 10 >= input)
         {
@@ -57,9 +56,9 @@ void _tmain(int argc, _TCHAR *argv[])
     auto part1 = 0U, part2 = 0U;
     Solve(33100000, part1, part2);
 
-    assert(part1 == 776160);
-    assert(part2 == 786240);
-
     std::cout << "part one: " << part1 << std::endl;
+    assert(part1 == 776160);
+
     std::cout << "part two: " << part2 << std::endl;
+    assert(part2 == 786240);
 }

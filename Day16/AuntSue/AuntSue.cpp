@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cassert>
 
 struct Data
 {
@@ -92,9 +93,15 @@ void _tmain(int argc, _TCHAR *argv[])
         ParseData(line, number, data);
 
         if (MatchesPart1(data, answer))
+        {
             std::cout << "part one: " << number << std::endl;
+            assert(number == 103);
+        }
 
         if (MatchesPart2(data, answer))
+        {
             std::cout << "part two: " << number << std::endl;
+            assert(number == 405);
+        }
     }
 }

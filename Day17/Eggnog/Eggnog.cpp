@@ -5,6 +5,7 @@
 #include "Solver.h"
 #include <fstream>
 #include <iostream>
+#include <cassert>
 
 void ReadInput(const char *filename, std::vector<unsigned> &containers)
 {
@@ -20,9 +21,12 @@ void _tmain(int argc, _TCHAR *argv[])
     std::vector<unsigned> containers;
     ReadInput("Input.txt", containers);
 
-    unsigned numCombinations = 0, numOfMinimumLength = 0;
+    auto numCombinations = 0U, numOfMinimumLength = 0U;
     Solver::Solve(containers, 150, numCombinations, numOfMinimumLength);
 
     std::cout << "part one: " << numCombinations << std::endl;
+    assert(numCombinations == 4372);
+
     std::cout << "part two: " << numOfMinimumLength << std::endl;
+    assert(numOfMinimumLength == 4);
 }
