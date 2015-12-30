@@ -23,16 +23,14 @@ private:
 
     static void PopulateGroups(std::vector<Package>::iterator from, std::vector<Package>::iterator to);
     static bool CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to);
-    
+    static void ProcessSolution();
     static void AssignPackage(Package &pkg, unsigned group);
-    static unsigned long long GetGroupOneQe(const std::vector<Package> &pkgs);
-    static unsigned long long GetLowestGroupOneQeOfSolutions();
 
     static unsigned s_numGroups;
-    static unsigned s_lowestSizedGroupOne;
     static unsigned s_weightPerGroup;
+    static unsigned s_lowestGroupOneSize;
+    static unsigned long long s_lowestGroupOneQeForLowestSize;
 
     static std::vector<Package> s_packages;
     static Group *s_groups;
-    static std::vector<std::vector<Package>> s_solutions;
 };

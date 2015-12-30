@@ -18,10 +18,10 @@ void _tmain(int argc, _TCHAR *argv[])
         weights.push_back(weight);
 
     auto part1 = Solver::Solve(weights, 3);
-    assert(part1 == 11266889531);
+    assert(part1 == 11266889531ULL);
     std::cout << "part one: " << part1 << std::endl;
 
     auto part2 = Solver::Solve(weights, 4);
-    assert(part2 == 77387711);
+    assert(part2 == 77387711ULL);
     std::cout << "part two: " << part2 << std::endl;
 }
