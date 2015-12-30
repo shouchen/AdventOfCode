@@ -8,160 +8,173 @@
 #include <algorithm>
 #include <cassert>
 
-auto s_numGroups = 3U;
 #define MAX_GROUPS 4
 
-struct Package
+class Solver
 {
-    unsigned weight;
-    unsigned group;
-};
+public:
+    struct Package
+    {
+        unsigned weight;
+        unsigned group;
+    };
 
-struct Group
-{
-    unsigned weight;
-    unsigned count;
-};
+    struct Group
+    {
+        unsigned weight;
+        unsigned count;
+    };
 
-std::vector<Package> s_packages;
-Group s_groups[MAX_GROUPS + 1];
-
-unsigned s_weightPerGroup;
-std::vector<std::vector<Package>> s_solutions;
-unsigned s_minSizeGroupOne = UINT_MAX;
-
-unsigned GetWeight(unsigned group)
-{
-    unsigned weight = 0;
-    for (auto p : s_packages)
+    static unsigned GetWeight(unsigned group)
+    {
+        unsigned weight = 0;
+        for (auto p : s_packages)
         if (p.group == group)
             weight += p.weight;
-    return weight;
-}
+        return weight;
+    }
 
-unsigned long long GetQE(const std::vector<Package> &pkgs)
-{
-    auto qe = 1ULL;
-    for (auto p : pkgs)
+    static unsigned long long GetQE(const std::vector<Package> &pkgs)
+    {
+        auto qe = 1ULL;
+        for (auto p : pkgs)
         if (p.group == 1)
             qe *= p.weight;
-    return qe;
-}
-
-void AssignPackage(Package &pkg, unsigned group)
-{
-    assert(pkg.group != group);
-
-    s_groups[pkg.group].weight -= pkg.weight;
-    s_groups[pkg.group].count--;
-    pkg.group = group;
-    s_groups[pkg.group].weight += pkg.weight;
-    s_groups[pkg.group].count++;
-}
-
-void AddSolution(const std::vector<Package> &pkgs)
-{
-    unsigned size = s_groups[1].count;
-    if (size > s_minSizeGroupOne) return;
-
-    if (size < s_minSizeGroupOne)
-    {
-        s_minSizeGroupOne = size;
-        s_solutions.clear();
+        return qe;
     }
 
-    s_solutions.push_back(pkgs);
-}
-
-bool CheckWayForGroupN(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages)
-{
-    if (n == s_numGroups)
+    static void AssignPackage(Package &pkg, unsigned group)
     {
-        bool retval = s_groups[s_numGroups].count >= minPackages;
-        if (retval)
-            AddSolution(s_packages);
-        return retval;
+        assert(pkg.group != group);
+
+        s_groups[pkg.group].weight -= pkg.weight;
+        s_groups[pkg.group].count--;
+        pkg.group = group;
+        s_groups[pkg.group].weight += pkg.weight;
+        s_groups[pkg.group].count++;
     }
 
-    if (from == to || s_groups[n].weight > s_weightPerGroup) return false;
-
-    if (s_groups[n].weight == s_weightPerGroup)
+    static void AddSolution(const std::vector<Package> &pkgs)
     {
-        if (s_groups[n].count < minPackages) return false;
+        unsigned size = s_groups[1].count;
+        if (size > s_minSizeGroupOne) return;
 
-        return CheckWayForGroupN(n + 1, s_packages.begin(), s_packages.end(), minPackages);
-    }
-
-    for (auto curr = from; curr != to; curr++)
-    {
-        if (curr->group == s_numGroups)
+        if (size < s_minSizeGroupOne)
         {
-            AssignPackage(*curr, n);
-            bool retval = CheckWayForGroupN(n, curr + 1, to, minPackages);
-            AssignPackage(*curr, s_numGroups);
+            s_minSizeGroupOne = size;
+            s_solutions.clear();
+        }
 
-            if (retval) return true;
+        s_solutions.push_back(pkgs);
+    }
+
+    static bool CheckWayForGroupN(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages)
+    {
+        if (n == s_numGroups)
+        {
+            bool retval = s_groups[s_numGroups].count >= minPackages;
+            if (retval)
+                AddSolution(s_packages);
+            return retval;
+        }
+
+        if (from == to || s_groups[n].weight > s_weightPerGroup) return false;
+
+        if (s_groups[n].weight == s_weightPerGroup)
+        {
+            if (s_groups[n].count < minPackages) return false;
+
+            return CheckWayForGroupN(n + 1, s_packages.begin(), s_packages.end(), minPackages);
+        }
+
+        for (auto curr = from; curr != to; curr++)
+        {
+            if (curr->group == s_numGroups)
+            {
+                AssignPackage(*curr, n);
+                bool retval = CheckWayForGroupN(n, curr + 1, to, minPackages);
+                AssignPackage(*curr, s_numGroups);
+
+                if (retval) return true;
+            }
+        }
+
+        return false;
+    }
+
+    static void PopulateGroup1Recurse(std::vector<Package>::iterator from, std::vector<Package>::iterator to)
+    {
+        if (s_groups[1].weight > s_weightPerGroup) return;
+
+        if (s_groups[1].weight == s_weightPerGroup)
+        {
+            CheckWayForGroupN(2, s_packages.begin(), s_packages.end(), s_groups[1].count);
+            return;
+        }
+
+        if (s_groups[1].count > s_minSizeGroupOne) return;
+
+        for (auto curr = from; curr != to; curr++)
+        {
+            AssignPackage(*curr, 1);
+            PopulateGroup1Recurse(curr + 1, to);
+            AssignPackage(*curr, s_numGroups);
         }
     }
 
-    return false;
-}
-
-void PopulateGroup1Recurse(std::vector<Package>::iterator from, std::vector<Package>::iterator to)
-{
-    if (s_groups[1].weight > s_weightPerGroup) return;
-
-    if (s_groups[1].weight == s_weightPerGroup)
+    static unsigned long long GetLowestQe()
     {
-        CheckWayForGroupN(2, s_packages.begin(), s_packages.end(), s_groups[1].count);
-        return;
+        auto minQe = ULLONG_MAX;
+        for (auto &s : s_solutions)
+        {
+            unsigned long long qe = GetQE(s);
+            minQe = std::min(minQe, qe);
+        }
+
+        return minQe;
     }
 
-    if (s_groups[1].count > s_minSizeGroupOne) return;
+    static unsigned s_numGroups;
+    static std::vector<Package> s_packages;
+    static Group s_groups[MAX_GROUPS + 1];
+    static unsigned s_weightPerGroup;
+    static std::vector<std::vector<Package>> s_solutions;
+    static unsigned s_minSizeGroupOne;
+};
 
-    for (auto curr = from; curr != to; curr++)
-    {
-        AssignPackage(*curr, 1);
-        PopulateGroup1Recurse(curr + 1, to);
-        AssignPackage(*curr, s_numGroups);
-    }
-}
+unsigned Solver::s_numGroups = 3U;
+std::vector<Solver::Package> Solver::s_packages;
+Solver::Group Solver::s_groups[MAX_GROUPS + 1];
+unsigned Solver::s_weightPerGroup;
+std::vector<std::vector<Solver::Package>> Solver::s_solutions;
+unsigned Solver::s_minSizeGroupOne = UINT_MAX;
 
-unsigned long long GetLowestQe()
-{
-    auto minQe = ULLONG_MAX;
-    for (auto &s : s_solutions)
-    {
-        unsigned long long qe = GetQE(s);
-        minQe = std::min(minQe, qe);
-    }
-
-    return minQe;
-}
 
 void _tmain(int argc, _TCHAR *argv[])
 {
     std::ifstream f("Input.txt");
     unsigned weight;
     while (f >> weight)
-        s_packages.push_back(Package{ weight, s_numGroups });
+        Solver::s_packages.push_back(Solver::Package{ weight, Solver::s_numGroups });
 
     // TODO: This should really be a reverse sort
-    std::reverse(s_packages.begin(), s_packages.end());
+    std::reverse(Solver::s_packages.begin(), Solver::s_packages.end());
 
     // Everything starts in last group by default
-    for (auto p : s_packages)
-        s_groups[s_numGroups].weight += p.weight;
-    s_weightPerGroup = s_groups[s_numGroups].weight / s_numGroups;
+    for (auto p : Solver::s_packages)
+        Solver::s_groups[Solver::s_numGroups].weight += p.weight;
+    Solver::s_weightPerGroup = Solver::s_groups[Solver::s_numGroups].weight / Solver::s_numGroups;
 
-    s_numGroups = 3;
-    PopulateGroup1Recurse(s_packages.begin(), s_packages.end());
+    Solver::s_numGroups = 3;
+    Solver::s_minSizeGroupOne = UINT_MAX;
+    Solver::PopulateGroup1Recurse(Solver::s_packages.begin(), Solver::s_packages.end());
 
-    auto qe = GetLowestQe();
+    auto qe = Solver::GetLowestQe();
     assert(qe == 11266889531);
     std::cout << "part one: " << qe << std::endl;
 
     //s_numGroups = 4;
+    //Solver::s_minSizeGroupOne = UINT_MAX;
     //PopulateGroup1Recurse(packages.begin(), packages.end());
 
     //qe = GetLowestQe();
