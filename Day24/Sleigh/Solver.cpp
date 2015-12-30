@@ -47,15 +47,6 @@ unsigned long long Solver::Solve(std::vector<unsigned> weights, unsigned numGrou
     return GetLowestQe();
 }
 
-unsigned Solver::GetWeight(unsigned group)
-{
-    auto weight = 0U;
-    for (auto p : s_packages)
-        if (p.group == group)
-            weight += p.weight;
-    return weight;
-}
-
 unsigned long long Solver::GetQE(const std::vector<Package> &pkgs)
 {
     auto qe = 1ULL;

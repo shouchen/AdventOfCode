@@ -17,11 +17,11 @@ void _tmain(int argc, _TCHAR *argv[])
     while (f >> weight)
         weights.push_back(weight);
 
-    auto qe = Solver::Solve(weights, 3);
-    assert(qe == 11266889531);
-    std::cout << "part one: " << qe << std::endl;
+    auto part1 = Solver::Solve(weights, 3);
+    assert(part1 == 11266889531);
+    std::cout << "part one: " << part1 << std::endl;
 
-    qe = Solver::Solve(weights, 4);
-    assert(qe == 77387711);
-    std::cout << "part two: " << qe << std::endl;
+    auto part2 = Solver::Solve(weights, 4);
+    assert(part2 == 77387711);
+    std::cout << "part two: " << part2 << std::endl;
 }
