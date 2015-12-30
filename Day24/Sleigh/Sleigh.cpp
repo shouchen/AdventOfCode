@@ -15,22 +15,20 @@ class Solver
 public:
     struct Package
     {
-        unsigned weight;
-        unsigned group;
+        unsigned weight, group;
     };
 
     struct Group
     {
-        unsigned weight;
-        unsigned count;
+        unsigned weight, count;
     };
 
     static unsigned GetWeight(unsigned group)
     {
-        unsigned weight = 0;
+        auto weight = 0U;
         for (auto p : s_packages)
-        if (p.group == group)
-            weight += p.weight;
+            if (p.group == group)
+                weight += p.weight;
         return weight;
     }
 
@@ -38,8 +36,8 @@ public:
     {
         auto qe = 1ULL;
         for (auto p : pkgs)
-        if (p.group == 1)
-            qe *= p.weight;
+            if (p.group == 1)
+                qe *= p.weight;
         return qe;
     }
 
@@ -134,6 +132,24 @@ public:
         return minQe;
     }
 
+    static unsigned long long Solve(unsigned numGroups)
+    {
+        // Set up globals and reset any state
+        s_numGroups = numGroups;
+        s_solutions.clear();
+
+        // Everything starts in last group by default
+        for (auto p : Solver::s_packages)
+            s_groups[s_numGroups].weight += p.weight;
+        s_weightPerGroup = s_groups[s_numGroups].weight / s_numGroups;
+
+        s_numGroups = numGroups;
+        s_minSizeGroupOne = UINT_MAX;
+        PopulateGroup1Recurse(s_packages.begin(), s_packages.end());
+
+        return GetLowestQe();
+    }
+
     static unsigned s_numGroups;
     static std::vector<Package> s_packages;
     static Group s_groups[MAX_GROUPS + 1];
@@ -160,24 +176,11 @@ void _tmain(int argc, _TCHAR *argv[])
     // TODO: This should really be a reverse sort
     std::reverse(Solver::s_packages.begin(), Solver::s_packages.end());
 
-    // Everything starts in last group by default
-    for (auto p : Solver::s_packages)
-        Solver::s_groups[Solver::s_numGroups].weight += p.weight;
-    Solver::s_weightPerGroup = Solver::s_groups[Solver::s_numGroups].weight / Solver::s_numGroups;
-
-    Solver::s_numGroups = 3;
-    Solver::s_minSizeGroupOne = UINT_MAX;
-    Solver::PopulateGroup1Recurse(Solver::s_packages.begin(), Solver::s_packages.end());
-
-    auto qe = Solver::GetLowestQe();
+    auto qe = Solver::Solve(3);
     assert(qe == 11266889531);
     std::cout << "part one: " << qe << std::endl;
 
-    //s_numGroups = 4;
-    //Solver::s_minSizeGroupOne = UINT_MAX;
-    //PopulateGroup1Recurse(packages.begin(), packages.end());
-
-    //qe = GetLowestQe();
-    //assert(qe == 77387711);
-    //cout << "part two: " << qe << endl;
+    qe = Solver::Solve(4);
+    assert(qe == 77387711);
+    std::cout << "part two: " << qe << std::endl;
 }
