@@ -52,16 +52,16 @@ unsigned long long Solver::Solve(std::vector<unsigned> weights, unsigned numGrou
 
 void Solver::PopulateGroups(std::vector<Package>::iterator from, std::vector<Package>::iterator to)
 {
+    // If we already have a solution with a smaller group one, stop looking at this tree.
+    if (s_groups[1].count > s_lowestSizedGroupOne) return;
+
     if (s_groups[1].weight > s_weightPerGroup)
     {
-        // Not a solution if the first group is too heavy now.
+        // Not a solution if first group is already too heavy.
         return;
     }
     else if (s_groups[1].weight < s_weightPerGroup)
     {
-        // If we already have a solution with a smaller group one, stop looking at this tree.
-        if (s_groups[1].count > s_lowestSizedGroupOne) return;
-
         // Recursively generate all the possible group one combinations.
         for (auto curr = from; curr != to; curr++)
         {
@@ -72,20 +72,27 @@ void Solver::PopulateGroups(std::vector<Package>::iterator from, std::vector<Pac
     }
     else
     {
-        // Group one exactly hit the target weight; see if there's a way for other groups to work.
-        CheckWayForGroupNAndBeyond(2, s_packages.begin(), s_packages.end(), s_groups[1].count);
+        // Group one exactly hit the target weight; see if there's a way for the other groups to work.
+        CheckWayForGroupNAndBeyond(2, s_packages.begin(), s_packages.end());
     }
 }
 
-bool Solver::CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages)
+bool Solver::CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to)
 {
     if (n == s_numGroups)
     {
-        // This is the last group; make sure it has right number of packages
-        if (s_groups[s_numGroups].count < minPackages) return false;
+        // This is the last group; make sure it has at least as many packages as group one.
+        if (s_groups[n].count < s_groups[1].count) return false;
 
-        // See if this solution is a new lowest-cost-so-far one.
-        CheckSolution(s_packages);
+        // We found a solution. If this is a new smallest group one, throw away any previous solutions.
+        if (s_groups[1].count < s_lowestSizedGroupOne)
+        {
+            s_lowestSizedGroupOne = s_groups[1].count;
+            s_solutions.clear();
+        }
+
+        // Save this solution in a vector in case we need to break ties.
+        s_solutions.push_back(s_packages);
         return true;
     }
 
@@ -97,19 +104,20 @@ bool Solver::CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterat
     {
         // If this group has enough packages (group one has to be the minimum), move to next group.
         return
-            (s_groups[n].count >= minPackages) &&
-            CheckWayForGroupNAndBeyond(n + 1, s_packages.begin(), s_packages.end(), minPackages);
+            (s_groups[n].count >= s_groups[1].count) &&
+            CheckWayForGroupNAndBeyond(n + 1, s_packages.begin(), s_packages.end());
     }
 
-    // Iterate across the remaining packages. Move combinations from group n (unassigned) to this group.
+    // Iterate across the remaining packages. Move combinations from last group (unassigned) to this group.
     for (auto curr = from; curr != to; curr++)
     {
         if (curr->group == s_numGroups)
         {
             AssignPackage(*curr, n);
-            auto retval = CheckWayForGroupNAndBeyond(n, curr + 1, to, minPackages);
+            auto retval = CheckWayForGroupNAndBeyond(n, curr + 1, to);
             AssignPackage(*curr, s_numGroups);
 
+            // Just need one solution for Groups 2..max, so exit out now.
             if (retval) return true;
         }
     }
@@ -117,28 +125,11 @@ bool Solver::CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterat
     return false;
 }
 
-void Solver::CheckSolution(const std::vector<Package> &pkgs)
-{
-    // If there are already solutions with fewer packages in group one, ignore this one.
-    auto size = s_groups[1].count;
-    if (size > s_lowestSizedGroupOne) return;
-
-    // If this is a new smallest group one, throw away previous "solutions".
-    if (size < s_lowestSizedGroupOne)
-    {
-        s_lowestSizedGroupOne = size;
-        s_solutions.clear();
-    }
-
-    // Save this solution in a vector in case we need to break ties.
-    s_solutions.push_back(pkgs);
-}
-
 void Solver::AssignPackage(Package &pkg, unsigned group)
 {
-    // Move pkg from current group to the specified new group.
     assert(pkg.group != group);
 
+    // Move pkg from current group to the specified new group.
     s_groups[pkg.group].weight -= pkg.weight;
     s_groups[pkg.group].count--;
     pkg.group = group;

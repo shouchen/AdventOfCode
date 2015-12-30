@@ -22,9 +22,8 @@ private:
     };
 
     static void PopulateGroups(std::vector<Package>::iterator from, std::vector<Package>::iterator to);
-    static bool CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages);
-    static void CheckSolution(const std::vector<Package> &pkgs);
-
+    static bool CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to);
+    
     static void AssignPackage(Package &pkg, unsigned group);
     static unsigned long long GetGroupOneQe(const std::vector<Package> &pkgs);
     static unsigned long long GetLowestGroupOneQeOfSolutions();
