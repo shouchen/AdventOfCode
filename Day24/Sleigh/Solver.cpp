@@ -6,106 +6,108 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <functional>
+#include <numeric>
 #include <cassert>
 #include "Solver.h"
 
-unsigned Solver::s_numGroups = 3U;
-std::vector<Solver::Package> Solver::s_packages;
-Solver::Group Solver::s_groups[MAX_GROUPS + 1];
+unsigned Solver::s_numGroups;
+unsigned Solver::s_lowestSizedGroupOne;
 unsigned Solver::s_weightPerGroup;
+
+std::vector<Solver::Package> Solver::s_packages;
+Solver::Group *Solver::s_groups;
 std::vector<std::vector<Solver::Package>> Solver::s_solutions;
-unsigned Solver::s_minSizeGroupOne = UINT_MAX;
 
 unsigned long long Solver::Solve(std::vector<unsigned> weights, unsigned numGroups)
 {
-    // Better thing to do here is a reverse sort
-    std::reverse(weights.begin(), weights.end());
+    // By sorting to heaviest first, a balanced group one will have fewer packages.
+    std::sort(weights.begin(), weights.end(), std::greater<int>());
+    auto totalWeight = std::accumulate(weights.begin(), weights.end(), 0U);
 
-    // Set up globals and reset any state
+    // Initialize statics (resetting any state).
     s_numGroups = numGroups;
+    s_lowestSizedGroupOne = UINT_MAX;
+    s_weightPerGroup = totalWeight / s_numGroups;
+
+    s_packages.clear();
+    s_groups = new Group[numGroups + 1];
     s_solutions.clear();
 
-    // Default everything to the last group
-    s_packages.clear();
+    for (auto i = 1U; i <= numGroups; i++)
+        s_groups[i].count = s_groups[i].weight = 0;
+
+    // Default everything initially to the last group, so we can place the others.
     for (auto weight : weights)
         s_packages.push_back(Solver::Package{ weight, numGroups });
 
-    for (int i = 0; i < sizeof(s_groups) / sizeof(s_groups[0]); i++)
+    s_groups[s_numGroups].weight = totalWeight;
+
+    // Populate the first group recursively, and the others after it.
+    PopulateGroups(s_packages.begin(), s_packages.end());
+
+    delete[] s_groups;
+    return GetLowestGroupOneQeOfSolutions();
+}
+
+void Solver::PopulateGroups(std::vector<Package>::iterator from, std::vector<Package>::iterator to)
+{
+    if (s_groups[1].weight > s_weightPerGroup)
     {
-        s_groups[i].count = 0;
-        s_groups[i].weight = 0;
+        // Not a solution if the first group is too heavy now.
+        return;
     }
-
-    for (auto p : Solver::s_packages)
-        s_groups[s_numGroups].weight += p.weight;
-    s_weightPerGroup = s_groups[s_numGroups].weight / s_numGroups;
-
-    s_numGroups = numGroups;
-    s_minSizeGroupOne = UINT_MAX;
-    PopulateGroup1Recurse(s_packages.begin(), s_packages.end());
-
-    return GetLowestQe();
-}
-
-unsigned long long Solver::GetQE(const std::vector<Package> &pkgs)
-{
-    auto qe = 1ULL;
-    for (auto p : pkgs)
-        if (p.group == 1)
-            qe *= p.weight;
-    return qe;
-}
-
-void Solver::AssignPackage(Package &pkg, unsigned group)
-{
-    assert(pkg.group != group);
-
-    s_groups[pkg.group].weight -= pkg.weight;
-    s_groups[pkg.group].count--;
-    pkg.group = group;
-    s_groups[pkg.group].weight += pkg.weight;
-    s_groups[pkg.group].count++;
-}
-
-void Solver::AddSolution(const std::vector<Package> &pkgs)
-{
-    unsigned size = s_groups[1].count;
-    if (size > s_minSizeGroupOne) return;
-
-    if (size < s_minSizeGroupOne)
+    else if (s_groups[1].weight < s_weightPerGroup)
     {
-        s_minSizeGroupOne = size;
-        s_solutions.clear();
-    }
+        // If we already have a solution with a smaller group one, stop looking at this tree.
+        if (s_groups[1].count > s_lowestSizedGroupOne) return;
 
-    s_solutions.push_back(pkgs);
+        // Recursively generate all the possible group one combinations.
+        for (auto curr = from; curr != to; curr++)
+        {
+            AssignPackage(*curr, 1);
+            PopulateGroups(curr + 1, to);
+            AssignPackage(*curr, s_numGroups);
+        }
+    }
+    else
+    {
+        // Group one exactly hit the target weight; see if there's a way for other groups to work.
+        CheckWayForGroupNAndBeyond(2, s_packages.begin(), s_packages.end(), s_groups[1].count);
+    }
 }
 
-bool Solver::CheckWayForGroupN(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages)
+bool Solver::CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages)
 {
     if (n == s_numGroups)
     {
-        bool retval = s_groups[s_numGroups].count >= minPackages;
-        if (retval)
-            AddSolution(s_packages);
-        return retval;
+        // This is the last group; make sure it has right number of packages
+        if (s_groups[s_numGroups].count < minPackages) return false;
+
+        // See if this solution is a new lowest-cost-so-far one.
+        CheckSolution(s_packages);
+        return true;
     }
 
+    // If all packages distributed before we get to last group, or if this group is too heavy, stop tree.
     if (from == to || s_groups[n].weight > s_weightPerGroup) return false;
 
+    // Check if group n is exactly at its target weight.
     if (s_groups[n].weight == s_weightPerGroup)
     {
-        if (s_groups[n].count < minPackages) return false;
-
-        return CheckWayForGroupN(n + 1, s_packages.begin(), s_packages.end(), minPackages);
+        // If this group has enough packages (group one has to be the minimum), move to next group.
+        return
+            (s_groups[n].count >= minPackages) &&
+            CheckWayForGroupNAndBeyond(n + 1, s_packages.begin(), s_packages.end(), minPackages);
     }
 
+    // Iterate across the remaining packages. Move combinations from group n (unassigned) to this group.
     for (auto curr = from; curr != to; curr++)
     {
         if (curr->group == s_numGroups)
         {
             AssignPackage(*curr, n);
-            bool retval = CheckWayForGroupN(n, curr + 1, to, minPackages);
+            auto retval = CheckWayForGroupNAndBeyond(n, curr + 1, to, minPackages);
             AssignPackage(*curr, s_numGroups);
 
             if (retval) return true;
@@ -115,32 +117,50 @@ bool Solver::CheckWayForGroupN(unsigned n, std::vector<Package>::iterator from, 
     return false;
 }
 
-void Solver::PopulateGroup1Recurse(std::vector<Package>::iterator from, std::vector<Package>::iterator to)
+void Solver::CheckSolution(const std::vector<Package> &pkgs)
 {
-    if (s_groups[1].weight > s_weightPerGroup) return;
+    // If there are already solutions with fewer packages in group one, ignore this one.
+    auto size = s_groups[1].count;
+    if (size > s_lowestSizedGroupOne) return;
 
-    if (s_groups[1].weight == s_weightPerGroup)
+    // If this is a new smallest group one, throw away previous "solutions".
+    if (size < s_lowestSizedGroupOne)
     {
-        CheckWayForGroupN(2, s_packages.begin(), s_packages.end(), s_groups[1].count);
-        return;
+        s_lowestSizedGroupOne = size;
+        s_solutions.clear();
     }
 
-    if (s_groups[1].count > s_minSizeGroupOne) return;
-
-    for (auto curr = from; curr != to; curr++)
-    {
-        AssignPackage(*curr, 1);
-        PopulateGroup1Recurse(curr + 1, to);
-        AssignPackage(*curr, s_numGroups);
-    }
+    // Save this solution in a vector in case we need to break ties.
+    s_solutions.push_back(pkgs);
 }
 
-unsigned long long Solver::GetLowestQe()
+void Solver::AssignPackage(Package &pkg, unsigned group)
+{
+    // Move pkg from current group to the specified new group.
+    assert(pkg.group != group);
+
+    s_groups[pkg.group].weight -= pkg.weight;
+    s_groups[pkg.group].count--;
+    pkg.group = group;
+    s_groups[pkg.group].weight += pkg.weight;
+    s_groups[pkg.group].count++;
+}
+
+unsigned long long Solver::GetGroupOneQe(const std::vector<Package> &pkgs)
+{
+    auto qe = 1ULL;
+    for (auto p : pkgs)
+    if (p.group == 1)
+        qe *= p.weight;
+    return qe;
+}
+
+unsigned long long Solver::GetLowestGroupOneQeOfSolutions()
 {
     auto minQe = ULLONG_MAX;
     for (auto &s : s_solutions)
     {
-        unsigned long long qe = GetQE(s);
+        unsigned long long qe = GetGroupOneQe(s);
         minQe = std::min(minQe, qe);
     }
 

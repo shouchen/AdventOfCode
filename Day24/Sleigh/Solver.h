@@ -5,8 +5,6 @@
 #include <vector>
 #include <algorithm>
 
-#define MAX_GROUPS 4
-
 class Solver
 {
 public:
@@ -23,18 +21,19 @@ private:
         unsigned weight, count;
     };
 
-    static unsigned GetWeight(unsigned group);
-    static unsigned long long GetQE(const std::vector<Package> &pkgs);
+    static void PopulateGroups(std::vector<Package>::iterator from, std::vector<Package>::iterator to);
+    static bool CheckWayForGroupNAndBeyond(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages);
+    static void CheckSolution(const std::vector<Package> &pkgs);
+
     static void AssignPackage(Package &pkg, unsigned group);
-    static void AddSolution(const std::vector<Package> &pkgs);
-    static bool CheckWayForGroupN(unsigned n, std::vector<Package>::iterator from, std::vector<Package>::iterator to, unsigned minPackages);
-    static void PopulateGroup1Recurse(std::vector<Package>::iterator from, std::vector<Package>::iterator to);
-    static unsigned long long GetLowestQe();
+    static unsigned long long GetGroupOneQe(const std::vector<Package> &pkgs);
+    static unsigned long long GetLowestGroupOneQeOfSolutions();
 
     static unsigned s_numGroups;
-    static std::vector<Package> s_packages;
-    static Group s_groups[MAX_GROUPS + 1];
+    static unsigned s_lowestSizedGroupOne;
     static unsigned s_weightPerGroup;
+
+    static std::vector<Package> s_packages;
+    static Group *s_groups;
     static std::vector<std::vector<Package>> s_solutions;
-    static unsigned s_minSizeGroupOne;
 };
