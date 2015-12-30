@@ -13,6 +13,36 @@
 class Solver
 {
 public:
+
+    static unsigned long long Solve(std::vector<unsigned> weights, unsigned numGroups)
+    {
+        // Set up globals and reset any state
+        s_numGroups = numGroups;
+        s_solutions.clear();
+
+        // Default everything to the last group
+        s_packages.clear();
+        for (auto weight : weights)
+            s_packages.push_back(Solver::Package{ weight, numGroups });
+
+        for (int i = 0; i < sizeof(s_groups) / sizeof(s_groups[0]); i++)
+        {
+            s_groups[i].count = 0;
+            s_groups[i].weight = 0;
+        }
+
+        for (auto p : Solver::s_packages)
+            s_groups[s_numGroups].weight += p.weight;
+        s_weightPerGroup = s_groups[s_numGroups].weight / s_numGroups;
+
+        s_numGroups = numGroups;
+        s_minSizeGroupOne = UINT_MAX;
+        PopulateGroup1Recurse(s_packages.begin(), s_packages.end());
+
+        return GetLowestQe();
+    }
+
+private:
     struct Package
     {
         unsigned weight, group;
@@ -132,24 +162,6 @@ public:
         return minQe;
     }
 
-    static unsigned long long Solve(unsigned numGroups)
-    {
-        // Set up globals and reset any state
-        s_numGroups = numGroups;
-        s_solutions.clear();
-
-        // Everything starts in last group by default
-        for (auto p : Solver::s_packages)
-            s_groups[s_numGroups].weight += p.weight;
-        s_weightPerGroup = s_groups[s_numGroups].weight / s_numGroups;
-
-        s_numGroups = numGroups;
-        s_minSizeGroupOne = UINT_MAX;
-        PopulateGroup1Recurse(s_packages.begin(), s_packages.end());
-
-        return GetLowestQe();
-    }
-
     static unsigned s_numGroups;
     static std::vector<Package> s_packages;
     static Group s_groups[MAX_GROUPS + 1];
@@ -168,19 +180,21 @@ unsigned Solver::s_minSizeGroupOne = UINT_MAX;
 
 void _tmain(int argc, _TCHAR *argv[])
 {
-    std::ifstream f("Input.txt");
     unsigned weight;
+    std::vector<unsigned> weights;
+
+    std::ifstream f("Input.txt");
     while (f >> weight)
-        Solver::s_packages.push_back(Solver::Package{ weight, Solver::s_numGroups });
+        weights.push_back(weight);
 
-    // TODO: This should really be a reverse sort
-    std::reverse(Solver::s_packages.begin(), Solver::s_packages.end());
+    // TODO: This should really be a reverse sort, and the solver should do it
+    std::reverse(weights.begin(), weights.end());
 
-    auto qe = Solver::Solve(3);
+    auto qe = Solver::Solve(weights, 3);
     assert(qe == 11266889531);
     std::cout << "part one: " << qe << std::endl;
 
-    qe = Solver::Solve(4);
+    qe = Solver::Solve(weights, 4);
     assert(qe == 77387711);
     std::cout << "part two: " << qe << std::endl;
 }
