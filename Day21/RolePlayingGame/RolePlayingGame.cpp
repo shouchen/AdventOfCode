@@ -112,7 +112,7 @@ void _tmain(int argc, _TCHAR *argv[])
     Solve(State{ 100, 0, 0 });
 
     std::cout << "part one: " << minCostToWin << std::endl;
-    assert(maxCostToLose == 201);
+    assert(minCostToWin == 121);
 
     std::cout << "part two: " << maxCostToLose << std::endl;
     assert(maxCostToLose == 201);
