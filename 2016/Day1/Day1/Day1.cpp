@@ -9,7 +9,7 @@ struct Direction
 {
     int x, y;
 
-    Direction(int x = 0, int y = -1) { this->x = x; this->y = y; }
+    Direction(int x = 0, int y = -1) : x(x), y(y) {}
     void TurnLeft() { int temp = x; x = y; y = -temp; }
     void TurnRight() { int temp = x; x = -y; y = temp; }
 };
@@ -18,7 +18,7 @@ struct Location
 {
     int x, y;
 
-    Location(int x = 0, int y = 0) { this->x = x; this->y = y; }
+    Location(int x = 0, int y = 0) : x(x), y(y) {}
     int blocks_from_origin() const { return abs(x) + abs(y); }
     bool operator<(const Location &rhs) const
     {
