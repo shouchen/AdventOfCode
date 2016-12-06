@@ -28,50 +28,46 @@ class PadTraversal
 {
 public:
     PadTraversal(const char pad_config[PAD_SIZE][PAD_SIZE], int x, int y)
-        : pad_config(pad_config), x(x), y(y)
+        : pad_config(pad_config), x(x), y(y) 
     {
     }
-    void MoveUp() { if (y > 0 && pad_config[y - 1][x] != ' ') y -= 1; }
-    void MoveDown() { if (y < PAD_SIZE - 1 && pad_config[y + 1][x] != ' ') y += 1; }
-    void MoveLeft() { if (x > 0 && pad_config[y][x - 1] != ' ') x -= 1; }
-    void MoveRight() { if (x < PAD_SIZE - 1 && pad_config[y][x + 1] != ' ') x += 1; }
+    char process_moves(const std::string &moves);
 
+private:
     const char(*pad_config)[PAD_SIZE];
-    int x = 1, y = 1;
+    int x, y;
 };
 
-PadTraversal traversal1(pad_config1, 1, 1);
-PadTraversal traversal2(pad_config2, 0, 2);
-
-std::string answer1, answer2;
-
-void process_line(const std::string &s, PadTraversal &traversal, std::string &answer)
+char PadTraversal::process_moves(const std::string &moves)
 {
-    for (char c : s)
+    for (char c : moves)
     {
         switch (c)
         {
-        case 'U': traversal.MoveUp(); break;
-        case 'D': traversal.MoveDown(); break;
-        case 'L': traversal.MoveLeft(); break;
-        case 'R': traversal.MoveRight(); break;
+        case 'U': if (y > 0 && pad_config[y - 1][x] != ' ') y -= 1;            break;
+        case 'D': if (y < PAD_SIZE - 1 && pad_config[y + 1][x] != ' ') y += 1; break;
+        case 'L': if (x > 0 && pad_config[y][x - 1] != ' ') x -= 1;            break;
+        case 'R': if (x < PAD_SIZE - 1 && pad_config[y][x + 1] != ' ') x += 1; break;
         }
     }
 
-    answer += traversal.pad_config[traversal.y][traversal.x];
+    return pad_config[y][x];
 }
 
 int main()
 {
+    PadTraversal traversal1(pad_config1, 1, 1);
+    PadTraversal traversal2(pad_config2, 0, 2);
+
     std::ifstream f;
     f.open("input.txt");
 
-    std::string line;
+    std::string line, answer1, answer2;
 
     while (f >> line)
     {
-        process_line(line, traversal1, answer1);
-        process_line(line, traversal2, answer2);
+        answer1.push_back(traversal1.process_moves(line));
+        answer2.push_back(traversal2.process_moves(line));
     }
 
     std::cout << "Part One: " << answer1 << std::endl;
@@ -81,4 +77,3 @@ int main()
     assert(answer2 == "D65C3");
     return 0;
 }
-    
