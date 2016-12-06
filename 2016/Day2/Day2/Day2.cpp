@@ -1,6 +1,3 @@
-// Day2.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
@@ -9,7 +6,7 @@
 
 #define PAD_SIZE 5
 
-const char pad1[PAD_SIZE][PAD_SIZE] =
+const char pad_config1[PAD_SIZE][PAD_SIZE] =
 {
     { '1', '2', '3', ' ', ' ' },
     { '4', '5', '6', ' ', ' ' },
@@ -18,7 +15,7 @@ const char pad1[PAD_SIZE][PAD_SIZE] =
     { ' ', ' ', ' ', ' ', ' ' },
 };
 
-const char pad2[PAD_SIZE][PAD_SIZE] =
+const char pad_config2[PAD_SIZE][PAD_SIZE] =
 {
     { ' ', ' ', '1', ' ', ' ' },
     { ' ', '2', '3', '4', ' ' },
@@ -27,25 +24,41 @@ const char pad2[PAD_SIZE][PAD_SIZE] =
     { ' ', ' ', 'D', ' ', ' ' },
 };
 
-auto x = 1, y = 1;   // y1 is already defined in math.h!
-auto x2 = 0, y2 = 2;
+class PadTraversal
+{
+public:
+    PadTraversal(const char pad_config[PAD_SIZE][PAD_SIZE], int x, int y)
+        : pad_config(pad_config), x(x), y(y)
+    {
+    }
+    void MoveUp() { if (y > 0 && pad_config[y - 1][x] != ' ') y -= 1; }
+    void MoveDown() { if (y < PAD_SIZE - 1 && pad_config[y + 1][x] != ' ') y += 1; }
+    void MoveLeft() { if (x > 0 && pad_config[y][x - 1] != ' ') x -= 1; }
+    void MoveRight() { if (x < PAD_SIZE - 1 && pad_config[y][x + 1] != ' ') x += 1; }
+
+    const char(*pad_config)[PAD_SIZE];
+    int x = 1, y = 1;
+};
+
+PadTraversal traversal1(pad_config1, 1, 1);
+PadTraversal traversal2(pad_config2, 0, 2);
 
 std::string answer1, answer2;
 
-void process_line(const std::string &s, const char pad[PAD_SIZE][PAD_SIZE], int &x, int &y, std::string &answer)
+void process_line(const std::string &s, PadTraversal &traversal, std::string &answer)
 {
     for (char c : s)
     {
         switch (c)
         {
-        case 'U': if (y > 0 && pad[y - 1][x] != ' ') y -= 1; break;
-        case 'D': if (y < PAD_SIZE - 1 && pad[y + 1][x] != ' ') y += 1; break;
-        case 'L': if (x > 0 && pad[y][x - 1] != ' ') x -= 1; break;
-        case 'R': if (x < PAD_SIZE - 1 && pad[y][x + 1] != ' ') x += 1; break;
+        case 'U': traversal.MoveUp(); break;
+        case 'D': traversal.MoveDown(); break;
+        case 'L': traversal.MoveLeft(); break;
+        case 'R': traversal.MoveRight(); break;
         }
     }
 
-    answer += pad[y][x];
+    answer += traversal.pad_config[traversal.y][traversal.x];
 }
 
 int main()
@@ -57,8 +70,8 @@ int main()
 
     while (f >> line)
     {
-        process_line(line, pad1, x, y, answer1);
-        process_line(line, pad2, x2, y2, answer2);
+        process_line(line, traversal1, answer1);
+        process_line(line, traversal2, answer2);
     }
 
     std::cout << "Part One: " << answer1 << std::endl;
