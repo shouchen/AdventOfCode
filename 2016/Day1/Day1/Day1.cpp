@@ -1,6 +1,3 @@
-// Day1.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 #include <cassert>
 #include <iostream>
@@ -8,58 +5,60 @@
 #include <set>
 #include <math.h>
 
-auto location = std::pair<int, int>(0, 0);
-auto direction = std::pair<int, int>(0, -1);
-
-std::set<std::pair<int, int>> visited;
-std::pair<int, int> *first_revisited;
-
-void apply_turn(char turn)
+struct xypair
 {
-    assert(turn == 'L' || turn == 'R');
+    int x, y;
 
-    std::swap(direction.first, direction.second);
-    if (turn == 'R') direction.first = -direction.first; else direction.second = -direction.second;
-}
-
-void apply_distance(int distance)
-{
-    for (int i = 0; i < distance; i++)
+    xypair(int x = 0, int y = 0) { this->x = x; this->y = y; }
+    int blocks_from_origin() const { return abs(x) + abs(y); }
+    bool operator<(const xypair &rhs) const
     {
-        location.first += direction.first;
-        location.second += direction.second;
+        if (x < rhs.x) return true;
+        if (x > rhs.x) return false;
+        return y < rhs.y;
+    }
+    xypair operator+=(const xypair &rhs) { x += rhs.x; y += rhs.y; return *this; }
+};
 
-        if (!first_revisited && visited.find(location) != visited.end())
-            first_revisited = new std::pair<int, int>(location);
+xypair location(0, 0), direction(0, -1);
+std::set<xypair> visited;
+std::set<xypair>::iterator first_revisited = visited.end();
 
-        visited.insert(location);
-	}
-}
-
-int distance_in_blocks(const std::pair<int, int> &place)
+void process_file(const std::string &filename)
 {
-    return abs(place.first) + abs(place.second);
+    visited.insert(location);
+
+    std::ifstream f(filename);
+
+    char turn, comma;
+    int distance;
+
+    while (f >> turn >> distance)
+    {
+        std::swap(direction.x, direction.y);
+        if (turn == 'R') direction.x = -direction.x; else direction.y = -direction.y;
+
+        while (distance--)
+        {
+            location += direction;
+
+            std::set<xypair>::iterator found = visited.find(location);
+            if (first_revisited == visited.end() && found != visited.end())
+                first_revisited = found;
+
+            visited.insert(location);
+        }
+
+        f >> comma;
+    }
 }
 
 int main()
 {
-    visited.insert(std::pair<int, int>(location));
+    process_file("input.txt");
 
-    std::ifstream f;
-    f.open("input.txt");
-
-    char turn, comma;
-    int distance = 0;
-
-    while (f >> turn >> distance)
-    {
-        apply_turn(turn);
-        apply_distance(distance);
-        f >> comma;
-    }
-
-    auto part_one = distance_in_blocks(location);
-    auto part_two = first_revisited ? distance_in_blocks(*first_revisited) : -1;
+    auto part_one = location.blocks_from_origin();
+    auto part_two = (first_revisited != visited.end()) ? first_revisited->blocks_from_origin() : -1;
 
     std::cout << "Part One: " << part_one << std::endl;
     std::cout << "Part Two: " << part_two << std::endl;
