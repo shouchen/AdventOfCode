@@ -22,7 +22,7 @@ struct xypair
 
 xypair location(0, 0), direction(0, -1);
 std::set<xypair> visited;
-std::set<xypair>::iterator first_revisited = visited.end();
+const xypair *first_revisited = nullptr;
 
 void process_file(const std::string &filename)
 {
@@ -46,8 +46,8 @@ void process_file(const std::string &filename)
 
             if (found == visited.end())
                 visited.insert(location);
-            else if (first_revisited == visited.end())
-                first_revisited = found;
+            else if (!first_revisited)
+                first_revisited = &(*found);
         }
 
         f >> comma;
@@ -59,7 +59,7 @@ int main()
     process_file("input.txt");
 
     auto part_one = location.blocks_from_origin();
-    auto part_two = (first_revisited != visited.end()) ? first_revisited->blocks_from_origin() : -1;
+    auto part_two = first_revisited ? first_revisited->blocks_from_origin() : -1;
 
     std::cout << "Part One: " << part_one << std::endl;
     std::cout << "Part Two: " << part_two << std::endl;
