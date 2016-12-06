@@ -5,24 +5,35 @@
 #include <set>
 #include <math.h>
 
-struct xypair
+struct Direction
 {
     int x, y;
 
-    xypair(int x = 0, int y = 0) { this->x = x; this->y = y; }
+    Direction(int x = 0, int y = -1) { this->x = x; this->y = y; }
+    void TurnLeft() { int temp = x; x = y; y = -temp; }
+    void TurnRight() { int temp = x; x = -y; y = temp; }
+};
+
+struct Location
+{
+    int x, y;
+
+    Location(int x = 0, int y = 0) { this->x = x; this->y = y; }
     int blocks_from_origin() const { return abs(x) + abs(y); }
-    bool operator<(const xypair &rhs) const
+    bool operator<(const Location &rhs) const
     {
         if (x < rhs.x) return true;
         if (x > rhs.x) return false;
         return y < rhs.y;
     }
-    xypair operator+=(const xypair &rhs) { x += rhs.x; y += rhs.y; return *this; }
+    Location operator+=(const Direction &rhs) { x += rhs.x; y += rhs.y; return *this; }
 };
 
-xypair location(0, 0), direction(0, -1);
-std::set<xypair> visited;
-const xypair *first_revisited = nullptr;
+Location location(0, 0);
+Direction direction;
+
+std::set<Location> visited;
+const Location *first_revisited = nullptr;
 
 void process_file(const std::string &filename)
 {
@@ -35,14 +46,12 @@ void process_file(const std::string &filename)
 
     while (f >> turn >> distance)
     {
-        std::swap(direction.x, direction.y);
-        if (turn == 'R') direction.x = -direction.x; else direction.y = -direction.y;
+        (turn == 'L') ? direction.TurnLeft() : direction.TurnRight();
 
         while (distance--)
         {
             location += direction;
-
-            std::set<xypair>::iterator found = visited.find(location);
+            auto found = visited.find(location);
 
             if (found == visited.end())
                 visited.insert(location);
