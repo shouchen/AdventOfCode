@@ -43,10 +43,11 @@ void process_file(const std::string &filename)
             location += direction;
 
             std::set<xypair>::iterator found = visited.find(location);
-            if (first_revisited == visited.end() && found != visited.end())
-                first_revisited = found;
 
-            visited.insert(location);
+            if (found == visited.end())
+                visited.insert(location);
+            else if (first_revisited == visited.end())
+                first_revisited = found;
         }
 
         f >> comma;
