@@ -59,9 +59,7 @@ int main()
     PadTraversal traversal1(pad_config1, 1, 1);
     PadTraversal traversal2(pad_config2, 0, 2);
 
-    std::ifstream f;
-    f.open("input.txt");
-
+    std::ifstream f("input.txt");
     std::string line, answer1, answer2;
 
     while (f >> line)
