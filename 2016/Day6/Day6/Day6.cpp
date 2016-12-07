@@ -1,6 +1,3 @@
-// Day6.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
@@ -67,8 +64,7 @@ std::string do_for_least_common()
 
 int main()
 {
-    std::ifstream f;
-    f.open("input.txt");
+    std::ifstream f("input.txt");
 
     std::string line;
 

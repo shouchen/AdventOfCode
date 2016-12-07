@@ -1,6 +1,3 @@
-// Day5.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 #include <Windows.h>
 #include <Wincrypt.h>
@@ -48,9 +45,9 @@ unsigned GetLengthLongestUnsignedLongLong()
     return oss.str().length();
 }
 
-void NextFiveZeros(const std::string &input, unsigned long long &start, char &sixth, char &seventh)
+std::string GetNextHashWithFiveLeadingZeros(const std::string &input, unsigned long long &start)
 {
-    char retval = ' ';
+    std::string hashed;
 
     HCRYPTPROV hProv = NULL;
     if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
@@ -66,12 +63,9 @@ void NextFiveZeros(const std::string &input, unsigned long long &start, char &si
         {
             int numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", curr);
 
-            std::string hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
+            hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
             if (hashed.substr(0, 5) == prefix)
             {
-                std::cout << "h> " << hashed << std::endl;
-                sixth = hashed[5];
-                seventh = hashed[5 + 1];
                 start = curr + 1;
                 break;
             }
@@ -79,34 +73,33 @@ void NextFiveZeros(const std::string &input, unsigned long long &start, char &si
 
         CryptReleaseContext(hProv, 0);
     }
+
+    return hashed;
 }
 
 int main()
 {
-    auto input = "reyedfim";
+    auto input = "reyedfim"; // TODO: read from a file
     std::string answer1, answer2;
     char buffer[] = "        ";
-    char sixth, seventh;
     auto start = 0ULL;
 
     for (;;)
     {
-        NextFiveZeros(input, start, sixth, seventh);
+        std::string hashed = GetNextHashWithFiveLeadingZeros(input, start);
 
         if (answer1.length() < 8)
         {
-            answer1 += sixth;
-            std::cout << "1> " << answer1 << std::endl;
+            answer1.push_back(hashed[5]);
         }
 
-        if (sixth >= '0' && sixth <= '7')
+        if (hashed[5] >= '0' && hashed[5] <= '7')
         {
-            int position = sixth - '0';
+            int position = hashed[5] - '0';
             if (buffer[position] == ' ')
             {
-                buffer[position] = seventh;
+                buffer[position] = hashed[6];
                 answer2 = buffer;
-                std::cout << "2> " << answer2 << std::endl;
             }
 
             if (buffer[0] != ' ' && buffer[1] != ' ' && buffer[2] != ' ' && buffer[3] != ' ' &&

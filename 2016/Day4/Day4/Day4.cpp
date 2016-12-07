@@ -1,6 +1,3 @@
-// Day4.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
@@ -29,8 +26,8 @@ std::string decrypt(const std::string &name, unsigned rots)
 
     for (char c : name)
     {
-        if (c == '-') retval += ' ';
-        else retval += static_cast<char>((((c - 'a') + rots) % 26) + 'a');
+        if (c == '-') retval.push_back(' ');
+        else retval.push_back((c - 'a' + rots) % 26 + 'a');
     }
 
     return retval;
@@ -39,19 +36,18 @@ std::string decrypt(const std::string &name, unsigned rots)
 unsigned return_sector_if_real(const std::string &room)
 {
     // Parse
-    std::size_t digit = room.find_first_of("0123456789");
-    std::size_t lbracket = room.find("[");
-    std::size_t rbracket = room.find("]");
+    auto digit = room.find_first_of("0123456789");
+    auto lbracket = room.find("["), rbracket = room.find("]");
 
-    std::string name = room.substr(0, digit - 1);
-    unsigned sector = atoi(room.substr(digit, lbracket - digit).c_str());
-    std::string checksum = room.substr(lbracket + 1, rbracket - lbracket - 1);
+    auto name = room.substr(0, digit - 1);
+    auto sector = atoi(room.substr(digit, lbracket - digit).c_str());
+    auto checksum = room.substr(lbracket + 1, rbracket - lbracket - 1);
 
     // Validate
     unsigned count[26];
-    for (int i = 0; i < 26; i++) count[i] = 0;
+    for (auto i = 0; i < 26; i++) count[i] = 0;
 
-    for (char c : name)
+    for (auto c : name)
     {
         if (c != '-')
             count[c - 'a']++;
@@ -60,7 +56,7 @@ unsigned return_sector_if_real(const std::string &room)
     // Heapify the collected data
     std::priority_queue<std::pair<char, unsigned>, std::vector<std::pair<char, unsigned>>, mycomparison> heap;
 
-    for (int i = 0; i < 26; i++)
+    for (auto i = 0; i < 26; i++)
     {
         auto pair = std::pair<char, unsigned>((char)('a' + i), count[i]);
         heap.push(pair);
@@ -69,7 +65,7 @@ unsigned return_sector_if_real(const std::string &room)
     std::string temp;
 
     // Pull out the top five
-    for (int i = 0; i < 5; i++)
+    for (auto i = 0; i < 5; i++)
     {
         temp += heap.top().first;
         heap.pop();
@@ -87,9 +83,7 @@ unsigned return_sector_if_real(const std::string &room)
 
 int main()
 {
-    std::ifstream f;
-    f.open("input.txt");
-
+    std::ifstream f("input.txt");
     std::string line;
     unsigned total = 0;
 
