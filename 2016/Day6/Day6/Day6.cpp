@@ -32,9 +32,7 @@ std::string do_for_most_common()
 {
     std::string retval;
     for (auto i = 0U; i < frequencies.size(); i++)
-    {
         retval.push_back(most_common[i].first);
-    }
 
     return retval;
 }
@@ -44,7 +42,7 @@ std::string do_for_least_common()
     std::string retval;
     for (auto i = 0U; i < frequencies.size(); i++)
     {
-        char least_common_char = ' ';
+        auto least_common_char = ' ';
         auto least_common_count = UINT_MAX;
 
         for (auto j : frequencies[i])
@@ -65,13 +63,10 @@ std::string do_for_least_common()
 int main()
 {
     std::ifstream f("input.txt");
-
     std::string line;
 
     while (f >> line)
-    {
         process_line(line);
-    }
 
     auto answer1 = do_for_most_common();
     auto answer2 = do_for_least_common();

@@ -61,7 +61,7 @@ std::string GetNextHashWithFiveLeadingZeros(const std::string &input, unsigned l
 
         for (auto curr = start; curr < ULLONG_MAX; curr++)
         {
-            int numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", curr);
+            auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", curr);
 
             hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
             if (hashed.substr(0, 5) == prefix)
@@ -86,7 +86,7 @@ int main()
 
     for (;;)
     {
-        std::string hashed = GetNextHashWithFiveLeadingZeros(input, start);
+        auto hashed = GetNextHashWithFiveLeadingZeros(input, start);
 
         if (answer1.length() < 8)
         {
@@ -95,7 +95,7 @@ int main()
 
         if (hashed[5] >= '0' && hashed[5] <= '7')
         {
-            int position = hashed[5] - '0';
+            auto position = hashed[5] - '0';
             if (buffer[position] == ' ')
             {
                 buffer[position] = hashed[6];
@@ -111,10 +111,9 @@ int main()
     }
 
     std::cout << "Part One: " << answer1 << std::endl;
-    assert(answer1 == "f97c354d");
-
     std::cout << "Part Two: " << answer2 << std::endl;
-    assert(answer2 == "863dde27");
 
+    assert(answer1 == "f97c354d");
+    assert(answer2 == "863dde27");
     return 0;
 }

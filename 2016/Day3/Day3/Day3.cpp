@@ -1,16 +1,15 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <cassert>
-
-int answer1 = 0, answer2 = 0;
 
 bool is_triangle(unsigned a, unsigned b, unsigned c)
 {
     return (a + b > c) && (a + c > b) && (b + c > a);
 }
 
-void process_file(const char *filename)
+void process_file(const std::string &filename, unsigned &answer1, unsigned &answer2)
 {
     std::ifstream file(filename);
     unsigned a, b, c, d, e, f, g, h, i;
@@ -29,7 +28,8 @@ void process_file(const char *filename)
 
 int main()
 {
-    process_file("input.txt");
+    auto answer1 = 0U, answer2 = 0U;
+    process_file("input.txt", answer1, answer2);
 
     std::cout << "Part One: " << answer1 << std::endl;
     std::cout << "Part Two: " << answer2 << std::endl;

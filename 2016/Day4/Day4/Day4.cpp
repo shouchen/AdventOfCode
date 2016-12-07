@@ -6,20 +6,6 @@
 #include <string>
 #include <cassert>
 
-class mycomparison
-{
-public:
-    mycomparison() {}
-
-    bool operator()(const std::pair<char, unsigned> &lhs, const std::pair<char, unsigned> &rhs) const
-    {
-        if (lhs.second < rhs.second) return true;
-        if (lhs.second > rhs.second) return false;
-
-        return (lhs.first > rhs.first);
-    }
-};
-
 std::string decrypt(const std::string &name, unsigned rots)
 {
     std::string retval;
@@ -33,25 +19,35 @@ std::string decrypt(const std::string &name, unsigned rots)
     return retval;
 }
 
-unsigned return_sector_if_real(const std::string &room)
+void parse(const std::string &room, std::string &encrypted_name, unsigned &sector, std::string &checksum)
 {
-    // Parse
     auto digit = room.find_first_of("0123456789");
     auto lbracket = room.find("["), rbracket = room.find("]");
 
-    auto name = room.substr(0, digit - 1);
-    auto sector = atoi(room.substr(digit, lbracket - digit).c_str());
-    auto checksum = room.substr(lbracket + 1, rbracket - lbracket - 1);
+    encrypted_name = room.substr(0, digit - 1);
+    sector = atoi(room.substr(digit, lbracket - digit).c_str());
+    checksum = room.substr(lbracket + 1, rbracket - lbracket - 1);
+}
 
-    // Validate
+bool is_valid(const std::string encrypted_name, const std::string checksum)
+{
+    class mycomparison
+    {
+    public:
+        bool operator()(const std::pair<char, unsigned> &lhs, const std::pair<char, unsigned> &rhs) const
+        {
+            if (lhs.second < rhs.second) return true;
+            if (lhs.second > rhs.second) return false;
+            return (lhs.first > rhs.first);
+        }
+    };
+
     unsigned count[26];
     for (auto i = 0; i < 26; i++) count[i] = 0;
 
-    for (auto c : name)
-    {
+    for (auto c : encrypted_name)
         if (c != '-')
             count[c - 'a']++;
-    }
 
     // Heapify the collected data
     std::priority_queue<std::pair<char, unsigned>, std::vector<std::pair<char, unsigned>>, mycomparison> heap;
@@ -71,29 +67,43 @@ unsigned return_sector_if_real(const std::string &room)
         heap.pop();
     }
 
-    if (checksum != temp) return 0;
+    return checksum == temp;
+}
 
-    // Decrypted list of names and their sectors. For Part Two, visually look for
-    // "northpole object storage" in the output (since this string wasn't exactly
-    // specified in the problem).
-    std::cout << decrypt(name, sector) << " (" << sector << ")" << std::endl;
+bool process_room(const std::string &room, unsigned &sector, std::string &name)
+{
+    std::string encrypted_name, checksum;
+    parse(room, encrypted_name, sector, checksum);
 
-    return sector;
+    if (!is_valid(encrypted_name, checksum)) return false;
+
+    name = decrypt(encrypted_name, sector);
+    return true;
 }
 
 int main()
 {
     std::ifstream f("input.txt");
-    std::string line;
-    unsigned total = 0;
+    std::string room, name;
+    auto total = 0U, sector = 0U, northpole_object_storage = 0U;
 
-    while (f >> line)
+    while (f >> room)
     {
-        total += return_sector_if_real(line);
+        if (process_room(room, sector, name))
+        {
+            total += sector;
+            std::cout << name << " (" << sector << ")" << std::endl;
+
+            // Note: Exact name not specified in the problem, but found by perusing
+            // the "decrypted" names in the above program output.
+            if (name == "northpole object storage") northpole_object_storage = sector;
+        }
     }
 
     std::cout << std::endl << "Part One: " << total << std::endl;
+    std::cout << "Part Two: " << northpole_object_storage << std::endl;
 
     assert(total == 158835);
+    assert(northpole_object_storage == 993);
     return 0;
 }

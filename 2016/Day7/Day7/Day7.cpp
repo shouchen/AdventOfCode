@@ -63,22 +63,22 @@ bool supports_ssl(std::vector<std::string> &outside_brackets, std::vector<std::s
 int main()
 {
     std::ifstream f("input.txt");
-    std::string line;
-    auto count1 = 0U, count2 = 0U;
+    std::string address;
+    auto tls_count = 0U, ssl_count = 0U;
 
-    while (f >> line)
+    while (f >> address)
     {
         std::vector<std::string> outside, inside;
-        parse_address(line, outside, inside);
+        parse_address(address, outside, inside);
 
-        if (supports_tls(outside, inside)) count1++;
-        if (supports_ssl(outside, inside)) count2++;
+        if (supports_tls(outside, inside)) tls_count++;
+        if (supports_ssl(outside, inside)) ssl_count++;
     }
 
-    std::cout << "Part One: " << count1 << std::endl;
-    std::cout << "Part Two: " << count2 << std::endl;
+    std::cout << "Part One: " << tls_count << std::endl;
+    std::cout << "Part Two: " << ssl_count << std::endl;
 
-    assert(count1 == 118);
-    assert(count2 == 260);
+    assert(tls_count == 118);
+    assert(ssl_count == 260);
     return 0;
 }

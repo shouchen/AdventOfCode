@@ -60,12 +60,12 @@ int main()
     PadTraversal traversal2(pad_config2, 0, 2);
 
     std::ifstream f("input.txt");
-    std::string line, answer1, answer2;
+    std::string moves, answer1, answer2;
 
-    while (f >> line)
+    while (f >> moves)
     {
-        answer1.push_back(traversal1.process_moves(line));
-        answer2.push_back(traversal2.process_moves(line));
+        answer1.push_back(traversal1.process_moves(moves));
+        answer2.push_back(traversal2.process_moves(moves));
     }
 
     std::cout << "Part One: " << answer1 << std::endl;
