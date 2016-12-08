@@ -9,16 +9,16 @@ class Board
 {
 public:
     Board();
-    void Rect(unsigned a, unsigned b);
-    void RotateRow(unsigned a, unsigned b);
-    void RotateColumn(unsigned a, unsigned b);
+    void Rect(unsigned width, unsigned height);
+    void RotateRow(unsigned row, unsigned times);
+    void RotateColumn(unsigned column, unsigned times);
     unsigned Count() const;
 
 private:
-    void ReverseColumn(unsigned col, unsigned startRow, unsigned endRow);
+    void ReverseColumn(unsigned column, unsigned startRow, unsigned endRow);
 
-    static const int NumRows = 6;
-    static const int NumColumns = 50;
+    static const unsigned NumRows = 6;
+    static const unsigned NumColumns = 50;
     static const char On = '#';
     static const char Off = ' ';
     char data[NumRows][NumColumns];
@@ -33,27 +33,27 @@ Board::Board()
             cell = Off;
 }
 
-void Board::Rect(unsigned a, unsigned b)
+void Board::Rect(unsigned width, unsigned height)
 {
-    for (auto row = 0U; row < b; row++)
-        for (auto column = 0U; column < a; column++)
+    for (auto row = 0U; row < height; row++)
+        for (auto column = 0U; column < width; column++)
             data[row][column] = On;
 }
 
-void Board::RotateRow(unsigned a, unsigned b)
+void Board::RotateRow(unsigned row, unsigned times)
 {
-    auto split = &data[a][NumColumns - b];
-    std::reverse(&data[a][0], split);
-    std::reverse(split, &data[a][NumColumns]);
-    std::reverse(&data[a][0], &data[a][NumColumns]);
+    auto split = &data[row][NumColumns - times];
+    std::reverse(&data[row][0], split);
+    std::reverse(split, &data[row][NumColumns]);
+    std::reverse(&data[row][0], &data[row][NumColumns]);
 }
 
-void Board::RotateColumn(unsigned a, unsigned b)
+void Board::RotateColumn(unsigned column, unsigned times)
 {
-    auto split = NumRows - b;
-    ReverseColumn(a, 0, split - 1);
-    ReverseColumn(a, split, NumRows - 1);
-    ReverseColumn(a, 0, NumRows - 1);
+    auto split = NumRows - times;
+    ReverseColumn(column, 0, split - 1);
+    ReverseColumn(column, split, NumRows - 1);
+    ReverseColumn(column, 0, NumRows - 1);
 }
 
 unsigned Board::Count() const
@@ -67,10 +67,10 @@ unsigned Board::Count() const
     return count;
 }
 
-void Board::ReverseColumn(unsigned col, unsigned startRow, unsigned endRow)
+void Board::ReverseColumn(unsigned column, unsigned startRow, unsigned endRow)
 {
     for (auto top = startRow, bottom = endRow; top < bottom; top++, bottom--)
-        std::swap(data[top][col], data[bottom][col]);
+        std::swap(data[top][column], data[bottom][column]);
 }
 
 std::ostream &operator<<(std::ostream &o, const Board &bb)
