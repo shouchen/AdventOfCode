@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <cstdio>
 #include <cassert>
@@ -77,38 +78,42 @@ std::string GetNextHashWithFiveLeadingZeros(const std::string &input, unsigned l
     return hashed;
 }
 
-int main()
+void process_file(const std::string &filename, std::string &answer1, std::string &answer2)
 {
-    auto input = "reyedfim"; // TODO: read from a file
-    std::string answer1, answer2;
-    char buffer[] = "        ";
+    std::ifstream f(filename);
+    std::string input;
+
+    f >> input;
+
+    answer2 = "        ";
     auto start = 0ULL;
 
     for (;;)
     {
         auto hashed = GetNextHashWithFiveLeadingZeros(input, start);
+        auto fifth = hashed[5], sixth = hashed[6];
 
         if (answer1.length() < 8)
-        {
-            answer1.push_back(hashed[5]);
-        }
+            answer1.push_back(fifth);
 
-        if (hashed[5] >= '0' && hashed[5] <= '7')
+        if (fifth >= '0' && fifth <= '7')
         {
-            auto position = hashed[5] - '0';
-            if (buffer[position] == ' ')
+            auto position = fifth - '0';
+            if (answer2[position] == ' ')
             {
-                buffer[position] = hashed[6];
-                answer2 = buffer;
-            }
+                answer2[position] = sixth;
 
-            if (buffer[0] != ' ' && buffer[1] != ' ' && buffer[2] != ' ' && buffer[3] != ' ' &&
-                buffer[4] != ' ' && buffer[5] != ' ' && buffer[6] != ' ' && buffer[7] != ' ')
-            {
-                break;
+                if (answer2.find(' ') == std::string::npos)
+                    break;
             }
         }
     }
+}
+
+int main()
+{
+    std::string answer1, answer2;
+    process_file("input.txt", answer1, answer2);
 
     std::cout << "Part One: " << answer1 << std::endl;
     std::cout << "Part Two: " << answer2 << std::endl;
