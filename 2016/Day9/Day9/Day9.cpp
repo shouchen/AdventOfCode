@@ -8,21 +8,17 @@ unsigned long long compute_length(const std::string &line, bool recurse)
 {
     auto count = 0ULL;
 
-    for (auto i = 0U; i < line.length(); i++)
+    for (auto i = 0U; line[i]; i++)
     {
         if (line[i] == '(')
         {
-            auto x = line.find('x', ++i);
-            auto repeat_length = atoi(line.substr(i, x).c_str());
+            auto x = line.find('x', i), parenth = line.find(')', x);
 
-            i = x + 1;
-            auto parenth = line.find(')', i);
-            auto b = atoi(line.substr(i, parenth).c_str());
+            auto run_length = atoi(line.substr(i + 1, x - i - 1).c_str());
+            auto num_repeats = atoi(line.substr(x + 1, parenth - x - 1).c_str());
 
-            i = parenth + 1;
-            count += b * (recurse ? compute_length(line.substr(i, repeat_length), true) : repeat_length);
-
-            i += repeat_length - 1;
+            count += num_repeats * (recurse ? compute_length(line.substr(parenth + 1, run_length), true) : run_length);
+            i = parenth + run_length;
         }
         else
         {
