@@ -12,12 +12,12 @@ unsigned long long compute_length(const std::string &line, bool recurse)
     {
         if (line[i] == '(')
         {
-            auto x = line.find('x', i), parenth = line.find(')', x);
+            auto x = line.find('x', i + 1), parenth = line.find(')', x + 1);
 
             auto run_length = atoi(line.substr(i + 1, x - i - 1).c_str());
-            auto num_repeats = atoi(line.substr(x + 1, parenth - x - 1).c_str());
+            auto times = atoi(line.substr(x + 1, parenth - x - 1).c_str());
 
-            count += num_repeats * (recurse ? compute_length(line.substr(parenth + 1, run_length), true) : run_length);
+            count += times * (recurse ? compute_length(line.substr(parenth + 1, run_length), true) : run_length);
             i = parenth + run_length;
         }
         else
