@@ -30,22 +30,42 @@ enum Name
 //    Ruthenium_G = 0x07,
 //    Cobalt_M = 0x08,
 //    Cobalt_G = 0x09,
-//    LastName
+//    NumNames
 //};
 
 const char *GetName(Name name)
 {
     switch (name)
     {
-    case Hydrogen_G: return "Hydrogen_G";
     case Hydrogen_M: return "Hydrogen_M";
-    case Lithium_G: return "Lithium_G";
+    case Hydrogen_G: return "Hydrogen_G";
     case Lithium_M: return "Lithium_M";
+    case Lithium_G: return "Lithium_G";
     }
 
     assert(false);
     return "<unknown>";
 }
+
+//const char *GetName(Name name)
+//{
+//    switch (name)
+//    {
+//    case Polonium_M: return "Polonium_M";
+//    case Polonium_G: return "Polonium_G";
+//    case Thulium_M: return "Thulium_M";
+//    case Thulium_G: return "Thulium_G";
+//    case Promethium_M: return "Promethium_M";
+//    case Promethium_G: return "Promethium_G";
+//    case Ruthenium_M: return "Ruthenium_M";
+//    case Ruthenium_G: return "Ruthenium_G";
+//    case Cobalt_M: return "Cobalt_M";
+//    case Cobalt_G: return "Cobalt_G";
+//    }
+//
+//    assert(false);
+//    return "<unknown>";
+//}
 
 struct Thing
 {
@@ -62,7 +82,7 @@ Thing input[NumNames] =
     { Lithium_M , 1 }
 };
 
-//Thing input[NumnNames] =
+//Thing input[NumNames] =
 //{
 //    { Polonium_M, 2 },
 //    { Promethium_M, 2 },
@@ -76,14 +96,13 @@ Thing input[NumNames] =
 //    { Cobalt_M , 1 },
 //};
 
-
 struct State
 {
-    State(Thing input[NumNames]) : elevator(1), soFar(""), numMoves(0)
+    State(Thing input[NumNames]) : elevator(1), numMoves(0)
         { for (int i = 0; i < NumNames; i++) this->input[i] = input[i]; }
     Thing input[NumNames];
     int elevator;
-    std::string soFar;
+//    std::string soFar;
     int numMoves;
 };
 
@@ -217,7 +236,7 @@ bool Solve()
             if (state.input[i].floor == state.elevator)
             {
                 State newState = state;
-                newState.soFar += (std::string)"U=" + GetName(state.input[i].name) + " ";
+                //newState.soFar += (std::string)"U=" + GetName(state.input[i].name) + " ";
                 newState.numMoves++;
                 newState.input[i].floor++;
                 newState.elevator++;
@@ -234,7 +253,7 @@ bool Solve()
                 if (state.input[i].floor == state.elevator && state.input[j].floor == state.elevator)
                 {
                     State newState = state;
-                    newState.soFar += (std::string)"U=" + GetName(state.input[i].name) + "/" + GetName(state.input[j].name) + " ";
+                    //newState.soFar += (std::string)"U=" + GetName(state.input[i].name) + "/" + GetName(state.input[j].name) + " ";
                     newState.numMoves++;
                     newState.input[i].floor++;
                     newState.input[j].floor++;
@@ -255,7 +274,7 @@ bool Solve()
             if (state.input[i].floor == state.elevator)
             {
                 State newState = state;
-                newState.soFar += (std::string)"D=" + GetName(state.input[i].name) + " ";
+                //newState.soFar += (std::string)"D=" + GetName(state.input[i].name) + " ";
                 newState.numMoves++;
                 newState.input[i].floor--;
                 newState.elevator--;
@@ -272,7 +291,7 @@ bool Solve()
                 if (state.input[i].floor == state.elevator && state.input[j].floor == state.elevator)
                 {
                     State newState = state;
-                    newState.soFar += (std::string)"D=" + GetName(state.input[i].name) + "/" + GetName(state.input[j].name) + " ";
+                    //newState.soFar += (std::string)"D=" + GetName(state.input[i].name) + "/" + GetName(state.input[j].name) + " ";
                     newState.numMoves++;
                     newState.input[i].floor--;
                     newState.input[j].floor--;
