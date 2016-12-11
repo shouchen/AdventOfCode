@@ -9,130 +9,99 @@
 #include <algorithm>
 #include <cassert>
 
-enum Name
+enum Name : char
 {
-    Hydrogen_M = 0x00,
-    Hydrogen_G = 0x01,
-    Lithium_M = 0x02,
-    Lithium_G = 0x03,
+    Polonium_M = 0x00,
+    Polonium_G = 0x01,
+    Thulium_M = 0x02,
+    Thulium_G = 0x03,
+    Promethium_M = 0x04,
+    Promethium_G = 0x05,
+    Ruthenium_M = 0x06,
+    Ruthenium_G = 0x07,
+    Cobalt_M = 0x08,
+    Cobalt_G = 0x09,
+
+    Elerium_M = 0x0A,
+    Elerium_G = 0x0B,
+    Dilithium_M = 0x0C,
+    Dilithium_G = 0x0D,
     NumNames
 };
-
-//enum Name
-//{
-//    Polonium_M = 0x00,
-//    Polonium_G = 0x01,
-//    Thulium_M = 0x02,
-//    Thulium_G = 0x03,
-//    Promethium_M = 0x04,
-//    Promethium_G = 0x05,
-//    Ruthenium_M = 0x06,
-//    Ruthenium_G = 0x07,
-//    Cobalt_M = 0x08,
-//    Cobalt_G = 0x09,
-//    NumNames
-//};
 
 const char *GetName(Name name)
 {
     switch (name)
     {
-    case Hydrogen_M: return "Hydrogen_M";
-    case Hydrogen_G: return "Hydrogen_G";
-    case Lithium_M: return "Lithium_M";
-    case Lithium_G: return "Lithium_G";
+    case Polonium_M: return "Polonium_M";
+    case Polonium_G: return "Polonium_G";
+    case Thulium_M: return "Thulium_M";
+    case Thulium_G: return "Thulium_G";
+    case Promethium_M: return "Promethium_M";
+    case Promethium_G: return "Promethium_G";
+    case Ruthenium_M: return "Ruthenium_M";
+    case Ruthenium_G: return "Ruthenium_G";
+    case Cobalt_M: return "Cobalt_M";
+    case Cobalt_G: return "Cobalt_G";
+
+    case Elerium_M: return "Elerium_M";
+    case Elerium_G: return "Elerium_G";
+    case Dilithium_M: return "Dilithium_M";
+    case Dilithium_G: return "Dilithium_G";
     }
 
     assert(false);
     return "<unknown>";
 }
 
-//const char *GetName(Name name)
-//{
-//    switch (name)
-//    {
-//    case Polonium_M: return "Polonium_M";
-//    case Polonium_G: return "Polonium_G";
-//    case Thulium_M: return "Thulium_M";
-//    case Thulium_G: return "Thulium_G";
-//    case Promethium_M: return "Promethium_M";
-//    case Promethium_G: return "Promethium_G";
-//    case Ruthenium_M: return "Ruthenium_M";
-//    case Ruthenium_G: return "Ruthenium_G";
-//    case Cobalt_M: return "Cobalt_M";
-//    case Cobalt_G: return "Cobalt_G";
-//    }
-//
-//    assert(false);
-//    return "<unknown>";
-//}
-
 struct Thing
 {
     Name name;
-    int floor;
+    char floor;
 };
 
 int elevator = 1;
+
 Thing input[NumNames] =
 {
-    { Lithium_G, 3 },
-    { Hydrogen_G, 2 },
-    { Hydrogen_M, 1 },
-    { Lithium_M , 1 }
-};
+    { Polonium_M, 2 },
+    { Promethium_M, 2 },
+    { Polonium_G , 1 },
+    { Thulium_G , 1 },
+    { Thulium_M , 1 },
+    { Promethium_G , 1 },
+    { Ruthenium_G , 1 },
+    { Ruthenium_M , 1 },
+    { Cobalt_G , 1 },
+    { Cobalt_M , 1 },
 
-//Thing input[NumNames] =
-//{
-//    { Polonium_M, 2 },
-//    { Promethium_M, 2 },
-//    { Polonium_G , 1 },
-//    { Thulium_G , 1 },
-//    { Thulium_M , 1 },
-//    { Promethium_G , 1 },
-//    { Ruthenium_G , 1 },
-//    { Ruthenium_M , 1 },
-//    { Cobalt_G , 1 },
-//    { Cobalt_M , 1 },
-//};
+    { Elerium_G , 1 },
+    { Elerium_M , 1 },
+    { Dilithium_G , 1 },
+    { Dilithium_M , 1 },
+};
 
 struct State
 {
     State(Thing input[NumNames]) : elevator(1), numMoves(0)
         { for (int i = 0; i < NumNames; i++) this->input[i] = input[i]; }
+    unsigned Hash()
+    {
+        unsigned val = elevator - 1;
+        for (int i = 0; i < NumNames; i++)
+        {
+            val = (val << 2) | (input[i].floor - 1);
+        }
+        return val;
+    }
+
     Thing input[NumNames];
     int elevator;
-//    std::string soFar;
     int numMoves;
 };
 
-std::set<std::string> seen;
+std::set<unsigned> seen;
 std::queue<State> queue;
-
-std::string Hash()
-{
-    std::string retval;
-    retval.push_back('E');
-    retval.push_back(elevator + '0');
-    retval.push_back(' ');
-
-    for (int e = 0; e < NumNames; e++)
-    {
-        for (auto i = 0; i < NumNames; i++)
-        {
-            if (input[i].name == e)
-            {
-                retval += GetName(input[i].name);
-                retval.push_back('=');
-                retval.push_back(input[i].floor + '0');
-                retval.push_back(' ');
-                break;
-            }
-        }
-    }
-
-    return retval;
-}
 
 void Dump(const State &state)
 {
@@ -186,7 +155,6 @@ bool IsSolved(const State &state)
     return true;
 }
 
-int num_steps = 0;
 int best_solution = INT_MAX;
 
 bool Solve()
@@ -196,36 +164,25 @@ bool Solve()
     State state = queue.front();
     queue.pop();
 
-    //if (num_steps >= best_solution)
-    //    return;
+    if (state.numMoves >= best_solution)
+        return true;
 
-    //std::cout << "So far: " << soFar << std::endl;
-    //if (state.soFar == "U=Hydrogen_M U=Hydrogen_G/Hydrogen_M D=Hydrogen_M ")
-    //if (state.soFar == "U=Hydrogen_M U=Hydrogen_G/Hydrogen_M ")
-    //{
-    //    Dump(state);
-    //}
+    if (!ValidConfig(state))
+        return true;
 
     if (IsSolved(state))
     {
-        std::cout << "SOLUTION in " << num_steps << std::endl;
-        if (num_steps < best_solution)
-        {
-            best_solution = num_steps;
-            return false;
-        }
-    }
+        if (state.numMoves < best_solution)
+            best_solution = state.numMoves;
 
-    if (!ValidConfig(state))
-    {
         return true;
     }
 
-    //std::string hash = Hash();
-    //if (seen.find(hash) != seen.end())
-    //    return;
+    auto hash = state.Hash();
+    if (seen.find(hash) != seen.end())
+        return true;
 
-    //seen.insert(hash);
+    seen.insert(hash);
 
     // Elevator up
     if (state.elevator < 4)
@@ -236,30 +193,22 @@ bool Solve()
             if (state.input[i].floor == state.elevator)
             {
                 State newState = state;
-                //newState.soFar += (std::string)"U=" + GetName(state.input[i].name) + " ";
                 newState.numMoves++;
                 newState.input[i].floor++;
                 newState.elevator++;
 
                 queue.push(newState);
-            }
-        }
 
-        // With 2 things
-        for (auto i = 0; i < NumNames; i++)
-        {
-            for (auto j = i + 1; j < NumNames; j++)
-            {
-                if (state.input[i].floor == state.elevator && state.input[j].floor == state.elevator)
+                // With 2 things
+                for (auto j = i + 1; j < NumNames; j++)
                 {
-                    State newState = state;
-                    //newState.soFar += (std::string)"U=" + GetName(state.input[i].name) + "/" + GetName(state.input[j].name) + " ";
-                    newState.numMoves++;
-                    newState.input[i].floor++;
-                    newState.input[j].floor++;
-                    newState.elevator++;
+                    if (state.input[j].floor == state.elevator)
+                    {
+                        State newState2 = newState;
+                        newState2.input[j].floor++;
 
-                    queue.push(newState);
+                        queue.push(newState2);
+                    }
                 }
             }
         }
@@ -274,30 +223,22 @@ bool Solve()
             if (state.input[i].floor == state.elevator)
             {
                 State newState = state;
-                //newState.soFar += (std::string)"D=" + GetName(state.input[i].name) + " ";
                 newState.numMoves++;
                 newState.input[i].floor--;
                 newState.elevator--;
 
                 queue.push(newState);
-            }
-        }
 
-        // With 2 things
-        for (auto i = 0; i < NumNames; i++)
-        {
-            for (auto j = i + 1; j < NumNames; j++)
-            {
-                if (state.input[i].floor == state.elevator && state.input[j].floor == state.elevator)
+                // With 2 things
+                for (auto j = i + 1; j < NumNames; j++)
                 {
-                    State newState = state;
-                    //newState.soFar += (std::string)"D=" + GetName(state.input[i].name) + "/" + GetName(state.input[j].name) + " ";
-                    newState.numMoves++;
-                    newState.input[i].floor--;
-                    newState.input[j].floor--;
-                    newState.elevator--;
+                    if (state.input[j].floor == state.elevator)
+                    {
+                        State newState2 = newState;
+                        newState2.input[j].floor--;
 
-                    queue.push(newState);
+                        queue.push(newState2);
+                    }
                 }
             }
         }
@@ -306,51 +247,17 @@ bool Solve()
     return true;
 }
 
-//void ReadFile(const std::string &filename)
-//{
-//    if (filename == "input-test.txt")
-//    {
-//        board[4].push_back 
-//
-//        //4 
-//        //3 Lithium(A)-G
-//        //2.Hydrogen(B)-G
-//        //1 Hydrogen(B)-M Lithium(A)-M
-//    }
-//
-//    //std::ifstream f(filename);
-//    //std::string word;
-//
-//    //int floor = -1;
-//    //while (f >> word)
-//    //{
-//    //    if (word.length() == 2 && word[0] == 'F' && isdigit(word[1]))
-//    //        floor = word[1] - '0';
-//    //    else if (word == "E")
-//    //        elevator = floor;
-//    //    else if (word != ".")
-//    //        place[floor].push_back(word);
-//    //}
-//
-//    //Dump();
-//}
-
 int main()
 {
-//    Dump();
-//    ReadFile("input-test.txt");
     State state(input);
     queue.push(state);
 
     while(Solve());
 
-    //auto answer1 = botThatCompares17And61;
-    //auto answer2 = outputs[0] * outputs[1] * outputs[2];
-
     std::cout << "Part One: " << best_solution << std::endl;
     //std::cout << "Part Two: " << answer2 << std::endl;
 
-    //assert(answer1 == 27);
-    //assert(answer2 == 13727);
+    //assert(best_solution == 47);
+    //assert(best_solution == 71);
     return 0;
 }
