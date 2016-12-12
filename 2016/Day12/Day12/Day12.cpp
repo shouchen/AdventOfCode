@@ -1,20 +1,21 @@
 #include "stdafx.h"
+#include <memory>
 #include <fstream>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <cassert>
 
-
 class Computer;
 class Instruction;
 
-using Program = std::vector<Instruction *>;
+using Program = std::vector<std::unique_ptr<Instruction>>;
 
 class Instruction
 {
 public:
     virtual void Execute(Computer &computer) = 0;
+    virtual ~Instruction() {}
 };
 
 class Computer
@@ -113,7 +114,7 @@ private:
 class Assembler
 {
 public:
-    static void AssembleProgram(const std::string &filename, Program &Program)
+    static void AssembleProgram(const std::string &filename, Program &program)
     {
         std::ifstream f(filename);
         std::string opcode, op1, op2;
@@ -124,25 +125,25 @@ public:
             {
                 f >> op1 >> op2;
                 IsRegister(op1)
-                    ? Program.push_back(new CpyRegisterInstruction(op1[0], op2[0]))
-                    : Program.push_back(new CpyValueInstruction(atoi(op1.c_str()), op2[0]));
+                    ? program.push_back(std::make_unique<CpyRegisterInstruction>(op1[0], op2[0]))
+                    : program.push_back(std::make_unique<CpyValueInstruction>(atoi(op1.c_str()), op2[0]));
             }
             else if (opcode == "inc")
             {
                 f >> op1;
-                Program.push_back(new IncInstruction(op1[0]));
+                program.push_back(std::make_unique<IncInstruction>(op1[0]));
             }
             else if (opcode == "dec")
             {
                 f >> op1;
-                Program.push_back(new DecInstruction(op1[0]));
+                program.push_back(std::make_unique<DecInstruction>(op1[0]));
             }
             else if (opcode == "jnz")
             {
                 f >> op1 >> op2;
                 IsRegister(op1)
-                    ? Program.push_back(new JnzRegisterInstruction(op1[0], atoi(op2.c_str())))
-                    : Program.push_back(new JnzValueInstruction(atoi(op1.c_str()), atoi(op2.c_str())));
+                    ? program.push_back(std::make_unique<JnzRegisterInstruction>(op1[0], atoi(op2.c_str())))
+                    : program.push_back(std::make_unique<JnzValueInstruction>(atoi(op1.c_str()), atoi(op2.c_str())));
             }
             else
                 assert(false);
@@ -158,17 +159,17 @@ private:
 
 int _tmain(int argc, _TCHAR *argv[])
 {
-    Program Program;
-    Assembler::AssembleProgram("Input.txt", Program);
+    Program program;
+    Assembler::AssembleProgram("Input.txt", program);
 
     Computer computer;
-    computer.ExecuteProgram(Program);
+    computer.ExecuteProgram(program);
 
     auto partOne = computer.GetRegister('a');
     std::cout << "Part One: " << partOne << std::endl;
 
     computer.InitializeRegisters(0, 0, 1, 0);
-    computer.ExecuteProgram(Program);
+    computer.ExecuteProgram(program);
 
     auto partTwo = computer.GetRegister('a');
     std::cout << "Part Two: " << partTwo << std::endl;
