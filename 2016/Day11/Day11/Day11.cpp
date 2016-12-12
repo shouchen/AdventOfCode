@@ -255,7 +255,6 @@ int main()
     while(Solve());
 
     std::cout << "Part One: " << best_solution << std::endl;
-    //std::cout << "Part Two: " << answer2 << std::endl;
 
     //assert(best_solution == 47);
     //assert(best_solution == 71);
