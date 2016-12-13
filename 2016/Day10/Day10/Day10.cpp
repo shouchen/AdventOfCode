@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <memory>
 #include <cassert>
 
 struct Bot
@@ -15,82 +16,78 @@ struct Bot
     int lowToBot, highToBot, lowToOutput, highToOutput;
 };
 
-std::vector<Bot> bots;
+std::map<unsigned, Bot *> bots;
 std::map<unsigned, unsigned> outputs;
 
 int botThatCompares17And61 = -1;
 
 void PutValueInBot(unsigned bot, unsigned value)
 {
-    for (auto i = 0U; i < bots.size(); i++)
+    for (auto &b : bots)
     {
-        Bot &b = bots[i];
-
-        if (b.number == bot)
+        if (b.second->number == bot)
         {
-            b.values.push_back(value);
-            assert(b.values.size() <= 2);
+            b.second->values.push_back(value);
             return;
         }
     }
 
-    Bot bb(bot);
-    bb.values.push_back(value);
-    bots.push_back(bb);
+    auto bb = new Bot(bot);
+    bb->values.push_back(value);
+    bots[bot] = std::move(bb);
 }
 
 void SetBotGives(unsigned bot, int lowToBot, int highToBot, int lowToOutput, int highToOutput)
 {
     for (auto &b : bots)
     {
-        if (b.number == bot)
+        if (b.second->number == bot)
         {
-            if (lowToBot != -1) b.lowToBot = lowToBot;
-            if (highToBot != -1) b.highToBot= highToBot;
-            if (lowToOutput != -1) b.lowToOutput = lowToOutput;
-            if (highToOutput != -1) b.highToOutput = highToOutput;
+            if (lowToBot != -1) b.second->lowToBot = lowToBot;
+            if (highToBot != -1) b.second->highToBot= highToBot;
+            if (lowToOutput != -1) b.second->lowToOutput = lowToOutput;
+            if (highToOutput != -1) b.second->highToOutput = highToOutput;
             return;
         }
     }
 
-    Bot bb(bot);
-    bb.lowToBot = lowToBot;
-    bb.highToBot = highToBot;
-    bb.lowToOutput = lowToOutput;
-    bb.highToOutput = highToOutput;
-    bots.push_back(bb);
+    Bot *bb = new Bot(bot);
+    bb->lowToBot = lowToBot;
+    bb->highToBot = highToBot;
+    bb->lowToOutput = lowToOutput;
+    bb->highToOutput = highToOutput;
+    bots[bot] = bb;
 }
 
 bool ApplyAnInstruction()
 {
-    for (auto i = 0U; i < bots.size(); i++)
+    for (auto &pair : bots)
     {
-        Bot &b = bots[i];
-        assert(b.values.size() <= 2);
-        if (b.values.size() == 2)
+        Bot *b = pair.second;
+        if (b->values.size() == 2)
         {
-            auto lower = std::min(b.values[0], b.values[1]);
-            auto higher = std::max(b.values[0], b.values[1]);
+            auto lower = std::min(b->values[0], b->values[1]);
+            auto higher = std::max(b->values[0], b->values[1]);
 
             if (lower == 17 && higher == 61)
-                botThatCompares17And61 = b.number;
+                botThatCompares17And61 = b->number;
 
-            if (b.lowToBot != -1)
-                PutValueInBot(b.lowToBot, lower);
-            else if (b.lowToOutput != -1)
-                outputs[b.lowToOutput] = lower;
+            if (b->lowToBot != -1)
+                PutValueInBot(b->lowToBot, lower);
+            else if (b->lowToOutput != -1)
+                outputs[b->lowToOutput] = lower;
             else
                 assert(false);
 
-            if (b.highToBot != -1)
-                PutValueInBot(b.highToBot, higher);
-            else if (b.highToOutput != -1)
-                outputs[b.highToOutput] = higher;
+            if (b->highToBot != -1)
+                PutValueInBot(b->highToBot, higher);
+            else if (b->highToOutput != -1)
+                outputs[b->highToOutput] = higher;
             else
                 assert(false);
 
-            b.values.clear();
-            b.lowToBot = b.highToBot = b.lowToOutput = b.highToOutput = -1;
+            b->values.clear();
+            b->lowToBot = b->highToBot = b->lowToOutput = b->highToOutput = -1;
 
             return true;
         }
