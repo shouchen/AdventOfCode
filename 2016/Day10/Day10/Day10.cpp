@@ -23,40 +23,44 @@ int botThatCompares17And61 = -1;
 
 void PutValueInBot(unsigned bot, unsigned value)
 {
-    for (auto &b : bots)
+    auto pos = bots.find(bot);
+    Bot *b = nullptr;
+
+    if (pos == bots.end())
     {
-        if (b.second->number == bot)
-        {
-            b.second->values.push_back(value);
-            return;
-        }
+        b = new Bot(bot);
+        bots[bot] = b;
+    }
+    else
+    {
+        b = pos->second;
     }
 
-    auto bb = new Bot(bot);
-    bb->values.push_back(value);
-    bots[bot] = std::move(bb);
+    b->values.push_back(value);
 }
 
 void SetBotGives(unsigned bot, int lowToBot, int highToBot, int lowToOutput, int highToOutput)
 {
-    for (auto &b : bots)
-    {
-        if (b.second->number == bot)
-        {
-            if (lowToBot != -1) b.second->lowToBot = lowToBot;
-            if (highToBot != -1) b.second->highToBot= highToBot;
-            if (lowToOutput != -1) b.second->lowToOutput = lowToOutput;
-            if (highToOutput != -1) b.second->highToOutput = highToOutput;
-            return;
-        }
-    }
+    auto pos = bots.find(bot);
+    Bot *b = nullptr;
 
-    Bot *bb = new Bot(bot);
-    bb->lowToBot = lowToBot;
-    bb->highToBot = highToBot;
-    bb->lowToOutput = lowToOutput;
-    bb->highToOutput = highToOutput;
-    bots[bot] = bb;
+    if (pos == bots.end())
+    {
+        b = new Bot(bot);
+        b->lowToBot = lowToBot;
+        b->highToBot = highToBot;
+        b->lowToOutput = lowToOutput;
+        b->highToOutput = highToOutput;
+        bots[bot] = b;
+    }
+    else
+    {
+        b = pos->second;
+        if (lowToBot != -1) b->lowToBot = lowToBot;
+        if (highToBot != -1) b->highToBot = highToBot;
+        if (lowToOutput != -1) b->lowToOutput = lowToOutput;
+        if (highToOutput != -1) b->highToOutput = highToOutput;
+    }
 }
 
 bool ApplyAnInstruction()
