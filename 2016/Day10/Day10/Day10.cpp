@@ -8,16 +8,32 @@
 #include <memory>
 #include <cassert>
 
-struct Bot
+struct IValueReceiver
 {
-    Bot(unsigned number) : number(number), lowToBot(-1), highToBot(-1), lowToOutput(-1), highToOutput(-1) {}
+    virtual void ReceiveValue(unsigned value) = 0;
+};
+
+struct Bot : public IValueReceiver
+{
+    Bot(unsigned number) : number(number) {}
+    void ReceiveValue(unsigned value) { values.push_back(value); }
+
     unsigned number;
     std::vector<unsigned> values;
-    int lowToBot, highToBot, lowToOutput, highToOutput;
+    IValueReceiver *lower = nullptr, *higher = nullptr;
+};
+
+struct Output : public IValueReceiver
+{
+    Output(unsigned number) : number(number) {}
+    void ReceiveValue(unsigned value) { this->value = value; }
+
+    unsigned number;
+    unsigned value = 0;
 };
 
 std::map<unsigned, Bot *> bots;
-std::map<unsigned, unsigned> outputs;
+std::map<unsigned, Output *> outputs;
 
 int botThatCompares17And61 = -1;
 
@@ -34,19 +50,17 @@ Bot *FindOrCreateBot(unsigned bot)
     return b;
 }
 
-void PutValueInBot(unsigned bot, unsigned value)
+Output *FindOrCreateOutput(unsigned output)
 {
-    FindOrCreateBot(bot)->values.push_back(value);
-}
+    Output *o = nullptr;
 
-void SetBotGives(unsigned bot, int lowToBot, int highToBot, int lowToOutput, int highToOutput)
-{
-    auto b = FindOrCreateBot(bot);
+    auto pos = outputs.find(output);
+    if (pos == outputs.end())
+        outputs[output] = o = new Output(output);
+    else
+        o = pos->second;
 
-    if (lowToBot != -1) b->lowToBot = lowToBot;
-    if (highToBot != -1) b->highToBot = highToBot;
-    if (lowToOutput != -1) b->lowToOutput = lowToOutput;
-    if (highToOutput != -1) b->highToOutput = highToOutput;
+    return o;
 }
 
 bool ApplyAnInstruction()
@@ -62,22 +76,11 @@ bool ApplyAnInstruction()
             if (lower == 17 && higher == 61)
                 botThatCompares17And61 = b->number;
 
-            if (b->lowToBot != -1)
-                PutValueInBot(b->lowToBot, lower);
-            else if (b->lowToOutput != -1)
-                outputs[b->lowToOutput] = lower;
-            else
-                assert(false);
-
-            if (b->highToBot != -1)
-                PutValueInBot(b->highToBot, higher);
-            else if (b->highToOutput != -1)
-                outputs[b->highToOutput] = higher;
-            else
-                assert(false);
+            b->lower->ReceiveValue(lower);
+            b->higher->ReceiveValue(higher);
 
             b->values.clear();
-            b->lowToBot = b->highToBot = b->lowToOutput = b->highToOutput = -1;
+            b->lower = b->higher = nullptr;
 
             return true;
         }
@@ -99,7 +102,7 @@ void ProcessFile(const std::string &filename)
         if (word == "value")
         {
             f >> value >> goes >> to >> bot >> n1;
-            PutValueInBot(n1, value);
+            FindOrCreateBot(n1)->ReceiveValue(value);
         }
         else if (word == "bot")
         {
@@ -109,16 +112,32 @@ void ProcessFile(const std::string &filename)
             if (botOrOutput1 == "bot")
             {
                 if (botOrOutput2 == "bot")
-                    SetBotGives(n1, n2, n3, -1, -1);
+                {
+                    auto b = FindOrCreateBot(n1);
+                    b->lower = FindOrCreateBot(n2);
+                    b->higher = FindOrCreateBot(n3);
+                }
                 else
-                    SetBotGives(n1, n2, -1, -1, n3);
+                {
+                    auto b = FindOrCreateBot(n1);
+                    b->lower = FindOrCreateBot(n2);
+                    b->higher = FindOrCreateOutput(n3);
+                }
             }
             else
             {
                 if (botOrOutput2 == "bot")
-                    SetBotGives(n1, -1, n3, n2, -1);
+                {
+                    auto b = FindOrCreateBot(n1);
+                    b->lower = FindOrCreateOutput(n2);
+                    b->higher = FindOrCreateBot(n3);
+                }
                 else
-                    SetBotGives(n1, -1, -1, n2, n3);
+                {
+                    auto b = FindOrCreateBot(n1);
+                    b->lower = FindOrCreateOutput(n2);
+                    b->higher = FindOrCreateOutput(n3);
+                }
             }
         }
     }
@@ -131,7 +150,7 @@ int main()
     ProcessFile("input.txt");
 
     auto answer1 = botThatCompares17And61;
-    auto answer2 = outputs[0] * outputs[1] * outputs[2];
+    auto answer2 = FindOrCreateOutput(0)->value * FindOrCreateOutput(1)->value * FindOrCreateOutput(2)->value;
 
     std::cout << "Part One: " << answer1 << std::endl;
     std::cout << "Part Two: " << answer2 << std::endl;
