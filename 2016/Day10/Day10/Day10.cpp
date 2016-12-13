@@ -18,7 +18,8 @@ public:
 class Bot : public IValueReceiver
 {
 public:
-    Bot(unsigned number) : number(number) {}
+    Bot(unsigned number = UINT_MAX) : number(number) {}
+
     void SetLower(IValueReceiver *lower) { this->lower = lower;  }
     void SetHigher(IValueReceiver *higher) { this->higher = higher; }
     void ReceiveValue(unsigned value) { values.push_back(value); }
@@ -37,7 +38,6 @@ public:
         higher->ReceiveValue(higherValue);
 
         values.clear();
-        lower = higher = nullptr;
         return true;
     }
 
