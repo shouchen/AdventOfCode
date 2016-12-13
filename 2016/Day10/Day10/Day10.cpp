@@ -7,8 +7,6 @@
 #include <algorithm>
 #include <cassert>
 
-void DumpBots();
-
 struct Bot
 {
     Bot(unsigned number) : number(number), lowToBot(-1), highToBot(-1), lowToOutput(-1), highToOutput(-1) {}
@@ -63,7 +61,7 @@ void SetBotGives(unsigned bot, int lowToBot, int highToBot, int lowToOutput, int
     bots.push_back(bb);
 }
 
-bool TryToApplyAnInstruction()
+bool ApplyAnInstruction()
 {
     for (auto i = 0U; i < bots.size(); i++)
     {
@@ -101,64 +99,49 @@ bool TryToApplyAnInstruction()
     return false;
 }
 
-void ProcessFile()
+void ProcessFile(const std::string &filename)
 {
-    std::ifstream f("input.txt");
+    std::ifstream f(filename);
     std::string word;
 
     while (f >> word)
     {
+        int value, n1, n2, n3;
+        std::string gives, goes, low, to, bot, botOrOutput1, botOrOutput2, and, high;
+
         if (word == "value")
         {
-            int value, n;
-            std::string goes, to, bot;
-            f >> value >> goes >> to >> bot >> n;
-            PutValueInBot(n, value);
+            f >> value >> goes >> to >> bot >> n1;
+            PutValueInBot(n1, value);
         }
         else if (word == "bot")
         {
-            int n1, n2, n3;
-            std::string gives, low, to, botOrOutput, and, high;
-            f >> n1 >> gives >> low >> to >> botOrOutput;
+            f >> n1 >> gives >> low >> to >> botOrOutput1 >> n2 >> and
+              >> high >> to >> botOrOutput2 >> n3;
 
-            if (botOrOutput == "bot")
+            if (botOrOutput1 == "bot")
             {
-                f >> n2 >> and >> high >> to;
-                f >> botOrOutput;
-                if (botOrOutput == "bot")
-                {
-                    f >> n3;
+                if (botOrOutput2 == "bot")
                     SetBotGives(n1, n2, n3, -1, -1);
-                }
-                else if (botOrOutput == "output")
-                {
-                    f >> n3;
+                else
                     SetBotGives(n1, n2, -1, -1, n3);
-                }
             }
-            else if (botOrOutput == "output")
+            else
             {
-                f >> n2 >> and >> high >> to;
-                f >> botOrOutput;
-                if (botOrOutput == "bot")
-                {
-                    f >> n3;
+                if (botOrOutput2 == "bot")
                     SetBotGives(n1, -1, n3, n2, -1);
-                }
-                else if (botOrOutput == "output")
-                {
-                    f >> n3;
+                else
                     SetBotGives(n1, -1, -1, n2, n3);
-                }
             }
         }
     }
+
+    while (ApplyAnInstruction());
 }
 
 int main()
 {
-    ProcessFile();
-    while (TryToApplyAnInstruction());
+    ProcessFile("input.txt");
 
     auto answer1 = botThatCompares17And61;
     auto answer2 = outputs[0] * outputs[1] * outputs[2];
