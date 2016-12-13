@@ -12,7 +12,7 @@ struct Bot
 {
     Bot(unsigned number) : number(number), lowToBot(-1), highToBot(-1), lowToOutput(-1), highToOutput(-1) {}
     unsigned number;
-    std::vector<unsigned> values; // up to 2
+    std::vector<unsigned> values;
     int lowToBot, highToBot, lowToOutput, highToOutput;
 };
 
@@ -21,46 +21,32 @@ std::map<unsigned, unsigned> outputs;
 
 int botThatCompares17And61 = -1;
 
-void PutValueInBot(unsigned bot, unsigned value)
+Bot *FindOrCreateBot(unsigned bot)
 {
-    auto pos = bots.find(bot);
     Bot *b = nullptr;
 
+    auto pos = bots.find(bot);
     if (pos == bots.end())
-    {
-        b = new Bot(bot);
-        bots[bot] = b;
-    }
+        bots[bot] = b = new Bot(bot);
     else
-    {
         b = pos->second;
-    }
 
-    b->values.push_back(value);
+    return b;
+}
+
+void PutValueInBot(unsigned bot, unsigned value)
+{
+    FindOrCreateBot(bot)->values.push_back(value);
 }
 
 void SetBotGives(unsigned bot, int lowToBot, int highToBot, int lowToOutput, int highToOutput)
 {
-    auto pos = bots.find(bot);
-    Bot *b = nullptr;
+    auto b = FindOrCreateBot(bot);
 
-    if (pos == bots.end())
-    {
-        b = new Bot(bot);
-        b->lowToBot = lowToBot;
-        b->highToBot = highToBot;
-        b->lowToOutput = lowToOutput;
-        b->highToOutput = highToOutput;
-        bots[bot] = b;
-    }
-    else
-    {
-        b = pos->second;
-        if (lowToBot != -1) b->lowToBot = lowToBot;
-        if (highToBot != -1) b->highToBot = highToBot;
-        if (lowToOutput != -1) b->lowToOutput = lowToOutput;
-        if (highToOutput != -1) b->highToOutput = highToOutput;
-    }
+    if (lowToBot != -1) b->lowToBot = lowToBot;
+    if (highToBot != -1) b->highToBot = highToBot;
+    if (lowToOutput != -1) b->lowToOutput = lowToOutput;
+    if (highToOutput != -1) b->highToOutput = highToOutput;
 }
 
 bool ApplyAnInstruction()
