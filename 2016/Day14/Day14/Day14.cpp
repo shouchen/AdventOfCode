@@ -3,39 +3,33 @@
 #include <Wincrypt.h>
 #include <string>
 #include <vector>
-#include <set>
 #include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <cstdio>
 #include <cassert>
 #include <algorithm>
 
 std::string salt = "zpqevtbw";
-//std::string salt = "abc";
 const int extraTimes = 2016; // CHANGE TO 0 FOR PART 1 OR 2016 FOR PART 2
 
+typedef BYTE Hash[16];
+typedef char HexHash[32];
 
-static const char hexdigit[] = "0123456789abcdef";
-
-void GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize, char hashed[32])
+void GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize, HexHash hashed)
 {
     HCRYPTPROV hHash = NULL;
 
     if (CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash))
     {
-        DWORD cbHashSize = 0, dwCount = sizeof(DWORD);
-
-        if (CryptHashData(hHash, static_cast<const BYTE *>(data), dataSize, 0) &&
-            CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&cbHashSize, &dwCount, 0))
+        if (CryptHashData(hHash, reinterpret_cast<const BYTE *>(data), dataSize, 0))
         {
-            assert(cbHashSize == 16);
-            BYTE buffer[16];
+            Hash buffer;
+            DWORD cbHashSize = sizeof(Hash);
 
-            if (CryptGetHashParam(hHash, HP_HASHVAL, reinterpret_cast<BYTE *>(&buffer[0]), &cbHashSize, 0))
+            if (CryptGetHashParam(hHash, HP_HASHVAL, buffer, &cbHashSize, 0))
             {
+                static const char hexdigit[] = "0123456789abcdef";
+
                 char *curr = hashed;
-                for (int i = 0; i < sizeof(buffer) / sizeof(buffer[0]); i++)
+                for (auto i = 0U; i < cbHashSize; i++)
                 {
                     auto x = buffer[i];
                     *curr++ = hexdigit[(x >> 4) & 0xf];
@@ -58,24 +52,21 @@ std::string GetHashString(HCRYPTPROV hProv, const void *data, const size_t dataS
 
 inline std::string Part2AdditionalHashing(const std::string &input, unsigned times)
 {
-    auto inputLength = input.length();
-    assert(inputLength == 32);
-
-    char hashed[33];
+    char buffer[33];
     for (int i = 0; i < 32; i++)
-        hashed[i] = input[i];
-    hashed[32] = '\0';
+        buffer[i] = input[i];
+    buffer[32] = '\0';
 
     HCRYPTPROV hProv = NULL;
     if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
     {
         for (auto i = 0U; i < times; i++)
-            GetHashText(hProv, &hashed[0], 32, &hashed[0]);
+            GetHashText(hProv, buffer, 32, buffer);
 
         CryptReleaseContext(hProv, 0);
     }
 
-    return hashed;
+    return buffer;
 }
 
 std::string HashInputWithSuffix(const std::string &input, unsigned suffix)
@@ -102,22 +93,20 @@ std::string HashInputWithSuffix(const std::string &input, unsigned suffix)
     return hashed;
 }
 
-
-//std::vector<std::set<char>> quintuples;
-std::vector<std::string> hashlog;
+std::vector<std::string> hashCache;
 
 std::string &GetHash(unsigned index)
 {
-    if (index >= hashlog.size())
+    if (index >= hashCache.size())
     {
-        for (auto i = hashlog.size(); i <= index; i++)
+        for (auto i = hashCache.size(); i <= index; i++)
         {
             auto hash = Part2AdditionalHashing(HashInputWithSuffix(salt, i), extraTimes);
-            hashlog.push_back(hash);
+            hashCache.push_back(hash);
         }
     }
 
-    return hashlog[index];
+    return hashCache[index];
 }
 
 int main()
@@ -129,7 +118,6 @@ int main()
     do
     {
         auto hash = GetHash(curr);
-        //std::cout << "curr = " << curr << std::endl;
 
         char mychar = '\0';
 
