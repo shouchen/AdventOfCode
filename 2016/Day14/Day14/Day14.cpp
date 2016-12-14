@@ -13,12 +13,12 @@
 
 std::string salt = "zpqevtbw";
 //std::string salt = "abc";
-const int extraTimes = 0; // CHANGE TO 0 FOR PART 1 OR 2016 FOR PART 2
+const int extraTimes = 2016; // CHANGE TO 0 FOR PART 1 OR 2016 FOR PART 2
 
 
 static const char hexdigit[] = "0123456789abcdef";
 
-void GetHashTextInternal(HCRYPTPROV hProv, const void *data, const size_t dataSize, char hashed[32])
+void GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize, char hashed[32])
 {
     HCRYPTPROV hHash = NULL;
 
@@ -48,23 +48,29 @@ void GetHashTextInternal(HCRYPTPROV hProv, const void *data, const size_t dataSi
     }
 }
 
-std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize)
+std::string GetHashString(HCRYPTPROV hProv, const void *data, const size_t dataSize)
 {
     char hashed[33];
-    GetHashTextInternal(hProv, data, dataSize, hashed);
+    GetHashText(hProv, data, dataSize, hashed);
     hashed[32] = '\0';
     return hashed;
 }
 
 inline std::string Part2AdditionalHashing(const std::string &input, unsigned times)
 {
-    std::string hashed = input;
+    auto inputLength = input.length();
+    assert(inputLength == 32);
+
+    char hashed[33];
+    for (int i = 0; i < 32; i++)
+        hashed[i] = input[i];
+    hashed[32] = '\0';
 
     HCRYPTPROV hProv = NULL;
     if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
     {
         for (auto i = 0U; i < times; i++)
-            hashed = GetHashText(hProv, &hashed[0], hashed.length());
+            GetHashText(hProv, &hashed[0], 32, &hashed[0]);
 
         CryptReleaseContext(hProv, 0);
     }
@@ -72,7 +78,7 @@ inline std::string Part2AdditionalHashing(const std::string &input, unsigned tim
     return hashed;
 }
 
-std::string Foo(const std::string &input, unsigned suffix)
+std::string HashInputWithSuffix(const std::string &input, unsigned suffix)
 {
     std::string hashed;
 
@@ -88,7 +94,7 @@ std::string Foo(const std::string &input, unsigned suffix)
 
         auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%u", suffix);
 
-        hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
+        hashed = GetHashString(hProv, &buffer[0], inputLength + numericSuffixSize);
 
         CryptReleaseContext(hProv, 0);
     }
@@ -106,7 +112,7 @@ std::string &GetHash(unsigned index)
     {
         for (auto i = hashlog.size(); i <= index; i++)
         {
-            auto hash = Part2AdditionalHashing(Foo(salt, i), extraTimes);
+            auto hash = Part2AdditionalHashing(HashInputWithSuffix(salt, i), extraTimes);
             hashlog.push_back(hash);
         }
     }
