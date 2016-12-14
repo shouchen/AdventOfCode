@@ -42,14 +42,6 @@ void GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize, HexH
     }
 }
 
-std::string GetHashString(HCRYPTPROV hProv, const void *data, const size_t dataSize)
-{
-    char hashed[33];
-    GetHashText(hProv, data, dataSize, hashed);
-    hashed[32] = '\0';
-    return hashed;
-}
-
 inline std::string Part2AdditionalHashing(const std::string &input, unsigned times)
 {
     char buffer[33];
@@ -69,24 +61,23 @@ inline std::string Part2AdditionalHashing(const std::string &input, unsigned tim
     return buffer;
 }
 
-std::string HashInputWithSuffix(const std::string &input, unsigned suffix)
+std::string HashInputWithSuffix(const std::string &input, unsigned suffix, unsigned times)
 {
-    std::string hashed;
+    char hashed[33];
+    hashed[32] = '\0';
 
     HCRYPTPROV hProv = NULL;
     if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
     {
         // Longest Unsigned is 10 chars, add one for null terminator
-        std::vector<char> buffer(input.length() + 11);
-
-        auto inputLength = sprintf_s(&buffer[0], buffer.capacity(), "%s", input.c_str());
-        auto remainingBufferSize = buffer.capacity() - inputLength;
-        auto suffixStart = &buffer[0] + inputLength;
-
+        std::vector<char> inBuffer(input.length() + 11);
+        
+        auto inputLength = sprintf_s(&inBuffer[0], inBuffer.capacity(), "%s", input.c_str());
+        auto remainingBufferSize = inBuffer.capacity() - inputLength;
+        auto suffixStart = &inBuffer[0] + inputLength;
         auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%u", suffix);
 
-        hashed = GetHashString(hProv, &buffer[0], inputLength + numericSuffixSize);
-
+        GetHashText(hProv, &inBuffer[0], inputLength + numericSuffixSize, hashed);
         CryptReleaseContext(hProv, 0);
     }
 
@@ -101,7 +92,7 @@ std::string &GetHash(unsigned index)
     {
         for (auto i = hashCache.size(); i <= index; i++)
         {
-            auto hash = Part2AdditionalHashing(HashInputWithSuffix(salt, i), extraTimes);
+            auto hash = Part2AdditionalHashing(HashInputWithSuffix(salt, i, extraTimes), extraTimes);
             hashCache.push_back(hash);
         }
     }
