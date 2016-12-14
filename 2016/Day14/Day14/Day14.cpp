@@ -155,8 +155,6 @@ std::string Foo(const std::string &input, long long unsigned suffix)
 std::vector<char> triples;
 std::vector<std::set<char>> quintuples;
 
-int hashes = 0;
-
 bool CheckKey(int start)
 {
     auto c = triples[start];
@@ -166,13 +164,7 @@ bool CheckKey(int start)
         {
             std::string five; five += c; five += c; five += c; five += c; five += c;
             if (quintuples[start + i].find(c) != quintuples[start + i].end())
-            {
-                hashes++;
-                std::cout << "#" << hashes << ": index " << start << std::endl;
-                if (hashes == 64)
-                    std::cout << std::endl;
                 return true;
-            }
         }
     }
 
@@ -186,52 +178,53 @@ int main()
 
     int hashes = 0;
     int curr = 0;
-    const int times = 0;
-LOOP:
-    auto hash = Foo(salt, curr);
+    const int times = 0; // CHANGE TO 2016 FOR PART 2
+    unsigned answer = 0;
 
-    // Change for part1/2
-    hash = Part2AdditionalHashing(hash, times);
-
-    char mychar = '\0';
-
-    for (auto i = 0U; i <= hash.length() - 3; i++)
+    for (;;)
     {
-        if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2])
+        auto hash = Foo(salt, curr);
+
+        // Change for part1/2
+        hash = Part2AdditionalHashing(hash, times);
+
+        char mychar = '\0';
+
+        for (auto i = 0U; i <= hash.length() - 3; i++)
         {
-            mychar = hash[i];
-            break; // only consider first
+            if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2])
+            {
+                mychar = hash[i];
+                break; // only consider first
+            }
         }
-    }
 
-    triples.push_back(mychar);
-    quintuples.push_back(std::set<char>());
+        triples.push_back(mychar);
+        quintuples.push_back(std::set<char>());
 
-    for (auto i = 0U; i <= hash.length() - 5; i++)
-    {
-        if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2] && hash[i] == hash[i + 3] && hash[i] == hash[i + 4])
-            quintuples[curr].insert(hash[i]);
-    }
-
-    if (curr > 1000)
-    {
-        auto temp = curr - 1000;
-        if (CheckKey(temp))
+        for (auto i = 0U; i <= hash.length() - 5; i++)
         {
-            //hashes++;
-            //std::cout << "KEY #" << hashes << " is " << temp << std::endl;
-            //if (hashes == 64)
-            //    std::cout << std::endl;
+            if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2] && hash[i] == hash[i + 3] && hash[i] == hash[i + 4])
+                quintuples[curr].insert(hash[i]);
         }
+
+        if (curr > 1000)
+        {
+            answer = curr - 1000;
+            if (CheckKey(answer))
+            {
+                hashes++;
+                std::cout << "KEY #" << hashes << " is " << answer << std::endl;
+                if (hashes == 64)
+                    break;
+            }
+        }
+
+        curr++;
     }
 
-    curr++;
-    goto LOOP;
+    std::cout << "Answer: " << answer << std::endl;
 
-    //std::cout << "Part One: " << answer1 << std::endl;
-    //std::cout << "Part Two: " << answer2 << std::endl;
-
-    //assert(answer1 == 10106);
-    //assert(answer2 == ?);
+    assert(answer == 16106);
     return 0;
 }
