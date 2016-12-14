@@ -42,25 +42,6 @@ void GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize, HexH
     }
 }
 
-inline std::string Part2AdditionalHashing(const std::string &input, unsigned times)
-{
-    char buffer[33];
-    for (int i = 0; i < 32; i++)
-        buffer[i] = input[i];
-    buffer[32] = '\0';
-
-    HCRYPTPROV hProv = NULL;
-    if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
-    {
-        for (auto i = 0U; i < times; i++)
-            GetHashText(hProv, buffer, 32, buffer);
-
-        CryptReleaseContext(hProv, 0);
-    }
-
-    return buffer;
-}
-
 std::string HashInputWithSuffix(const std::string &input, unsigned suffix, unsigned times)
 {
     char hashed[33];
@@ -78,6 +59,10 @@ std::string HashInputWithSuffix(const std::string &input, unsigned suffix, unsig
         auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%u", suffix);
 
         GetHashText(hProv, &inBuffer[0], inputLength + numericSuffixSize, hashed);
+
+        for (auto i = 0U; i < times; i++)
+            GetHashText(hProv, hashed, 32, hashed);
+
         CryptReleaseContext(hProv, 0);
     }
 
@@ -92,7 +77,7 @@ std::string &GetHash(unsigned index)
     {
         for (auto i = hashCache.size(); i <= index; i++)
         {
-            auto hash = Part2AdditionalHashing(HashInputWithSuffix(salt, i, extraTimes), extraTimes);
+            auto hash = HashInputWithSuffix(salt, i, extraTimes);
             hashCache.push_back(hash);
         }
     }
