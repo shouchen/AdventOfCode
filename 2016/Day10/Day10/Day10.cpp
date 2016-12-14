@@ -20,19 +20,17 @@ class Bot : public IValueReceiver
 public:
     Bot(unsigned number = UINT_MAX) : number(number) {}
 
+    unsigned GetNumber() { return this->number; }
     void SetLower(IValueReceiver *lower) { this->lower = lower;  }
     void SetHigher(IValueReceiver *higher) { this->higher = higher; }
     void ReceiveValue(unsigned value) { values.push_back(value); }
 
-    bool DoWorkIfReady(unsigned &botThatCompares17And61)
+    bool DoWorkIfReady(unsigned &lowerValue, unsigned &higherValue)
     {
         if (values.size() != 2) return false;
 
-        auto lowerValue = std::min(values[0], values[1]);
-        auto higherValue = std::max(values[0], values[1]);
-
-        if (lowerValue == 17 && higherValue == 61)
-            botThatCompares17And61 = number;
+        lowerValue = std::min(values[0], values[1]);
+        higherValue = std::max(values[0], values[1]);
 
         lower->ReceiveValue(lowerValue);
         higher->ReceiveValue(higherValue);
@@ -62,10 +60,19 @@ private:
 class Solver
 {
 public:
-    void Solve(const std::string &filename, unsigned &botThatCompares17And61, unsigned &outputs123)
+    void Solve(
+        const std::string &filename,
+        unsigned lowerCompared,
+        unsigned higherCompared,
+        unsigned &botThatComparesThoseTwo,
+        unsigned &outputs123)
     {
         ProcessFile(filename);
-        while (ApplyAnInstruction(botThatCompares17And61));
+
+        unsigned bot, lower, higher;
+        while (ApplyAnInstruction(bot, lower, higher))
+            if (lower == lowerCompared && higher == higherCompared)
+                botThatComparesThoseTwo = bot;
 
         outputs123 = FindOrCreateOutput(0)->GetValue() * FindOrCreateOutput(1)->GetValue() * FindOrCreateOutput(2)->GetValue();
     }
@@ -73,34 +80,32 @@ public:
 private:
     Bot *FindOrCreateBot(unsigned bot)
     {
-        Bot *b = nullptr;
-
         auto pos = bots.find(bot);
-        if (pos == bots.end())
-            bots[bot] = b = new Bot(bot);
-        else
-            b = pos->second;
+        if (pos != bots.end())
+            return pos->second.get();
 
-        return b;
+        bots[bot] = std::move(std::make_unique<Bot>(bot));
+        return bots[bot].get();
     }
 
     Output *FindOrCreateOutput(unsigned output)
     {
-        Output *o = nullptr;
-
         auto pos = outputs.find(output);
-        if (pos == outputs.end())
-            outputs[output] = o = new Output(output);
-        else
-            o = pos->second;
+        if (pos != outputs.end())
+            return pos->second.get();
 
-        return o;
+        outputs[output] = std::move(std::make_unique<Output>(output));
+        return outputs[output].get();
     }
 
-    bool ApplyAnInstruction(unsigned &botThatCompares17And61)
+    bool ApplyAnInstruction(unsigned &number, unsigned &lower, unsigned &higher)
     {
         for (auto &pair : bots)
-            if (pair.second->DoWorkIfReady(botThatCompares17And61)) return true;
+        {
+            number = pair.second->GetNumber();
+            if (pair.second->DoWorkIfReady(lower, higher))
+                return true;
+        }
 
         return false;
     }
@@ -148,16 +153,16 @@ private:
     }
 
 private:
-    std::map<unsigned, Bot *> bots;
-    std::map<unsigned, Output *> outputs;
-    unsigned botThatCompares17And61 = INT_MAX;
+    std::map<unsigned, std::unique_ptr<Bot>> bots;
+    std::map<unsigned, std::unique_ptr<Output>> outputs;
+    unsigned botThatComparesThoseTwo = INT_MAX;
 };
 
 int main()
 {
     Solver solver;
     unsigned part1, part2;
-    solver.Solve("input.txt", part1, part2);
+    solver.Solve("input.txt", 17, 61, part1, part2);
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
