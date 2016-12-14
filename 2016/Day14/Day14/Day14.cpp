@@ -14,7 +14,7 @@
 
 std::string salt = "zpqevtbw";
 //std::string salt = "abc";
-const int times = 2016; // CHANGE TO 0 FOR PART 1 OR 2016 FOR PART 2
+const int extraTimes = 0; // CHANGE TO 0 FOR PART 1 OR 2016 FOR PART 2
 
 
 std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize)
@@ -46,75 +46,12 @@ std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSiz
     return oss.str();
 }
 
-unsigned GetLengthLongestUnsignedLongLong()
+inline unsigned GetLengthLongestUnsigned()
 {
-    std::ostringstream oss;
-    oss << ULLONG_MAX;
-    return oss.str().length();
-}
-
-std::string GetNextHashWithFiveLeadingZeros(const std::string &input, unsigned long long &start)
-{
-    std::string hashed;
-
-    HCRYPTPROV hProv = NULL;
-    if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
-    {
-        std::vector<char> buffer(input.length() + GetLengthLongestUnsignedLongLong() + 1);
-
-        auto inputLength = sprintf_s(&buffer[0], buffer.capacity(), "%s", input.c_str());
-        auto remainingBufferSize = buffer.capacity() - inputLength;
-        auto suffixStart = &buffer[0] + inputLength;
-        auto prefix = std::string(5, '0');
-
-        for (auto curr = start; curr < ULLONG_MAX; curr++)
-        {
-            auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", curr);
-
-            hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
-            if (hashed.substr(0, 5) == prefix)
-            {
-                start = curr + 1;
-                break;
-            }
-        }
-
-        CryptReleaseContext(hProv, 0);
-    }
-
-    return hashed;
-}
-
-void process_file(const std::string &filename, std::string &answer1, std::string &answer2)
-{
-    std::ifstream f(filename);
-    std::string input;
-
-    f >> input;
-
-    answer2 = "        ";
-    auto start = 0ULL;
-
-    for (;;)
-    {
-        auto hashed = GetNextHashWithFiveLeadingZeros(input, start);
-        auto fifth = hashed[5], sixth = hashed[6];
-
-        if (answer1.length() < 8)
-            answer1.push_back(fifth);
-
-        if (fifth >= '0' && fifth <= '7')
-        {
-            auto position = fifth - '0';
-            if (answer2[position] == ' ')
-            {
-                answer2[position] = sixth;
-
-                if (answer2.find(' ') == std::string::npos)
-                    break;
-            }
-        }
-    }
+    //std::ostringstream oss;
+    //oss << UINT_MAX;
+    //return oss.str().length();
+    return 10;
 }
 
 std::string Part2AdditionalHashing(const std::string &input, unsigned times)
@@ -133,20 +70,20 @@ std::string Part2AdditionalHashing(const std::string &input, unsigned times)
     return hashed;
 }
 
-std::string Foo(const std::string &input, long long unsigned suffix)
+std::string Foo(const std::string &input, unsigned suffix)
 {
     std::string hashed;
 
     HCRYPTPROV hProv = NULL;
     if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
     {
-        std::vector<char> buffer(input.length() + GetLengthLongestUnsignedLongLong() + 1);
+        std::vector<char> buffer(input.length() + GetLengthLongestUnsigned() + 1);
 
         auto inputLength = sprintf_s(&buffer[0], buffer.capacity(), "%s", input.c_str());
         auto remainingBufferSize = buffer.capacity() - inputLength;
         auto suffixStart = &buffer[0] + inputLength;
 
-        auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", suffix);
+        auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%u", suffix);
 
         hashed = GetHashText(hProv, &buffer[0], inputLength + numericSuffixSize);
 
@@ -157,25 +94,8 @@ std::string Foo(const std::string &input, long long unsigned suffix)
 }
 
 
-//std::vector<char> triples;
 //std::vector<std::set<char>> quintuples;
 std::vector<std::string> hashlog;
-
-//bool CheckKey(int start)
-//{
-//    auto c = triples[start];
-//    if (c)
-//    {
-//        for (int i = 1; i <= 1000; i++)
-//        {
-//            std::string five; five += c; five += c; five += c; five += c; five += c;
-//            if (quintuples[start + i].find(c) != quintuples[start + i].end())
-//                return true;
-//        }
-//    }
-//
-//    return false;
-//}
 
 std::string &GetHash(unsigned index)
 {
@@ -183,7 +103,7 @@ std::string &GetHash(unsigned index)
     {
         for (auto i = hashlog.size(); i <= index; i++)
         {
-            auto hash = Part2AdditionalHashing(Foo(salt, i), times);
+            auto hash = Part2AdditionalHashing(Foo(salt, i), extraTimes);
             hashlog.push_back(hash);
         }
     }
@@ -200,7 +120,7 @@ int main()
     do
     {
         auto hash = GetHash(curr);
-        std::cout << "curr = " << curr << std::endl;
+        //std::cout << "curr = " << curr << std::endl;
 
         char mychar = '\0';
 
@@ -209,7 +129,7 @@ int main()
             if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2])
             {
                 mychar = hash[i];
-                break; // only consider first
+                break; // only consider first triple
             }
         }
 
@@ -242,7 +162,7 @@ int main()
         }
 
         curr++;
-    } while (answer);
+    } while (!answer);
 
     //assert(answer == 16106); // part 1
     //assert(answer == 22423); // part 2
