@@ -112,6 +112,22 @@ void process_file(const std::string &filename, std::string &answer1, std::string
     }
 }
 
+std::string Part2AdditionalHashing(const std::string &input, unsigned times)
+{
+    std::string hashed = input;
+
+    HCRYPTPROV hProv = NULL;
+    if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
+    {
+        for (auto i = 0U; i < times; i++)
+            hashed = GetHashText(hProv, &hashed[0], hashed.length());
+
+        CryptReleaseContext(hProv, 0);
+    }
+
+    return hashed;
+}
+
 std::string Foo(const std::string &input, long long unsigned suffix)
 {
     std::string hashed;
@@ -124,7 +140,6 @@ std::string Foo(const std::string &input, long long unsigned suffix)
         auto inputLength = sprintf_s(&buffer[0], buffer.capacity(), "%s", input.c_str());
         auto remainingBufferSize = buffer.capacity() - inputLength;
         auto suffixStart = &buffer[0] + inputLength;
-        //auto prefix = std::string(5, '0');
 
         auto numericSuffixSize = sprintf_s(suffixStart, remainingBufferSize, "%llu", suffix);
 
@@ -172,8 +187,12 @@ int main()
 
     int hashes = 0;
     int curr = 0;
+    const int times = 0;
 LOOP:
     auto hash = Foo(salt, curr);
+
+    // Change for part1/2
+    hash = Part2AdditionalHashing(hash, times);
 
     triples.push_back(std::set<char>());
     quintuples.push_back(std::set<char>());
