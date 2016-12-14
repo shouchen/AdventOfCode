@@ -152,24 +152,23 @@ std::string Foo(const std::string &input, long long unsigned suffix)
 }
 
 
-std::vector<std::set<char>> triples;
+std::vector<char> triples;
 std::vector<std::set<char>> quintuples;
-std::vector<std::string> hashlog;
 
 int hashes = 0;
 
 bool CheckKey(int start)
 {
-    for (auto c : triples[start])
+    auto c = triples[start];
+    if (c)
     {
         for (int i = 1; i <= 1000; i++)
         {
             std::string five; five += c; five += c; five += c; five += c; five += c;
-            if (hashlog[start + i].find(five) != std::string::npos)
-            //if (quintuples[start + i].find(c) != quintuples[start + i].end())
+            if (quintuples[start + i].find(c) != quintuples[start + i].end())
             {
                 hashes++;
-                std::cout << "#" << hashes << ": index " << start << " is " << hashlog[start] << " and index " << (start + i) << " is " << hashlog[start + i] << " with char " << c << std::endl;
+                std::cout << "#" << hashes << ": index " << start << std::endl;
                 if (hashes == 64)
                     std::cout << std::endl;
                 return true;
@@ -194,18 +193,19 @@ LOOP:
     // Change for part1/2
     hash = Part2AdditionalHashing(hash, times);
 
-    triples.push_back(std::set<char>());
-    quintuples.push_back(std::set<char>());
-    hashlog.push_back(hash);
+    char mychar = '\0';
 
     for (auto i = 0U; i <= hash.length() - 3; i++)
     {
         if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2])
         {
-            triples[curr].insert(hash[i]);
+            mychar = hash[i];
             break; // only consider first
         }
     }
+
+    triples.push_back(mychar);
+    quintuples.push_back(std::set<char>());
 
     for (auto i = 0U; i <= hash.length() - 5; i++)
     {
@@ -228,110 +228,10 @@ LOOP:
     curr++;
     goto LOOP;
 
-    //auto myhashcount = 0;
-    //for (int i = 0; i < 23000; i++)
-    //{
-    //    auto hash1 = hashlog[i];
-    //    for (int j = 0; j <= hashlog[i].length() - 3; j++)
-    //    {
-    //        if (hash1[j] == hash1[j + 1] && hash1[j] == hash1[j + 2])
-    //        {
-    //            for (int k = i + 1; k <= i + 1000; k++)
-    //            {
-    //                std::string tempstr; tempstr.push_back(hash1[j]); tempstr.push_back(hash1[j]); tempstr.push_back(hash1[j]); tempstr.push_back(hash1[j]); tempstr.push_back(hash1[j]);
-    //                if (hashlog[k].find(tempstr) != std::string::npos)
-    //                {
-    //                    ++myhashcount;
-    //                    std::cout << "NEW SOLUTION #" << myhashcount << " at " << i << " with " << hashlog[i] << " and " << hashlog[k] << std::endl;
-
-    //                    break; // break
-    //                }
-    //            }
-
-    //            j = hashlog[i].length();
-    //        }
-    //    }
-    //}
-
-
-
-
-
-    // 16106 for part one!
-
-    //std::string answer1, answer2;
-    //process_file("input.txt", answer1, answer2);
-
     //std::cout << "Part One: " << answer1 << std::endl;
     //std::cout << "Part Two: " << answer2 << std::endl;
 
-    //assert(answer1 == "f97c354d");
-    //assert(answer2 == "863dde27");
+    //assert(answer1 == 10106);
+    //assert(answer2 == ?);
     return 0;
 }
-/* For real puzzle input, this gets a right solution:
-#1 is 3483
-#2 is 3536
-#3 is 3672
-#4 is 3683
-#5 is 3747
-#6 is 3772
-#7 is 3868
-#8 is 4288
-#9 is 4299
-#10 is 4307
-#11 is 4329
-#12 is 4370
-#13 is 4415
-#14 is 4442
-#15 is 4467
-#16 is 4473
-#17 is 4548
-#18 is 4659
-#19 is 4786
-#20 is 4810
-#21 is 4940
-#22 is 5093
-#23 is 5430
-#24 is 5543
-#25 is 5872
-#26 is 5928
-#27 is 6074
-#28 is 6075
-#29 is 6086
-#30 is 6098
-#31 is 6099
-#32 is 6138
-#33 is 6213
-#34 is 6393
-#35 is 6650
-#36 is 6865
-#37 is 6873
-#38 is 6960
-#39 is 7558
-#40 is 7591
-#41 is 7776
-#42 is 7854
-#43 is 7977
-#44 is 8031
-#45 is 8132
-#46 is 8141
-#47 is 8749
-#48 is 8876
-#49 is 8982
-#50 is 8993
-#51 is 9115
-#52 is 9185
-#53 is 9273
-#54 is 9320
-#55 is 13517
-#56 is 13583
-#57 is 13625
-#58 is 13648
-#59 is 13726
-#60 is 13882
-#61 is 13914
-#62 is 14061
-#63 is 14212
-#64 is 16106
-*/
