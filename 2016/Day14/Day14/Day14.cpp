@@ -85,57 +85,58 @@ std::string &GetHash(unsigned index)
     return hashCache[index];
 }
 
+char FindFirstTriple(const std::string &s)
+{
+    for (auto i = 0U; i <= s.length() - 3; i++)
+        if (s[i] == s[i + 1] && s[i] == s[i + 2])
+            return s[i];
+
+    return '\0';
+}
+
+bool HasQuintuple(unsigned start, char triple)
+{
+    for (int i = 1; i <= 1000; i++)
+    {
+        auto hash2 = GetHash(start + i);
+
+        for (auto j = 0U; j <= hash2.length() - 5; j++)
+        {
+            if (hash2[j] == triple &&
+                hash2[j + 1] == triple &&
+                hash2[j + 2] == triple &&
+                hash2[j + 3] == triple &&
+                hash2[j + 4] == triple)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 int main()
 {
     int hashes = 0;
-    int curr = 0;
     unsigned answer = 0;
 
-    do
+    for (auto curr = 0; !answer; curr++)
     {
         auto hash = GetHash(curr);
+        char triple = FindFirstTriple(hash);
 
-        char mychar = '\0';
-
-        for (auto i = 0U; i <= hash.length() - 3; i++)
+        if (triple && HasQuintuple(curr, triple))
         {
-            if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2])
+            hashes++;
+            std::cout << "KEY #" << hashes << " is " << curr << std::endl;
+            if (hashes == 64)
             {
-                mychar = hash[i];
-                break; // only consider first triple
+                answer = curr;
+                std::cout << "Answer: " << answer << std::endl;
             }
         }
-
-        if (mychar)
-        {
-            bool lookForQuintuple = true;
-            for (int i = 1; i <= 1000 && lookForQuintuple; i++)
-            {
-                auto hash2 = GetHash(curr + i);
-
-                for (auto j = 0U; (j <= hash2.length() - 5) && lookForQuintuple; j++)
-                {
-                    if (hash2[j] == mychar &&
-                        hash2[j + 1] == mychar &&
-                        hash2[j + 2] == mychar &&
-                        hash2[j + 3] == mychar &&
-                        hash2[j + 4] == mychar)
-                    {
-                        lookForQuintuple = false;
-                        hashes++;
-                        std::cout << "KEY #" << hashes << " is " << curr << std::endl;
-                        if (hashes == 64)
-                        {
-                            answer = curr;
-                            std::cout << "Answer: " << answer << std::endl;
-                        }
-                    }
-                }
-            }
-        }
-
-        curr++;
-    } while (!answer);
+    }
 
     //assert(answer == 16106); // part 1
     //assert(answer == 22423); // part 2
