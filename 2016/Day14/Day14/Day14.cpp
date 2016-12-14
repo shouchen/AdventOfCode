@@ -12,6 +12,11 @@
 #include <cassert>
 #include <algorithm>
 
+std::string salt = "zpqevtbw";
+//std::string salt = "abc";
+const int times = 2016; // CHANGE TO 0 FOR PART 1 OR 2016 FOR PART 2
+
+
 std::string GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize)
 {
     std::ostringstream oss;
@@ -152,41 +157,50 @@ std::string Foo(const std::string &input, long long unsigned suffix)
 }
 
 
-std::vector<char> triples;
-std::vector<std::set<char>> quintuples;
+//std::vector<char> triples;
+//std::vector<std::set<char>> quintuples;
+std::vector<std::string> hashlog;
 
-bool CheckKey(int start)
+//bool CheckKey(int start)
+//{
+//    auto c = triples[start];
+//    if (c)
+//    {
+//        for (int i = 1; i <= 1000; i++)
+//        {
+//            std::string five; five += c; five += c; five += c; five += c; five += c;
+//            if (quintuples[start + i].find(c) != quintuples[start + i].end())
+//                return true;
+//        }
+//    }
+//
+//    return false;
+//}
+
+std::string &GetHash(unsigned index)
 {
-    auto c = triples[start];
-    if (c)
+    if (index >= hashlog.size())
     {
-        for (int i = 1; i <= 1000; i++)
+        for (auto i = hashlog.size(); i <= index; i++)
         {
-            std::string five; five += c; five += c; five += c; five += c; five += c;
-            if (quintuples[start + i].find(c) != quintuples[start + i].end())
-                return true;
+            auto hash = Part2AdditionalHashing(Foo(salt, i), times);
+            hashlog.push_back(hash);
         }
     }
 
-    return false;
+    return hashlog[index];
 }
 
 int main()
 {
-    std::string salt = "zpqevtbw";
-    //std::string salt = "abc";
-
     int hashes = 0;
     int curr = 0;
-    const int times = 0; // CHANGE TO 2016 FOR PART 2
     unsigned answer = 0;
 
-    for (;;)
+    do
     {
-        auto hash = Foo(salt, curr);
-
-        // Change for part1/2
-        hash = Part2AdditionalHashing(hash, times);
+        auto hash = GetHash(curr);
+        std::cout << "curr = " << curr << std::endl;
 
         char mychar = '\0';
 
@@ -199,32 +213,38 @@ int main()
             }
         }
 
-        triples.push_back(mychar);
-        quintuples.push_back(std::set<char>());
-
-        for (auto i = 0U; i <= hash.length() - 5; i++)
+        if (mychar)
         {
-            if (hash[i] == hash[i + 1] && hash[i] == hash[i + 2] && hash[i] == hash[i + 3] && hash[i] == hash[i + 4])
-                quintuples[curr].insert(hash[i]);
-        }
-
-        if (curr > 1000)
-        {
-            answer = curr - 1000;
-            if (CheckKey(answer))
+            bool lookForQuintuples = true;
+            for (int i = 1; i <= 1000 && lookForQuintuples; i++)
             {
-                hashes++;
-                std::cout << "KEY #" << hashes << " is " << answer << std::endl;
-                if (hashes == 64)
-                    break;
+                auto hash2 = GetHash(curr + i);
+
+                for (auto j = 0U; (j <= hash2.length() - 5) && lookForQuintuples; j++)
+                {
+                    if (hash2[j] == mychar &&
+                        hash2[j + 1] == mychar &&
+                        hash2[j + 2] == mychar &&
+                        hash2[j + 3] == mychar &&
+                        hash2[j + 4] == mychar)
+                    {
+                        lookForQuintuples = false;
+                        hashes++;
+                        std::cout << "KEY #" << hashes << " is " << curr << std::endl;
+                        if (hashes == 64)
+                        {
+                            answer = curr;
+                            std::cout << "Answer: " << answer << std::endl;
+                        }
+                    }
+                }
             }
         }
 
         curr++;
-    }
+    } while (answer);
 
-    std::cout << "Answer: " << answer << std::endl;
-
-    assert(answer == 16106);
+    //assert(answer == 16106); // part 1
+    //assert(answer == 22423); // part 2
     return 0;
 }
