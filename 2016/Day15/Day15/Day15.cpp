@@ -2,39 +2,36 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <map>
+#include <vector>
 #include <cassert>
-#include <climits>
 
 struct Disc
 {
-    Disc(unsigned long long numPositions, unsigned long long currPosition) : numPositions(numPositions), currPosition(currPosition) {}
-    unsigned long long numPositions;
-    unsigned long long currPosition;
+    unsigned long long numPositions, currPosition;
 };
 
-std::map<int, Disc *> discs;
+std::vector<Disc> discs;
+
+inline bool IsSolution(unsigned long long time)
+{
+    for (auto i = 0U; i < discs.size(); i++)
+        if ((time + (i + 1) + discs[i].currPosition) % discs[i].numPositions != 0)
+            return false;
+    return true;
+}
 
 void ReadFile(const std::string &filename)
 {
     std::ifstream f(filename);
     std::string disc, has, positions, at, time, it, is, position;
     char pound, period;
-    int d, p, startPos = 0;
+    unsigned d, p, startPos = 0;
 
-    while (f >> disc >> pound >> d >> has >> p >> positions >> at >> time >> it >> is >> at >> position >> startPos >> period)
+    while (f >> disc >> pound >> d >> has >> p >> positions >> at >> time >> it
+             >> is >> at >> position >> startPos >> period)
     {
-        Disc *tempDisc = new Disc(p, startPos);
-        discs[d] = tempDisc;
+        discs.push_back(Disc { p, startPos });
     }
-}
-
-inline bool IsSolution(unsigned long long time)
-{
-    for (auto p : discs)
-        if ((time + p.first + p.second->currPosition) % p.second->numPositions != 0)
-            return false;
-    return true;
 }
 
 int main()
@@ -49,8 +46,7 @@ int main()
         part1++;
     }
 
-    Disc *tempDisc = new Disc(11, 0);
-    discs[7] = tempDisc;
+    discs.push_back(Disc { 11, 0 });
 
     auto part2 = 0ULL;
     for (;;)
