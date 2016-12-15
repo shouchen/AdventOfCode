@@ -5,56 +5,75 @@
 #include <vector>
 #include <cassert>
 
-struct Disc
+class Disc
 {
-    unsigned long long numPositions, currPosition;
+public:
+    Disc(unsigned number, unsigned positions, unsigned startPosition)
+        : number(number), positions(positions), startPosition(startPosition) {}
+
+    inline bool IsAlignedAtTime(unsigned long long t)
+    {
+        return ((startPosition + number + t) % positions) == 0;
+    }
+
+private:
+    unsigned number, positions, startPosition;
 };
 
-std::vector<Disc> discs;
-
-inline bool IsSolution(unsigned long long time)
+class Machine
 {
-    for (auto i = 0U; i < discs.size(); i++)
-        if ((time + (i + 1) + discs[i].currPosition) % discs[i].numPositions != 0)
-            return false;
-    return true;
-}
-
-void ReadFile(const std::string &filename)
-{
-    std::ifstream f(filename);
-    std::string disc, has, positions, at, time, it, is, position;
-    char pound, period;
-    unsigned d, p, startPos = 0;
-
-    while (f >> disc >> pound >> d >> has >> p >> positions >> at >> time >> it
-             >> is >> at >> position >> startPos >> period)
+public:
+    Machine(const std::string &filename)
     {
-        discs.push_back(Disc { p, startPos });
+        std::ifstream f(filename);
+        std::string disc, has, positions, at, timeEqualsZero, it, is, position;
+        char pound, period;
+        unsigned num, numPositions, startPosition;
+
+        while (f >> disc >> pound >> num >> has >> numPositions >> positions >> at
+                 >> timeEqualsZero >> it >> is >> at >> position >> startPosition >> period)
+        {
+            AddDisc(numPositions, startPosition);
+        }
     }
-}
+
+    unsigned long long FindSolution()
+    {
+        auto curr = 0ULL;
+        while (!IsSolution(curr))
+            curr++;
+
+        return curr;
+    }
+
+    void AddDisc(unsigned numPositions, unsigned startPosition)
+    {
+        discs.push_back(Disc(discs.size() + 1, numPositions, startPosition));
+    }
+
+private:
+    inline bool IsSolution(unsigned long long time)
+    {
+        for (auto disc : discs)
+            if (!disc.IsAlignedAtTime(time))
+                return false;
+
+        return true;
+    }
+
+    std::vector<Disc> discs;
+};
+
 
 int main()
 {
-    ReadFile("input.txt");
+    Machine machine("input.txt");
 
-    auto part1 = 0ULL;
-    for (;;)
-    {
-        if (IsSolution(part1))
-            break;
-        part1++;
-    }
+    auto part1 = machine.FindSolution();
 
-    discs.push_back(Disc { 11, 0 });
+    machine.AddDisc(11, 0);
 
-    auto part2 = 0ULL;
-    for (;;)
-    {
-        if (IsSolution(part2))
-            break;
-        part2++;
-    }
+    auto part2 = machine.FindSolution();
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
