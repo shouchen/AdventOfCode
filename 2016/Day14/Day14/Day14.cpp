@@ -13,7 +13,7 @@ const int extraTimes = 2016; // CHANGE TO 0 FOR PART 1 OR 2016 FOR PART 2
 typedef BYTE Hash[16];
 typedef char HexHash[32];
 
-void GetHashText(HCRYPTPROV hProv, const void *data, const size_t dataSize, HexHash hashed)
+void GetHashText(HCRYPTPROV hProv, const void *data, const DWORD dataSize, HexHash hashed)
 {
     HCRYPTPROV hHash = NULL;
 
@@ -77,7 +77,7 @@ std::string &GetHash(unsigned index)
     {
         for (auto i = hashCache.size(); i <= index; i++)
         {
-            auto hash = HashInputWithSuffix(salt, i, extraTimes);
+            auto hash = HashInputWithSuffix(salt, static_cast<unsigned>(i), extraTimes);
             hashCache.push_back(hash);
         }
     }
