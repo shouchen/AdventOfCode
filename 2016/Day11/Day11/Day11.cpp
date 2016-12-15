@@ -1,12 +1,7 @@
 #include "stdafx.h"
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <map>
-#include <vector>
 #include <set>
 #include <queue>
-#include <algorithm>
 #include <cassert>
 
 enum Name : char
@@ -22,241 +17,195 @@ enum Name : char
     Cobalt_M = 0x08,
     Cobalt_G = 0x09,
 
-    Elerium_M = 0x0A,
-    Elerium_G = 0x0B,
-    Dilithium_M = 0x0C,
-    Dilithium_G = 0x0D,
+    //Elerium_M = 0x0A,
+    //Elerium_G = 0x0B,
+    //Dilithium_M = 0x0C,
+    //Dilithium_G = 0x0D,
+
+    //Hydrogen_M = 0x00,
+    //Hydrogen_G = 0x01,
+    //Lithium_M = 0x02,
+    //Lithium_G = 0x03,
+
     NumNames
 };
 
-const char *GetName(Name name)
-{
-    switch (name)
-    {
-    case Polonium_M: return "Polonium_M";
-    case Polonium_G: return "Polonium_G";
-    case Thulium_M: return "Thulium_M";
-    case Thulium_G: return "Thulium_G";
-    case Promethium_M: return "Promethium_M";
-    case Promethium_G: return "Promethium_G";
-    case Ruthenium_M: return "Ruthenium_M";
-    case Ruthenium_G: return "Ruthenium_G";
-    case Cobalt_M: return "Cobalt_M";
-    case Cobalt_G: return "Cobalt_G";
-
-    case Elerium_M: return "Elerium_M";
-    case Elerium_G: return "Elerium_G";
-    case Dilithium_M: return "Dilithium_M";
-    case Dilithium_G: return "Dilithium_G";
-    }
-
-    assert(false);
-    return "<unknown>";
-}
-
-struct Thing
-{
-    Name name;
-    char floor;
-};
-
-int elevator = 1;
-
-Thing input[NumNames] =
-{
-    { Polonium_M, 2 },
-    { Promethium_M, 2 },
-    { Polonium_G , 1 },
-    { Thulium_G , 1 },
-    { Thulium_M , 1 },
-    { Promethium_G , 1 },
-    { Ruthenium_G , 1 },
-    { Ruthenium_M , 1 },
-    { Cobalt_G , 1 },
-    { Cobalt_M , 1 },
-
-    { Elerium_G , 1 },
-    { Elerium_M , 1 },
-    { Dilithium_G , 1 },
-    { Dilithium_M , 1 },
-};
-
+// To minimize the memory footprint, store the state of the world in a single unsigned int like this:
+//
+//  3         2         1
+// 10987654321098765432109876543210
+//     xdxcxbxax9x8x7x6x5x4x3x2x1x0 <= for each object, store (floor - 1) in the two bits
+//   ee                             <= for the elevator, store (floor - 1) in these two bits
+// --                               <= unused
 struct State
 {
-    State(Thing input[NumNames]) : elevator(1), numMoves(0)
-        { for (int i = 0; i < NumNames; i++) this->input[i] = input[i]; }
-    unsigned Hash()
+    State() : value(0) { SetElevatorFloor(1); }
+
+    inline unsigned GetHash() const { return value; }
+    inline unsigned GetElevatorFloor() const { return ((value >> 28) & 0x03) + 1; }
+    inline void SetElevatorFloor(unsigned floor) { value = (value & 0xcfffffff) | ((floor - 1) << 28); }
+    inline void AdjustElevatorFloor(int direction) { SetElevatorFloor(GetElevatorFloor() + direction); }
+    inline unsigned GetFloor(Name name) const { return ((value >> (name * 2)) & 0x03) + 1; }
+    inline void SetFloor(Name name, unsigned floor) { value = (value & ~(0x03U << (name * 2))) | ((floor - 1U) << (name * 2)); }
+    inline void AdjustFloor(Name name, int direction) { SetFloor(name, GetFloor(name) + direction); }
+
+    bool IsValid()
     {
-        unsigned val = elevator - 1;
-        for (int i = 0; i < NumNames; i++)
+        // See if any chips will "fry"; loop through all chips.
+        for (auto i = 0; i < NumNames; i++)
         {
-            val = (val << 2) | (input[i].floor - 1);
+            Name name1(static_cast<Name>(i));
+            if ((name1 & 0x01) == 0) // a chip
+            {
+                bool withCorrespondingGenerator = false, withDifferentGenerator = false;
+
+                // Look through all generators on the same floor
+                for (auto j = 0; j < NumNames; j++)
+                {
+                    Name name2(static_cast<Name>(j));
+                    if (GetFloor(name1) == GetFloor(name2))
+                    {
+                        if ((name1 ^ name2) == 1)
+                            withCorrespondingGenerator = true;
+                        else if (name2 & 0x01)
+                            withDifferentGenerator = true;
+                    }
+                }
+
+                if (withDifferentGenerator && !withCorrespondingGenerator)
+                    return false;
+            }
         }
-        return val;
+
+        return true;
     }
 
-    Thing input[NumNames];
-    int elevator;
-    int numMoves;
+    bool IsSolved()
+    {
+        for (auto i = 0; i < NumNames; i++)
+            if (GetFloor(static_cast<Name>(i)) != 4)
+                return false;
+
+        return true;
+    }
+
+private:
+    unsigned value;
+};
+
+struct QueueNode
+{
+    State state;
+    unsigned numMoves;
 };
 
 std::set<unsigned> seen;
-std::queue<State> queue;
+std::queue<QueueNode> queue;
 
-void Dump(const State &state)
+unsigned best_solution = INT_MAX;
+
+void ScheduleSecond(QueueNode node, Name name, int direction)
 {
-    for (int f = 4; f > 0; f--)
-    {
-        std::cout << ((state.elevator == f) ? 'E' : ' ') << f << " ";
-        for (auto thing : state.input)
-        {
-            if (thing.floor == f) std::cout << GetName(thing.name) << " ";
-        }
-        std::cout << std::endl;
-    }
+    node.state.AdjustFloor(name, direction);
 
-    std::cout << std::endl;
+    if (node.numMoves < best_solution && node.state.IsValid())
+    {
+        queue.push(node);
+    }
 }
 
-bool ValidConfig(const State &state)
+void ScheduleFirst(QueueNode node, Name name1, int direction)
 {
-    // See if any chips will "fry"; loop through all chips.
+    int elevator = node.state.GetElevatorFloor();
+
+    node.state.AdjustFloor(name1, direction);
+    node.state.AdjustElevatorFloor(direction);
+    node.numMoves++;
+
+    if (node.numMoves >= best_solution) return;
+
+    if (node.state.IsValid())
+        queue.push(node);
+
+    for (auto i = name1 + 1; i < NumNames; i++)
+    {
+        Name name2(static_cast<Name>(i));
+        if (node.state.GetFloor(name2) == elevator)
+            ScheduleSecond(node, name2, direction);
+    }
+}
+
+void ScheduleUpOrDown(QueueNode &node, int direction)
+{
     for (auto i = 0; i < NumNames; i++)
     {
-        if ((state.input[i].name & 0x01) == 0) // a chip
-        {
-            bool withCorrespondingGenerator = false, withDifferentGenerator = false;
-
-            // Look through all generators on the same floor
-            for (auto j = 0; j < NumNames; j++)
-            {
-                if (state.input[i].floor == state.input[j].floor)
-                {
-                    if ((state.input[i].name ^ state.input[j].name) == 1)
-                        withCorrespondingGenerator = true;
-                    else if (state.input[j].name & 0x01)
-                        withDifferentGenerator = true;
-                }
-            }
-
-            if (withDifferentGenerator && !withCorrespondingGenerator)
-                return false;
-        }
+        Name name(static_cast<Name>(i));
+        if (node.state.GetFloor(name) == node.state.GetElevatorFloor())
+            ScheduleFirst(node, name, direction);
     }
-
-    return true;
 }
-
-bool IsSolved(const State &state)
-{
-    for (auto i = 0; i < sizeof(state.input) / sizeof(state.input[0]); i++)
-        if (state.input[i].floor != 4) return false;
-
-    return true;
-}
-
-int best_solution = INT_MAX;
 
 bool Solve()
 {
-    if (queue.empty()) return false;
+    if (queue.empty())
+        return true;
 
-    State state = queue.front();
+    QueueNode node = queue.front();
     queue.pop();
 
-    if (state.numMoves >= best_solution)
-        return true;
-
-    if (!ValidConfig(state))
-        return true;
-
-    if (IsSolved(state))
-    {
-        if (state.numMoves < best_solution)
-            best_solution = state.numMoves;
-
-        return true;
-    }
-
-    auto hash = state.Hash();
+    auto hash = node.state.GetHash();
     if (seen.find(hash) != seen.end())
-        return true;
+        return false;
 
     seen.insert(hash);
 
-    // Elevator up
-    if (state.elevator < 4)
+    if (node.state.IsSolved())
     {
-        // With 1 thing
-        for (auto i = 0; i < NumNames; i++)
-        {
-            if (state.input[i].floor == state.elevator)
-            {
-                State newState = state;
-                newState.numMoves++;
-                newState.input[i].floor++;
-                newState.elevator++;
+        if (node.numMoves < best_solution)
+            best_solution = node.numMoves;
 
-                queue.push(newState);
-
-                // With 2 things
-                for (auto j = i + 1; j < NumNames; j++)
-                {
-                    if (state.input[j].floor == state.elevator)
-                    {
-                        State newState2 = newState;
-                        newState2.input[j].floor++;
-
-                        queue.push(newState2);
-                    }
-                }
-            }
-        }
+        return false;
     }
 
-    // Elevator down
-    if (state.elevator > 1)
-    {
-        // With 1 thing
-        for (auto i = 0; i < NumNames; i++)
-        {
-            if (state.input[i].floor == state.elevator)
-            {
-                State newState = state;
-                newState.numMoves++;
-                newState.input[i].floor--;
-                newState.elevator--;
+    if (node.state.GetElevatorFloor() != 4) ScheduleUpOrDown(node, 1);
+    if (node.state.GetElevatorFloor() != 1) ScheduleUpOrDown(node, -1);
 
-                queue.push(newState);
-
-                // With 2 things
-                for (auto j = i + 1; j < NumNames; j++)
-                {
-                    if (state.input[j].floor == state.elevator)
-                    {
-                        State newState2 = newState;
-                        newState2.input[j].floor--;
-
-                        queue.push(newState2);
-                    }
-                }
-            }
-        }
-    }
-
-    return true;
+    return false;
 }
 
 int main()
 {
-    State state(input);
-    queue.push(state);
+    State state;
 
-    while(Solve());
+    state.SetFloor(Polonium_M, 2);
+    state.SetFloor(Promethium_M, 2);
+    state.SetFloor(Polonium_G, 1);
+    state.SetFloor(Thulium_G, 1);
+    state.SetFloor(Thulium_M, 1);
+    state.SetFloor(Promethium_G, 1);
+    state.SetFloor(Ruthenium_G, 1);
+    state.SetFloor(Ruthenium_M, 1);
+    state.SetFloor(Cobalt_G, 1);
+    state.SetFloor(Cobalt_M, 1);
 
-    std::cout << "Part One: " << best_solution << std::endl;
+    //state.SetFloor(Elerium_G, 1);
+    //state.SetFloor(Elerium_M, 1);
+    //state.SetFloor(Dilithium_G, 1);
+    //state.SetFloor(Dilithium_M, 1);
 
-    //assert(best_solution == 47);
-    //assert(best_solution == 71);
+    //state.SetFloor(Hydrogen_M, 1);
+    //state.SetFloor(Hydrogen_G, 2);
+    //state.SetFloor(Lithium_M, 1);
+    //state.SetFloor(Lithium_G, 3);
+
+    queue.push(QueueNode{ state, 0 });
+
+    while(!Solve());
+
+    std::cout << "Solution: " << best_solution << std::endl;
+
+    assert(best_solution == 47);   // Part 1
+    //assert(best_solution == 71); // Part 2
+    //assert(best_solution == 11); // Example
     return 0;
 }
