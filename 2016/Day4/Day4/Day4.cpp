@@ -6,32 +6,29 @@
 #include <string>
 #include <cassert>
 
-std::string decrypt(const std::string &name, unsigned rots)
+std::string Decrypt(const std::string &name, unsigned rots)
 {
     std::string retval;
 
     for (char c : name)
-    {
-        if (c == '-') retval.push_back(' ');
-        else retval.push_back((c - 'a' + rots) % 26 + 'a');
-    }
+        retval.push_back((c == '-') ? ' ' : ((c - 'a' + rots) % 26 + 'a'));
 
     return retval;
 }
 
-void parse(const std::string &room, std::string &encrypted_name, unsigned &sector, std::string &checksum)
+void Parse(const std::string &room, std::string &encryptedName, unsigned &sector, std::string &checksum)
 {
     auto digit = room.find_first_of("0123456789");
     auto lbracket = room.find("["), rbracket = room.find("]");
 
-    encrypted_name = room.substr(0, digit - 1);
+    encryptedName = room.substr(0, digit - 1);
     sector = atoi(room.substr(digit, lbracket - digit).c_str());
     checksum = room.substr(lbracket + 1, rbracket - lbracket - 1);
 }
 
-bool is_valid(const std::string encrypted_name, const std::string checksum)
+bool IsValid(const std::string encryptedName, const std::string checksum)
 {
-    class mycomparison
+    class MyComparison
     {
     public:
         bool operator()(const std::pair<char, unsigned> &lhs, const std::pair<char, unsigned> &rhs) const
@@ -43,41 +40,41 @@ bool is_valid(const std::string encrypted_name, const std::string checksum)
     };
 
     unsigned count[26];
-    for (auto i = 0; i < 26; i++) count[i] = 0;
+    for (auto &c : count) c = 0;
 
-    for (auto c : encrypted_name)
+    for (auto c : encryptedName)
         if (c != '-')
             count[c - 'a']++;
 
     // Heapify the collected data
-    std::priority_queue<std::pair<char, unsigned>, std::vector<std::pair<char, unsigned>>, mycomparison> heap;
-
+    std::priority_queue<std::pair<char, unsigned>, std::vector<std::pair<char, unsigned>>, MyComparison> heap;
     for (auto i = 0; i < 26; i++)
     {
         auto pair = std::pair<char, unsigned>((char)('a' + i), count[i]);
         heap.push(pair);
     }
 
-    std::string temp;
-
-    // Pull out the top five
+    // The top five should match the checksum digits.
     for (auto i = 0; i < 5; i++)
     {
-        temp += heap.top().first;
+        if (checksum[i] != heap.top().first)
+            return false;
+
         heap.pop();
     }
 
-    return checksum == temp;
+    return true;
 }
 
-bool process_room(const std::string &room, unsigned &sector, std::string &name)
+bool ProcessRoom(const std::string &room, unsigned &sector, std::string &name)
 {
-    std::string encrypted_name, checksum;
-    parse(room, encrypted_name, sector, checksum);
+    std::string encryptedName, checksum;
+    Parse(room, encryptedName, sector, checksum);
 
-    if (!is_valid(encrypted_name, checksum)) return false;
+    if (!IsValid(encryptedName, checksum))
+        return false;
 
-    name = decrypt(encrypted_name, sector);
+    name = Decrypt(encryptedName, sector);
     return true;
 }
 
@@ -85,25 +82,26 @@ int main()
 {
     std::ifstream f("input.txt");
     std::string room, name;
-    auto total = 0U, sector = 0U, northpole_object_storage = 0U;
+    auto total = 0U, sector = 0U, northpoleObjectStorage = 0U;
 
     while (f >> room)
     {
-        if (process_room(room, sector, name))
+        if (ProcessRoom(room, sector, name))
         {
             total += sector;
             std::cout << name << " (" << sector << ")" << std::endl;
 
             // Note: Exact name not specified in the problem, but found by perusing
             // the "decrypted" names in the above program output.
-            if (name == "northpole object storage") northpole_object_storage = sector;
+            if (name == "northpole object storage")
+                northpoleObjectStorage = sector;
         }
     }
 
     std::cout << std::endl << "Part One: " << total << std::endl;
-    std::cout << "Part Two: " << northpole_object_storage << std::endl;
+    std::cout << "Part Two: " << northpoleObjectStorage << std::endl;
 
     assert(total == 158835);
-    assert(northpole_object_storage == 993);
+    assert(northpoleObjectStorage == 993);
     return 0;
 }
