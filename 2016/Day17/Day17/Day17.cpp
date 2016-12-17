@@ -45,61 +45,65 @@ static std::string HashInput(const std::string &input)
     return retval;
 }
 
-struct QueueNode
-{
-    QueueNode(const std::string moves, unsigned x, unsigned y) : moves(moves), x(x), y(y) {}
-    std::string moves;
-    unsigned x, y;
-};
-
-std::queue<QueueNode> queue;
 std::string bestSolution;
 unsigned worstSolution;
 
-bool Solve(const std::string &input)
+void Solve(const std::string &input, std::string &moves, unsigned x, unsigned y)
 {
-    if (queue.empty())
-        return true;
-
-    QueueNode node = queue.front();
-    queue.pop();
-
-    if (node.x == 3 && node.y == 3)
+    if (x == 3 && y == 3)
     {
-        if (node.moves.length() < bestSolution.length() || bestSolution.length() == 0)
-            bestSolution = node.moves;
+        if (moves.length() < bestSolution.length() || bestSolution.length() == 0)
+            bestSolution = moves;
 
-        if (node.moves.length() > worstSolution)
-            worstSolution = node.moves.length();
+        if (moves.length() > worstSolution)
+            worstSolution = moves.length();
 
-        return false;
+        return;
     }
 
-    // Get hash of <input>+pathSoFar;
-    auto hash = HashInput(input + node.moves);
+    auto hash = HashInput(input + moves);
 
     // Schedule that node to be processed if it works.
-    if (node.y > 0 && hash[0] > 'a')
-        queue.push(QueueNode(node.moves + "U", node.x, node.y - 1U));
+    if (y > 0 && hash[0] > 'a')
+    {
+        moves.push_back('U');
+        Solve(input, moves, x, y - 1);
+        moves.pop_back();
+    }
 
-    if (node.y < 3 && hash[1] > 'a')
-        queue.push(QueueNode(node.moves + "D", node.x, node.y + 1U));
+    if (y < 3 && hash[1] > 'a')
+    {
+        moves.push_back('D');
+        Solve(input, moves, x, y + 1);
+        moves.pop_back();
+    }
 
-    if (node.x > 0 && hash[2] > 'a')
-        queue.push(QueueNode(node.moves + "L", node.x - 1U, node.y));
+    if (x > 0 && hash[2] > 'a')
+    {
+        moves.push_back('L');
+        Solve(input, moves, x - 1, y);
+        moves.pop_back();
+    }
 
-    if (node.x < 3 && hash[3] > 'a')
-        queue.push(QueueNode(node.moves + "R", node.x + 1U, node.y));
+    if (x < 3 && hash[3] > 'a')
+    {
+        moves.push_back('R');
+        Solve(input, moves, x + 1, y);
+        moves.pop_back();
+    }
+}
 
-    return false;
+void Solve(const std::string &input)
+{
+    std::string moves;
+    Solve(input, moves, 0, 0);
 }
 
 int main()
 {
     double startTime = clock();
 
-    queue.push(QueueNode("", 0, 0));
-    while (!Solve("dmypynyp"));
+    Solve("dmypynyp");
 
     std::cout << "Part One: " << bestSolution << std::endl;
     std::cout << "Part Two: " << worstSolution << std::endl;
