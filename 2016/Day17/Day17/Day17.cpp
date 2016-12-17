@@ -53,49 +53,49 @@ struct QueueNode
     std::string moves;
     unsigned x = 0, y = 0;
 
-    bool operator<(const QueueNode &rhs) const
-    {
-        auto leftAStar = moves.length() + (3 - x) + (3 - y);
-        auto rightAStar = rhs.moves.length() + (3 - rhs.x) + (3 - rhs.y);
+    //bool operator<(const QueueNode &rhs) const
+    //{
+    //    auto leftAStar = moves.length() + (3 - x) + (3 - y);
+    //    auto rightAStar = rhs.moves.length() + (3 - rhs.x) + (3 - rhs.y);
 
-        if (leftAStar > rightAStar) return true;
-        if (leftAStar < rightAStar) return false;
+    //    if (leftAStar > rightAStar) return true;
+    //    if (leftAStar < rightAStar) return false;
 
-        if (moves > rhs.moves) return true;
-        if (moves < rhs.moves) return false;
+    //    if (moves > rhs.moves) return true;
+    //    if (moves < rhs.moves) return false;
 
-        if (x > rhs.x) return true;
-        if (x < rhs.x) return false;
+    //    if (x > rhs.x) return true;
+    //    if (x < rhs.x) return false;
 
-        if (y > rhs.y) return true;
-        if (y < rhs.y) return false;
+    //    if (y > rhs.y) return true;
+    //    if (y < rhs.y) return false;
 
-        return false;
-    }
+    //    return false;
+    //}
 
-    bool operator>(const QueueNode &rhs) const
-    {
-        auto leftAStar = moves.length() + (0 - x) + (0 - y);
-        auto rightAStar = rhs.moves.length() + (0 - rhs.x) + (0 - rhs.y);
-        
-        if (leftAStar < rightAStar) return true;
-        if (leftAStar > rightAStar) return false;
-        
-        if (moves < rhs.moves) return true;
-        if (moves > rhs.moves) return false;
-        
-        if (x < rhs.x) return true;
-        if (x > rhs.x) return false;
-        
-        if (y < rhs.y) return true;
-        if (y > rhs.y) return false;
-        
-        return false;
-    }
+    //bool operator>(const QueueNode &rhs) const
+    //{
+    //    auto leftAStar = moves.length() + (0 - x) + (0 - y);
+    //    auto rightAStar = rhs.moves.length() + (0 - rhs.x) + (0 - rhs.y);
+    //    
+    //    if (leftAStar < rightAStar) return true;
+    //    if (leftAStar > rightAStar) return false;
+    //    
+    //    if (moves < rhs.moves) return true;
+    //    if (moves > rhs.moves) return false;
+    //    
+    //    if (x < rhs.x) return true;
+    //    if (x > rhs.x) return false;
+    //    
+    //    if (y < rhs.y) return true;
+    //    if (y > rhs.y) return false;
+    //    
+    //    return false;
+    //}
 };
 
-std::priority_queue<QueueNode> queue;
-std::priority_queue<QueueNode, std::vector<QueueNode>, std::greater<QueueNode>> queue2;
+std::queue<QueueNode> queue;
+std::queue<QueueNode> queue2;
 
 std::string bestSolution;
 unsigned worstSolution = 0;
@@ -105,7 +105,7 @@ bool InternalSolvePart1(const std::string &input)
     if (queue.empty())
         return true;
 
-    QueueNode node = queue.top();
+    QueueNode node = queue.front();
     queue.pop();
 
     if (node.x == 3 && node.y == 3)
@@ -144,7 +144,7 @@ bool InternalSolvePart2(const std::string &input)
     if (queue2.empty())
         return true;
 
-    QueueNode node = queue2.top();
+    QueueNode node = queue2.front();
     queue2.pop();
 
     if (node.x == 3 && node.y == 3)
