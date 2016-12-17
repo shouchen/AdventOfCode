@@ -3,9 +3,7 @@
 #include <Wincrypt.h>
 #include <iostream>
 #include <string>
-#include <vector>
 #include <queue>
-#include <functional>
 #include <ctime>
 #include <cassert>
 
