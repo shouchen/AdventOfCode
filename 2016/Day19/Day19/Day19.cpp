@@ -1,27 +1,36 @@
 #include "stdafx.h"
 #include <iostream>
-#include <vector>
+#include <ctime>
 #include <cassert>
 
-#define MAX 3001330
-
-struct Base
+class SolverBase
 {
+public:
+    unsigned Solve(unsigned numElves)
+    {
+        Initialize(numElves);
+
+        do
+        {
+            current->presents += other->presents;
+            PostProcess();
+        } while (current->presents < numElves);
+
+        auto retval = current->initialSpot;
+        delete current;
+        return retval;
+    }
+
+protected:
     struct Node
     {
-        unsigned initialSpot;
-        unsigned presents;
+        unsigned initialSpot, presents;
         Node *next, *prev;
     };
 
-    Node *head = nullptr, *current = nullptr, *other = nullptr;
-    unsigned count = 0;
-
-    virtual void PostProcess() = 0;
-
-    void Initialize()
+    void Initialize(unsigned numElves)
     {
-        for (auto i = 1U; i <= MAX; i++)
+        for (auto i = 1U; i <= numElves; i++)
             Append(new Node{ i, 1 });
     }
 
@@ -44,6 +53,8 @@ struct Base
             current->prev = current;
             count = 1;
         }
+
+        AdjustOtherAfterAppend();
     }
 
     void Remove(Node *node)
@@ -54,28 +65,20 @@ struct Base
         count--;
     }
 
-    unsigned Solve()
-    {
-        Initialize();
+    virtual void AdjustOtherAfterAppend() = 0;
+    virtual void PostProcess() = 0;
 
-        do
-        {
-            current->presents += other->presents;
-            PostProcess();
-        } while (current->presents < MAX);
-
-        return current->initialSpot;
-    }
+    Node *head = nullptr, *current = nullptr, *other = nullptr;
+    unsigned count = 0;
 };
 
-struct Part1 : public Base
+class SolverPart1 : public SolverBase
 {
-    void Append(Node *node) override
+protected:
+    void AdjustOtherAfterAppend() override
     {
-        Base::Append(node);
-
         if (count == 2)
-            other = node;
+            other = head->next;
     }
 
     void PostProcess() override
@@ -84,14 +87,13 @@ struct Part1 : public Base
         current = current->next;
         other = current->next;
     }
-} part1;
+};
 
-struct Part2 : public Base
+struct SolverPart2 : public SolverBase
 {
-    void Append(Node *node) override
+protected:
+    void AdjustOtherAfterAppend() override
     {
-        Base::Append(node);
-
         if ((count & 0x1) == 0)
             other = other->next;
     }
@@ -106,17 +108,25 @@ struct Part2 : public Base
         current = current->next;
         other = nextOpposite;
     }
-} part2;
+};
 
 int main()
 {
-    auto answer1 = part1.Solve();
+    double startTime = clock();
+
+    const unsigned numElves = 3001330;
+
+    SolverPart1 solverPart1;
+    auto answer1 = solverPart1.Solve(numElves);
     std::cout << "Part One: " << answer1 << std::endl;
 
-    auto answer2 = part2.Solve();
+    SolverPart2 solverPart2;
+    auto answer2 = solverPart2.Solve(numElves);
     std::cout << "Part Two: " << answer2 << std::endl;
 
     assert(answer1 == 1808357);
     assert(answer2 == 1407007);
+
+    std::cout << std::endl << "It took " << (clock() - startTime) / (CLOCKS_PER_SEC / 1000) << " ms." << std::endl;
     return 0;
 }
