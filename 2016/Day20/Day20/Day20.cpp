@@ -47,13 +47,13 @@ void CoalesceRanges()
     }
 }
 
-unsigned SolvePart1()
+void Solve(unsigned &part1, unsigned &part2)
 {
-    return ranges.begin()->second + 1;
-}
+    std::sort(ranges.begin(), ranges.end(), WayToSort);
+    CoalesceRanges();
 
-unsigned SolvePart2()
-{
+    part1 = ranges.begin()->second + 1;
+
     unsigned sizeOfRanges = 0;
     for (auto r : ranges)
     {
@@ -61,7 +61,7 @@ unsigned SolvePart2()
         sizeOfRanges += thisSize;
     }
 
-    return UINT_MAX - sizeOfRanges + 1;
+    part2 = UINT_MAX - sizeOfRanges + 1;
 }
 
 int main()
@@ -70,16 +70,13 @@ int main()
 
     ReadInput("input.txt");
 
-    // Simplify ranges by sorting and merging first
-    std::sort(ranges.begin(), ranges.end(), WayToSort);
-    CoalesceRanges();
+    auto part1 = 0U, part2 = 0U;
+    Solve(part1, part2);
 
-    auto part1 = SolvePart1();
     std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 32259706);
-
-    auto part2 = SolvePart2();
     std::cout << "Part Two: " << part2 << std::endl;
+
+    assert(part1 == 32259706);
     assert(part2 == 113);
 
     std::cout << std::endl << "It took " << (clock() - startTime) / (CLOCKS_PER_SEC / 1000) << " ms." << std::endl;
