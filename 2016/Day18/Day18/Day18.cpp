@@ -1,44 +1,41 @@
 #include "stdafx.h"
 #include <iostream>
+#include <iomanip>
 #include <string>
-#include <map>
 #include <algorithm>
 #include <ctime>
 #include <cassert>
 
-inline void FindNext(std::string &input)
-{
-    std::string next;
-
-    for (auto i = 0U; i < input.length(); i++)
-    {
-        char left = (i > 0) ? input[i - 1] : '.';
-        char center = input[i];
-        char right = (i < input.length() - 1) ? input[i + 1] : '.';
-
-        next.push_back((left == right) ? '.' : '^');
-    }
-
-    input = next;
-}
-
-bool IsSafe(char c)
-{
-    return c == '.';
-}
-
 void DoProblem(std::string input, unsigned &afterForty, unsigned &afterFourHundredThousand)
 {
+    const unsigned length = input.length();
+    std::string buffer(length, ' ');
+
+    char *curr = &input[0], *other = &buffer[0];
     auto count = 0U;
+    auto nextLineCount = std::count_if(curr, curr + length, [](char c) -> bool { return c == '.'; });
 
     for (auto i = 0U; i < 400000; i++)
     {
-        count += std::count_if(input.begin(), input.end(), IsSafe);
+        count += nextLineCount;
 
         if (i == 39)
             afterForty = count;
 
-        FindNext(input);
+        // Generate next line and count safes at the same time
+        nextLineCount = 0L;
+
+        for (auto j = 0U; j < length; j++)
+        {
+            char left = (j > 0) ? curr[j - 1] : '.';
+            char right = (j < length - 1) ? curr[j + 1] : '.';
+
+            other[j] = (left == right) ? '.' : '^';
+            if (other[j] == '.')
+                nextLineCount++;
+        }
+
+        std::swap(curr, other);
     }
 
     afterFourHundredThousand = count;
