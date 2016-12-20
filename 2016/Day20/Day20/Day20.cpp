@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <vector>
 #include <algorithm>
 #include <ctime>
@@ -24,15 +23,17 @@ bool WayToSort(std::pair<unsigned, unsigned> &p1, std::pair<unsigned, unsigned> 
     return p1.first < p2.first;
 }
 
-// Returns true if something was coalesced, false if nothing more can be done.
-bool CoalesceOneRange()
+void CoalesceRanges()
 {
     for (auto a = ranges.begin(); a != ranges.end(); a++)
     {
-        // Try to merge qualifying B's with A.
-        auto lowestOverlappingBStart = (a->second == UINT_MAX) ? a->second : (a->second + 1);
-        for (auto b = a + 1; b != ranges.end() && b->first <= lowestOverlappingBStart; b++)
+        for (auto b = a + 1; b != ranges.end(); b = a + 1)
         {
+            // Try to merge qualifying B's with A.
+            auto lowestOverlappingBStart = (a->second == UINT_MAX) ? a->second : (a->second + 1);
+            if (b->first > lowestOverlappingBStart)
+                break;
+
             // In here, we know and B overlap, and that B's start is not before A's. We can
             // remove B and merge it into A. This can only change A's end range, so the sort
             // order won't be affected.
@@ -42,16 +43,13 @@ bool CoalesceOneRange()
 
             a->second = std::max(a->second, b->second);
             ranges.erase(b);
-            return true;
         }
     }
-
-    return false;
 }
 
 unsigned SolvePart1()
 {
-    return ranges[0].second + 1;
+    return ranges.begin()->second + 1;
 }
 
 unsigned SolvePart2()
@@ -72,8 +70,9 @@ int main()
 
     ReadInput("input.txt");
 
+    // Simplify ranges by sorting and merging first
     std::sort(ranges.begin(), ranges.end(), WayToSort);
-    while (CoalesceOneRange());
+    CoalesceRanges();
 
     auto part1 = SolvePart1();
     std::cout << "Part One: " << part1 << std::endl;
