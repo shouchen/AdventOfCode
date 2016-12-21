@@ -28,17 +28,6 @@ void Parse(const std::string &room, std::string &encryptedName, unsigned &sector
 
 bool IsValid(const std::string encryptedName, const std::string checksum)
 {
-    class MyComparison
-    {
-    public:
-        bool operator()(const std::pair<char, unsigned> &lhs, const std::pair<char, unsigned> &rhs) const
-        {
-            if (lhs.second < rhs.second) return true;
-            if (lhs.second > rhs.second) return false;
-            return (lhs.first > rhs.first);
-        }
-    };
-
     unsigned count[26];
     for (auto &c : count) c = 0;
 
@@ -46,22 +35,25 @@ bool IsValid(const std::string encryptedName, const std::string checksum)
         if (c != '-')
             count[c - 'a']++;
 
-    // Heapify the collected data
-    std::priority_queue<std::pair<char, unsigned>, std::vector<std::pair<char, unsigned>>, MyComparison> heap;
+    // Put into vector for sorting
+    std::vector<std::pair<char, unsigned>> list;
     for (auto i = 0; i < 26; i++)
     {
         auto pair = std::pair<char, unsigned>((char)('a' + i), count[i]);
-        heap.push(pair);
+        list.push_back(pair);
     }
+
+    std::sort(list.begin(), list.end(), [](const auto &p1, const auto &p2)
+    {
+        if (p1.second > p2.second) return true;
+        if (p1.second < p2.second) return false;
+        return (p1.first < p2.first);
+    });
 
     // The top five should match the checksum digits.
     for (auto i = 0; i < 5; i++)
-    {
-        if (checksum[i] != heap.top().first)
+        if (checksum[i] != list[i].first)
             return false;
-
-        heap.pop();
-    }
 
     return true;
 }
