@@ -135,19 +135,14 @@ private:
 
     void UnrotateBasedOnLetter(std::string &s, char letter)
     {
-        auto rotatedS = s;
-        for (;;)
-        {
-            auto rotatedBasedOnLetter = rotatedS;
-            RotateBasedOnLetter(rotatedBasedOnLetter, letter);
-            if (rotatedBasedOnLetter == s)
-            {
-                s = rotatedS;
-                break;
-            }
+        std::string input = s, rotatedBasedOnLetter;
 
-            RotateLeft(rotatedS, 1);
-        }
+        do
+        {
+            RotateLeft(s, 1);
+            rotatedBasedOnLetter = s;
+            RotateBasedOnLetter(rotatedBasedOnLetter, letter);
+        } while (rotatedBasedOnLetter != input);
     }
 
     std::vector<std::string> m_steps;
