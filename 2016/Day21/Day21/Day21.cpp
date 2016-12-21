@@ -18,16 +18,20 @@ public:
             m_steps.push_back(line);
     }
 
-    void DoSteps(std::string &input)
+    std::string DoSteps(std::string input)
     {
         for (auto step : m_steps)
             PerformStep(step, input, false);
+
+        return input;
     }
 
-    void UndoSteps(std::string &input)
+    std::string UndoSteps(std::string input)
     {
         for (auto curr = m_steps.rbegin(); curr != m_steps.rend(); curr++)
             PerformStep(*curr, input, true);
+
+        return input;
     }
 
 private:
@@ -155,11 +159,8 @@ int main()
 
     Puzzle puzzle("input.txt");
 
-    std::string part1 = "abcdefgh";
-    puzzle.DoSteps(part1);
-
-    std::string part2 = "fbgdceah";
-    puzzle.UndoSteps(part2);
+    auto part1 = puzzle.DoSteps("abcdefgh");
+    auto part2 = puzzle.UndoSteps("fbgdceah");
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
