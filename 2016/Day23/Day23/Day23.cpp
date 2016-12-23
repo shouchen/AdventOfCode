@@ -1,12 +1,11 @@
 #include "stdafx.h"
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <ctime>
 #include <cassert>
-
-class Computer;
 
 using Program = std::vector<std::string>;
 
@@ -17,20 +16,15 @@ public:
 
     void InitializeRegisters(long long a = 0, long long b = 0, long long c = 0, long long d = 0)
     {
-        GetRegister('a') = a;
-        GetRegister('b') = b;
-        GetRegister('c') = c;
-        GetRegister('d') = d;
-    }
-
-    inline long long &GetRegister(char name)
-    {
-        assert(name >= 'a' && name <= 'd');
-        return registers[name - 'a'];
+        this->a = a;
+        this->b = b;
+        this->c = c;
+        this->d = d;
     }
 
     void ExecuteProgram(Program &program);
-    void ExecuteInstruction(std::string instruction);
+
+    long long a, b, c, d;
 
 private:
     inline static bool IsRegister(const std::string x)
@@ -38,37 +32,48 @@ private:
         return x.length() == 1 && x[0] >= 'a' && x[0] <= 'd';
     }
 
+    inline long long &GetRegister(char name)
+    {
+        switch (name)
+        {
+        case 'a': return a;
+        case 'b': return b;
+        case 'c': return c;
+        case 'd': return d;
+        default:
+            assert(false);
+            return a;
+        }
+    }
+
+    void ExecuteInstruction(std::string instruction);
     void Optimize();
 
     Program originalProgram, program;
-    long long registers[4];
     unsigned pc = 0;
 };
 
 void Computer::ExecuteProgram(Program &program)
 {
     this->originalProgram.clear();
-    this->program.clear();
 
     for (auto i : program)
-    {
         this->originalProgram.push_back(i);
-        this->program.push_back(i);
-    }
 
     Optimize();
+
     for (pc = 0U; pc < this->program.size(); )
         ExecuteInstruction(this->program[pc]);
 }
 
 void Computer::Optimize()
 {
-    // Remove optimization and re-optimize
+    // Code self-modified; remove any optimizations and re-optimize
     program.clear();
     for (auto i : originalProgram)
         this->program.push_back(i);
 
-    // Look for multiplies of the form a += c * d
+    // Replace slow multiplies of the form a += c * d
     for (auto i = 0U; i < program.size() - 4; i++)
     {
         if (program[i] == "inc a")
@@ -76,7 +81,7 @@ void Computer::Optimize()
             if ((program[i + 1] == "dec c" && program[i + 2] == "jnz c -2" && program[i + 3] == "dec d" && program[i + 4] == "jnz d -5") ||
                 (program[i + 1] == "dec d" && program[i + 2] == "jnz d -2" && program[i + 3] == "dec c" && program[i + 4] == "jnz c -5"))
             {
-                program[i] = "mpy a";
+                program[i] = "mpy c d a";
                 program[i + 1] = "cpy 0 c";
                 program[i + 2] = "cpy 0 d";
                 program[i + 3] = "cpy 0 c";
@@ -88,21 +93,11 @@ void Computer::Optimize()
 
 void Computer::ExecuteInstruction(std::string instruction)
 {
-    auto find = instruction.find(' ', 4);
+    std::stringstream ss(instruction);
+    std::string opcode, op1, op2, op3;
+    ss >> opcode >> op1 >> op2 >> op3;
 
-    auto opcode = instruction.substr(0, 3);
-    std::string op1, op2;
-    if (find == std::string::npos)
-    {
-        op1 = instruction.substr(4);
-    }
-    else
-    {
-        op1 = instruction.substr(4, find - 4);
-        op2 = instruction.substr(find + 1);
-    }
-
-    if (opcode == "cpy") // src, dest   (reg/value, reg)
+    if (opcode == "cpy")
     {
         if (IsRegister(op2))
         {
@@ -111,61 +106,53 @@ void Computer::ExecuteInstruction(std::string instruction)
         }
         pc++;
     }
-    else if (opcode == "inc") // reg
+    else if (opcode == "inc")
     {
         if (IsRegister(op1))
             GetRegister(op1[0])++;
 
         pc++;
     }
-    else if (opcode == "dec") // reg
+    else if (opcode == "dec")
     {
         if (IsRegister(op1))
             GetRegister(op1[0])--;
 
         pc++;
     }
-    else if (opcode == "jnz") // if op1 is not zero, jump to offset of op2
+    else if (opcode == "jnz")
     {
         long long value = IsRegister(op1) ? GetRegister(op1[0]) : atoi(op1.c_str());
         long long offset = IsRegister(op2) ? GetRegister(op2[0]) : atoi(op2.c_str());
+
         auto newpc = pc + (value ? offset : 1);
-        assert(newpc != pc); // catch infini-loop
         if (newpc >= 0 && newpc < program.size())
             pc = static_cast<unsigned>(newpc);
     }
-    else if (opcode == "tgl") // offset and self-modify code
+    else if (opcode == "tgl")
     {
         long long offset = IsRegister(op1) ? GetRegister(op1[0]) : atoi(op1.c_str());
-
         if (pc + offset >= 0 && pc + offset < program.size())
         {
-            auto instruction = program[pc + static_cast<int>(offset)];
+            auto instruction = originalProgram[pc + static_cast<int>(offset)];
             auto opcode = instruction.substr(0, 3);
 
-            if (opcode == "cpy") instruction = "jnz" + instruction.substr(3);
-            else if (opcode == "jnz") instruction = "cpy" + instruction.substr(3);
-            else if (opcode == "inc") instruction = "dec" + instruction.substr(3);
-            else if (opcode == "dec") instruction = "inc" + instruction.substr(3);
-            else if (opcode == "tgl") instruction = "inc" + instruction.substr(3);
+            if (opcode == "cpy") instruction.replace(0, 3, "jnz");
+            else if (opcode == "jnz") instruction.replace(0, 3, "cpy");
+            else if (opcode == "inc") instruction.replace(0, 3, "dec");
+            else if (opcode == "dec" || opcode == "tgl") instruction.replace(0, 3, "inc");
             else assert(false);
 
-            program[pc + static_cast<int>(offset)] = instruction;
             originalProgram[pc + static_cast<int>(offset)] = instruction;
-
             Optimize();
         }
         pc++;
     }
-    else if (opcode == "add") // a += d
+    else if (opcode == "mpy")
     {
-        long long value = IsRegister(op1) ? GetRegister(op1[0]) : atoi(op1.c_str());
-        GetRegister(op2[0]) += value;
-        pc++;
-    }
-    else if (opcode == "mpy") // a += d * c
-    {
-        GetRegister('a') += GetRegister('d') * GetRegister('c');
+        if (IsRegister(op1) && IsRegister(op2) && IsRegister(op3))
+            GetRegister(op3[0]) += GetRegister(op1[0]) * GetRegister(op2[0]);
+
         pc++;
     }
     else
@@ -187,13 +174,13 @@ int _tmain(int argc, _TCHAR *argv[])
     computer.InitializeRegisters(7, 0, 0, 0);
     computer.ExecuteProgram(program);
 
-    auto partOne = computer.GetRegister('a');
+    auto partOne = computer.a;
     std::cout << "Part One: " << partOne << std::endl;
 
     computer.InitializeRegisters(12, 0, 0, 0);
     computer.ExecuteProgram(program);
 
-    auto partTwo = computer.GetRegister('a');
+    auto partTwo = computer.a;
     std::cout << "Part Two: " << partTwo << std::endl;
 
     std::cout << std::endl << "It took " << (clock() - startTime) / (CLOCKS_PER_SEC / 1000) << " ms." << std::endl;
