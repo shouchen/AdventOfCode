@@ -22,7 +22,7 @@ public:
     {
     }
 
-    char operator[](unsigned index)
+    char operator[](unsigned index) const
     {
         unsigned offset = index % cyclePeriod;
 
@@ -38,10 +38,10 @@ public:
 private:
     const std::string input;
     const unsigned cyclePeriod;
-    static FilledDiskWithModifiedDragonCurve zeroCurve;
+    static const FilledDiskWithModifiedDragonCurve zeroCurve;
 };
 
-FilledDiskWithModifiedDragonCurve FilledDiskWithModifiedDragonCurve::zeroCurve("0");
+const FilledDiskWithModifiedDragonCurve FilledDiskWithModifiedDragonCurve::zeroCurve("0");
 
 // For the checksum computation, we know how many bits from the filled-up disk
 // contribute to each checksum digit (call this "group size").
@@ -70,7 +70,7 @@ std::string FindChecksum(FilledDiskWithModifiedDragonCurve &dcg, unsigned fillSi
     {
         if (dcg[i] == '1') oneCount++;
 
-        // Emit checksum digit if time to (end of group or end of input)
+        // Emit checksum digit if time to (at end of group or at end of whole input)
         if (((i + 1) % groupSize == 0) || (i + 1) == fillSize)
         {
             cs.push_back((oneCount & 0x1) ? '0' : '1');
