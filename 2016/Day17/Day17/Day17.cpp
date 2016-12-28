@@ -47,10 +47,11 @@ static std::string HashInput(const std::string &input)
 
 std::string bestSolution;
 unsigned worstSolution;
+const auto startX = 0U, startY = 0U, goalX = 3U, goalY = 3U, maxX = 3U, maxY = 3U;
 
 void Solve(const std::string &input, std::string &moves, unsigned x, unsigned y)
 {
-    if (x == 3 && y == 3)
+    if (x == goalX && y == goalY)
     {
         if (moves.length() < bestSolution.length() || bestSolution.length() == 0)
             bestSolution = moves;
@@ -63,7 +64,7 @@ void Solve(const std::string &input, std::string &moves, unsigned x, unsigned y)
 
     auto hash = HashInput(input + moves);
 
-    // Schedule that node to be processed if it works.
+    // Recurse through all possible next steps.
     if (y > 0 && hash[0] > 'a')
     {
         moves.push_back('U');
@@ -71,7 +72,7 @@ void Solve(const std::string &input, std::string &moves, unsigned x, unsigned y)
         moves.pop_back();
     }
 
-    if (y < 3 && hash[1] > 'a')
+    if (y < maxY && hash[1] > 'a')
     {
         moves.push_back('D');
         Solve(input, moves, x, y + 1);
@@ -85,7 +86,7 @@ void Solve(const std::string &input, std::string &moves, unsigned x, unsigned y)
         moves.pop_back();
     }
 
-    if (x < 3 && hash[3] > 'a')
+    if (x < maxX && hash[3] > 'a')
     {
         moves.push_back('R');
         Solve(input, moves, x + 1, y);
@@ -96,7 +97,7 @@ void Solve(const std::string &input, std::string &moves, unsigned x, unsigned y)
 void Solve(const std::string &input)
 {
     std::string moves;
-    Solve(input, moves, 0, 0);
+    Solve(input, moves, startX, startY);
 }
 
 int main()
