@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include <iostream>
+#include <iomanip>
 #include <set>
 #include <queue>
+#include <ctime>
 #include <cassert>
 
 enum Name : char
@@ -17,17 +19,10 @@ enum Name : char
     Cobalt_M = 0x08,
     Cobalt_G = 0x09,
 
-    //Elerium_M = 0x0A,
-    //Elerium_G = 0x0B,
-    //Dilithium_M = 0x0C,
-    //Dilithium_G = 0x0D,
-
-    //Hydrogen_M = 0x00,
-    //Hydrogen_G = 0x01,
-    //Lithium_M = 0x02,
-    //Lithium_G = 0x03,
-
-    NumNames
+    Elerium_M = 0x0A,
+    Elerium_G = 0x0B,
+    Dilithium_M = 0x0C,
+    Dilithium_G = 0x0D,
 };
 
 // To minimize the memory footprint, store the state of the world in a single unsigned int like this:
@@ -39,42 +34,54 @@ enum Name : char
 // --                               <= unused
 struct State
 {
-    State() : value(0) { SetElevatorFloor(1); }
+    State() { SetElevatorFloor(1); }
 
-    inline unsigned GetHash() const { return value; }
-    inline unsigned GetElevatorFloor() const { return ((value >> 28) & 0x03) + 1; }
-    inline void SetElevatorFloor(unsigned floor) { value = (value & 0xcfffffff) | ((floor - 1) << 28); }
-    inline void AdjustElevatorFloor(int direction) { SetElevatorFloor(GetElevatorFloor() + direction); }
-    inline unsigned GetFloor(Name name) const { return ((value >> (name * 2)) & 0x03) + 1; }
-    inline void SetFloor(Name name, unsigned floor) { value = (value & ~(0x03U << (name * 2))) | ((floor - 1U) << (name * 2)); }
-    inline void AdjustFloor(Name name, int direction) { SetFloor(name, GetFloor(name) + direction); }
+    inline unsigned long long GetHash() const { return ((unsigned long long)floor[0]) | ((unsigned long long)floor[1] << 16) | ((unsigned long long)floor[2] << 32) | ((unsigned long long)floor[3] << 48); }
+    inline unsigned GetElevatorFloor() const 
+    {
+        for (int i = 0; i <= 3; i++)
+            if (floor[i] & 0x8000) return i + 1;
+        return 0;
+    }
+    inline void SetElevatorFloor(unsigned f)
+    {
+        floor[0] &= ~0x8000; floor[1] &= ~0x8000; floor[2] &= ~0x8000; floor[3] &= ~0x8000;
+        floor[f - 1] |= 0x8000;
+    }
+    inline void AdjustElevatorFloor(int direction)
+    {
+        SetElevatorFloor(GetElevatorFloor() + direction);
+    }
+    inline unsigned GetFloor(Name name) const
+    {
+        unsigned short bit = 1 << name;
+        for (int i = 0; i <= 3; i++)
+            if (floor[i] & bit) return i + 1;
+        return 0;
+    }
+    inline void SetFloor(Name name, unsigned f)
+    {
+        unsigned short bit = 1 << name;
+        floor[0] &= ~bit; floor[1] &= ~bit; floor[2] &= ~bit; floor[3] &= ~bit;
+        floor[f - 1] |= bit;
+    }
+    inline void AdjustFloor(Name name, int direction)
+    {
+        SetFloor(name, GetFloor(name) + direction);
+    }
 
     bool IsValid()
     {
-        // See if any chips will "fry"; loop through all chips.
-        for (auto i = 0; i < NumNames; i++)
+        // Make sure no chips will fry
+        for (int i = 0; i < 10; i += 2)
         {
-            Name name1(static_cast<Name>(i));
-            if ((name1 & 0x01) == 0) // a chip
-            {
-                bool withCorrespondingGenerator = false, withDifferentGenerator = false;
+            auto chipFloor = GetFloor(static_cast<Name>(i));
+            auto genFloor = GetFloor(static_cast<Name>(i + 1));
 
-                // Look through all generators on the same floor
-                for (auto j = 0; j < NumNames; j++)
-                {
-                    Name name2(static_cast<Name>(j));
-                    if (GetFloor(name1) == GetFloor(name2))
-                    {
-                        if ((name1 ^ name2) == 1)
-                            withCorrespondingGenerator = true;
-                        else if (name2 & 0x01)
-                            withDifferentGenerator = true;
-                    }
-                }
+            if (genFloor == chipFloor) continue; // safe
 
-                if (withDifferentGenerator && !withCorrespondingGenerator)
-                    return false;
-            }
+            // See if other gens are on the same floor as this chip
+            if (floor[chipFloor - 1] & 0x2aaaaaaa) return false;
         }
 
         return true;
@@ -82,16 +89,34 @@ struct State
 
     bool IsSolved()
     {
-        for (auto i = 0; i < NumNames; i++)
-            if (GetFloor(static_cast<Name>(i)) != 4)
+        for (auto i = 0; i < 3; i++)
+            if (floor[i] & 0xfe)
                 return false;
 
         return true;
     }
 
 private:
-    unsigned value;
+    unsigned short floor[4] = { 0, 0, 0, 0 };
 };
+
+void Dump(State state)
+{
+    for (int i = 4; i > 0; i--)
+    {
+        std::cout << ((state.GetElevatorFloor() == i) ? 'e' : ' ') << i << ": ";
+        for (int j = 0; j < 15; j++)
+        {
+            if (state.GetFloor(static_cast<Name>(j)) == i)
+                if (j & 1)
+                    std::cout << char('A' + ((j - 1) / 2));
+                else
+                    std::cout << char('a' + (j / 2));
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
 
 struct QueueNode
 {
@@ -99,22 +124,20 @@ struct QueueNode
     unsigned numMoves;
 };
 
-std::set<unsigned> seen;
+std::set<unsigned long long> seen;
 std::queue<QueueNode> queue;
 
-unsigned best_solution = INT_MAX;
+unsigned bestSolution = INT_MAX;
 
-void ScheduleSecond(QueueNode node, Name name, int direction)
+void ScheduleSecondObject(QueueNode node, Name name, int direction)
 {
     node.state.AdjustFloor(name, direction);
 
-    if (node.numMoves < best_solution && node.state.IsValid())
-    {
+    if (node.numMoves < bestSolution && node.state.IsValid())
         queue.push(node);
-    }
 }
 
-void ScheduleFirst(QueueNode node, Name name1, int direction)
+void ScheduleFirstObject(QueueNode node, Name name1, int direction)
 {
     int elevator = node.state.GetElevatorFloor();
 
@@ -122,26 +145,26 @@ void ScheduleFirst(QueueNode node, Name name1, int direction)
     node.state.AdjustElevatorFloor(direction);
     node.numMoves++;
 
-    if (node.numMoves >= best_solution) return;
+    if (node.numMoves >= bestSolution) return;
 
     if (node.state.IsValid())
         queue.push(node);
 
-    for (auto i = name1 + 1; i < NumNames; i++)
+    for (auto i = name1 + 1; i < 10; i++)
     {
         Name name2(static_cast<Name>(i));
         if (node.state.GetFloor(name2) == elevator)
-            ScheduleSecond(node, name2, direction);
+            ScheduleSecondObject(node, name2, direction);
     }
 }
 
 void ScheduleUpOrDown(QueueNode &node, int direction)
 {
-    for (auto i = 0; i < NumNames; i++)
+    for (auto i = 0; i < 10; i++)
     {
         Name name(static_cast<Name>(i));
         if (node.state.GetFloor(name) == node.state.GetElevatorFloor())
-            ScheduleFirst(node, name, direction);
+            ScheduleFirstObject(node, name, direction);
     }
 }
 
@@ -161,20 +184,25 @@ bool Solve()
 
     if (node.state.IsSolved())
     {
-        if (node.numMoves < best_solution)
-            best_solution = node.numMoves;
+        if (node.numMoves < bestSolution)
+            bestSolution = node.numMoves;
 
         return false;
     }
 
-    if (node.state.GetElevatorFloor() != 4) ScheduleUpOrDown(node, 1);
-    if (node.state.GetElevatorFloor() != 1) ScheduleUpOrDown(node, -1);
+    if (node.state.GetElevatorFloor() != 4)
+        ScheduleUpOrDown(node, 1);
+
+    if (node.state.GetElevatorFloor() != 1)
+        ScheduleUpOrDown(node, -1);
 
     return false;
 }
 
 int main()
 {
+    double startTime = clock();
+
     State state;
 
     state.SetFloor(Polonium_M, 2);
@@ -202,10 +230,10 @@ int main()
 
     while(!Solve());
 
-    std::cout << "Solution: " << best_solution << std::endl;
+    std::cout << "Part One: " << bestSolution << std::endl;
+    std::cout << std::endl << "It took " << (clock() - startTime) / (CLOCKS_PER_SEC / 1000) << " ms." << std::endl;
 
-    assert(best_solution == 47);   // Part 1
-    //assert(best_solution == 71); // Part 2
-    //assert(best_solution == 11); // Example
+    assert(bestSolution == 47);   // Part 1
+    //assert(bestSolution == 71); // Part 2
     return 0;
 }
