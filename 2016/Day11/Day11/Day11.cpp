@@ -6,117 +6,86 @@
 #include <ctime>
 #include <cassert>
 
-enum Name : char
+// These must be ordered by microchip-generator pairs (microchip followed by
+// its corresponding generator).
+enum : unsigned short
 {
-    Polonium_M = 0x00,
-    Polonium_G = 0x01,
-    Thulium_M = 0x02,
-    Thulium_G = 0x03,
-    Promethium_M = 0x04,
-    Promethium_G = 0x05,
-    Ruthenium_M = 0x06,
-    Ruthenium_G = 0x07,
-    Cobalt_M = 0x08,
-    Cobalt_G = 0x09,
+    Polonium_M =   0x0001,
+    Polonium_G =   0x0002,
+    Thulium_M =    0x0004,
+    Thulium_G =    0x0008,
+    Promethium_M = 0x0010,
+    Promethium_G = 0x0020,
+    Ruthenium_M =  0x0040,
+    Ruthenium_G =  0x0080,
+    Cobalt_M =     0x0100,
+    Cobalt_G =     0x0200,
+    Elerium_M =    0x0400,
+    Elerium_G =    0x0800,
+    Dilithium_M =  0x1000,
+    Dilithium_G =  0x2000,
 
-    Elerium_M = 0x0A,
-    Elerium_G = 0x0B,
-    Dilithium_M = 0x0C,
-    Dilithium_G = 0x0D,
+    Elevator =     0x8000
 };
 
-// To minimize the memory footprint, store the state of the world in a single unsigned int like this:
-//
-//  3         2         1
-// 10987654321098765432109876543210
-//     xdxcxbxax9x8x7x6x5x4x3x2x1x0 <= for each object, store (floor - 1) in the two bits
-//   ee                             <= for the elevator, store (floor - 1) in these two bits
-// --                               <= unused
+const unsigned short NotElevator = ~Elevator;
+const unsigned short AllMicrochips = 0x1555;
+const unsigned short AllGenerators = 0x2aaa;
+
 struct State
 {
-    State() { SetElevatorFloor(1); }
-
-    inline unsigned long long GetHash() const { return ((unsigned long long)floor[0]) | ((unsigned long long)floor[1] << 16) | ((unsigned long long)floor[2] << 32) | ((unsigned long long)floor[3] << 48); }
-    inline unsigned GetElevatorFloor() const 
+    inline unsigned long long GetHash() const
     {
-        for (int i = 0; i <= 3; i++)
-            if (floor[i] & 0x8000) return i + 1;
+        return hash;
+    }
+    
+    inline unsigned GetElevatorIndex() const 
+    {
+        if (floor[3] & Elevator) return 3;
+        if (floor[2] & Elevator) return 2;
+        if (floor[1] & Elevator) return 1;
         return 0;
     }
-    inline void SetElevatorFloor(unsigned f)
+    
+    inline void PlaceObjectAtFloor(unsigned short name, unsigned f)
     {
-        floor[0] &= ~0x8000; floor[1] &= ~0x8000; floor[2] &= ~0x8000; floor[3] &= ~0x8000;
-        floor[f - 1] |= 0x8000;
+        floor[f - 1] |= name;
     }
-    inline void AdjustElevatorFloor(int direction)
+    
+    inline bool IsObjectAtIndex(unsigned short name, unsigned index)
     {
-        SetElevatorFloor(GetElevatorFloor() + direction);
+        return (floor[index] & name) ? true : false;
     }
-    inline unsigned GetFloor(Name name) const
+    
+    inline void MoveObject(unsigned short name, unsigned oldIndex, unsigned newIndex)
     {
-        unsigned short bit = 1 << name;
-        for (int i = 0; i <= 3; i++)
-            if (floor[i] & bit) return i + 1;
-        return 0;
-    }
-    inline void SetFloor(Name name, unsigned f)
-    {
-        unsigned short bit = 1 << name;
-        floor[0] &= ~bit; floor[1] &= ~bit; floor[2] &= ~bit; floor[3] &= ~bit;
-        floor[f - 1] |= bit;
-    }
-    inline void AdjustFloor(Name name, int direction)
-    {
-        SetFloor(name, GetFloor(name) + direction);
+        floor[oldIndex] &= ~name;
+        floor[newIndex] |= name;
     }
 
-    bool IsValid()
+    inline bool IsSolved()
     {
-        // Make sure no chips will fry
-        for (int i = 0; i < 10; i += 2)
-        {
-            auto chipFloor = GetFloor(static_cast<Name>(i));
-            auto genFloor = GetFloor(static_cast<Name>(i + 1));
-
-            if (genFloor == chipFloor) continue; // safe
-
-            // See if other gens are on the same floor as this chip
-            if (floor[chipFloor - 1] & 0x2aaaaaaa) return false;
-        }
-
-        return true;
+        return !(floor[0] & NotElevator) && !(floor[1] & NotElevator) && !(floor[2] & NotElevator);
     }
 
-    bool IsSolved()
+    inline bool IsIndexValid(unsigned index)
     {
-        for (auto i = 0; i < 3; i++)
-            if (floor[i] & 0xfe)
-                return false;
+        unsigned short generators = floor[index] & AllGenerators;
+        if (!generators) return true;
 
-        return true;
+        unsigned short microchips = floor[index] & AllMicrochips;
+        unsigned short microchipsWithoutTheirGenerator = microchips & ~(generators >> 1);
+
+        return !microchipsWithoutTheirGenerator;
     }
 
 private:
-    unsigned short floor[4] = { 0, 0, 0, 0 };
-};
-
-void Dump(State state)
-{
-    for (int i = 4; i > 0; i--)
+    union
     {
-        std::cout << ((state.GetElevatorFloor() == i) ? 'e' : ' ') << i << ": ";
-        for (int j = 0; j < 15; j++)
-        {
-            if (state.GetFloor(static_cast<Name>(j)) == i)
-                if (j & 1)
-                    std::cout << char('A' + ((j - 1) / 2));
-                else
-                    std::cout << char('a' + (j / 2));
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
+        unsigned short floor[4] = { 0, 0, 0, 0 };
+        unsigned long long hash;
+    };
+};
 
 struct QueueNode
 {
@@ -126,114 +95,124 @@ struct QueueNode
 
 std::set<unsigned long long> seen;
 std::queue<QueueNode> queue;
-
 unsigned bestSolution = INT_MAX;
 
-void ScheduleSecondObject(QueueNode node, Name name, int direction)
+inline void TryMoveSecondObject(QueueNode node, unsigned short name, unsigned oldIndex, unsigned newIndex)
 {
-    node.state.AdjustFloor(name, direction);
+    node.state.MoveObject(name, oldIndex, newIndex);
 
-    if (node.numMoves < bestSolution && node.state.IsValid())
+    if (node.state.IsIndexValid(oldIndex) && node.state.IsIndexValid(newIndex))
         queue.push(node);
 }
 
-void ScheduleFirstObject(QueueNode node, Name name1, int direction)
+inline void TryMoveFirstObject(QueueNode node, unsigned short name, unsigned oldIndex, unsigned newIndex)
 {
-    int elevator = node.state.GetElevatorFloor();
-
-    node.state.AdjustFloor(name1, direction);
-    node.state.AdjustElevatorFloor(direction);
+    node.state.MoveObject(name, oldIndex, newIndex);
+    node.state.MoveObject(Elevator, oldIndex, newIndex);
     node.numMoves++;
 
-    if (node.numMoves >= bestSolution) return;
-
-    if (node.state.IsValid())
+    if (node.state.IsIndexValid(oldIndex) && node.state.IsIndexValid(newIndex))
         queue.push(node);
 
-    for (auto i = name1 + 1; i < 10; i++)
-    {
-        Name name2(static_cast<Name>(i));
-        if (node.state.GetFloor(name2) == elevator)
-            ScheduleSecondObject(node, name2, direction);
-    }
+    for (unsigned short curr = name << 1; curr < Elevator; curr <<= 1)
+        if (node.state.IsObjectAtIndex(curr, oldIndex))
+            TryMoveSecondObject(node, curr, oldIndex, newIndex);
 }
 
-void ScheduleUpOrDown(QueueNode &node, int direction)
+inline void TryMove(QueueNode &node, unsigned oldIndex, unsigned newIndex)
 {
-    for (auto i = 0; i < 10; i++)
-    {
-        Name name(static_cast<Name>(i));
-        if (node.state.GetFloor(name) == node.state.GetElevatorFloor())
-            ScheduleFirstObject(node, name, direction);
-    }
+    for (unsigned short curr = 0x1; curr < Elevator; curr <<= 1)
+        if (node.state.IsObjectAtIndex(curr, oldIndex))
+            TryMoveFirstObject(node, curr, oldIndex, newIndex);
 }
 
-bool Solve()
+unsigned Solve(const State &initState)
 {
-    if (queue.empty())
-        return true;
+    seen.clear();
+    while (!queue.empty()) queue.pop();
+    bestSolution = INT_MAX;
 
-    QueueNode node = queue.front();
-    queue.pop();
+    queue.push(QueueNode{ initState, 0 });
 
-    auto hash = node.state.GetHash();
-    if (seen.find(hash) != seen.end())
-        return false;
-
-    seen.insert(hash);
-
-    if (node.state.IsSolved())
+    while (!queue.empty())
     {
-        if (node.numMoves < bestSolution)
-            bestSolution = node.numMoves;
+        QueueNode node = queue.front();
+        queue.pop();
 
-        return false;
+        auto hash = node.state.GetHash();
+        if (seen.find(hash) != seen.end())
+            continue;
+
+        seen.insert(hash);
+
+        if (node.state.IsSolved())
+        {
+            if (node.numMoves < bestSolution)
+                bestSolution = node.numMoves;
+
+            continue;
+        }
+
+        if (node.numMoves + 1 < bestSolution)
+        {
+            auto index = node.state.GetElevatorIndex();
+
+            if (index != 3) TryMove(node, index, index + 1);
+            if (index != 0) TryMove(node, index, index - 1);
+        }
     }
+    
+    return bestSolution;
+}
 
-    if (node.state.GetElevatorFloor() != 4)
-        ScheduleUpOrDown(node, 1);
+void DoCommonStateSetupForParts1And2(State &state)
+{
+    state.PlaceObjectAtFloor(Polonium_M, 2);
+    state.PlaceObjectAtFloor(Promethium_M, 2);
+    state.PlaceObjectAtFloor(Polonium_G, 1);
+    state.PlaceObjectAtFloor(Thulium_G, 1);
+    state.PlaceObjectAtFloor(Thulium_M, 1);
+    state.PlaceObjectAtFloor(Promethium_G, 1);
+    state.PlaceObjectAtFloor(Ruthenium_G, 1);
+    state.PlaceObjectAtFloor(Ruthenium_M, 1);
+    state.PlaceObjectAtFloor(Cobalt_G, 1);
+    state.PlaceObjectAtFloor(Cobalt_M, 1);
+    state.PlaceObjectAtFloor(Elevator, 1);
+}
 
-    if (node.state.GetElevatorFloor() != 1)
-        ScheduleUpOrDown(node, -1);
+unsigned DoPart1()
+{
+    State state;
+    DoCommonStateSetupForParts1And2(state);
 
-    return false;
+    return Solve(state);
+}
+
+unsigned DoPart2()
+{
+    State state;
+    DoCommonStateSetupForParts1And2(state);
+
+    state.PlaceObjectAtFloor(Elerium_G, 1);
+    state.PlaceObjectAtFloor(Elerium_M, 1);
+    state.PlaceObjectAtFloor(Dilithium_G, 1);
+    state.PlaceObjectAtFloor(Dilithium_M, 1);
+
+    return Solve(state);
 }
 
 int main()
 {
     double startTime = clock();
 
-    State state;
+    auto part1 = DoPart1();
+    std::cout << "Part One: " << part1 << std::endl;
+    assert(part1 == 47);
 
-    state.SetFloor(Polonium_M, 2);
-    state.SetFloor(Promethium_M, 2);
-    state.SetFloor(Polonium_G, 1);
-    state.SetFloor(Thulium_G, 1);
-    state.SetFloor(Thulium_M, 1);
-    state.SetFloor(Promethium_G, 1);
-    state.SetFloor(Ruthenium_G, 1);
-    state.SetFloor(Ruthenium_M, 1);
-    state.SetFloor(Cobalt_G, 1);
-    state.SetFloor(Cobalt_M, 1);
+    auto part2 = DoPart2();
+    std::cout << "Part Two: " << part2 << std::endl;
+    assert(part2 == 71);
 
-    //state.SetFloor(Elerium_G, 1);
-    //state.SetFloor(Elerium_M, 1);
-    //state.SetFloor(Dilithium_G, 1);
-    //state.SetFloor(Dilithium_M, 1);
-
-    //state.SetFloor(Hydrogen_M, 1);
-    //state.SetFloor(Hydrogen_G, 2);
-    //state.SetFloor(Lithium_M, 1);
-    //state.SetFloor(Lithium_G, 3);
-
-    queue.push(QueueNode{ state, 0 });
-
-    while(!Solve());
-
-    std::cout << "Part One: " << bestSolution << std::endl;
-    std::cout << std::endl << "It took " << (clock() - startTime) / (CLOCKS_PER_SEC / 1000) << " ms." << std::endl;
-
-    assert(bestSolution == 47);   // Part 1
-    //assert(bestSolution == 71); // Part 2
+    std::cout << std::endl << "It took " << (clock() - startTime) / CLOCKS_PER_SEC << " sec." << std::endl;
     return 0;
 }
