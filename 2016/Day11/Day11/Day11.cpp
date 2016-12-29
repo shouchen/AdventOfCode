@@ -34,11 +34,6 @@ const unsigned short AllGenerators = 0x2aaa;
 
 struct State
 {
-    inline unsigned long long GetHash() const
-    {
-        return hash;
-    }
-    
     inline unsigned GetElevatorIndex() const 
     {
         if (floor[3] & Elevator) return 3;
@@ -52,7 +47,7 @@ struct State
         floor[f - 1] |= name;
     }
     
-    inline bool IsObjectAtIndex(unsigned short name, unsigned index)
+    inline bool IsObjectAtIndex(unsigned short name, unsigned index) const
     {
         return (floor[index] & name) ? true : false;
     }
@@ -79,6 +74,37 @@ struct State
         return !microchipsWithoutTheirGenerator;
     }
 
+    // Special hash function that hashes to the same value all states that are
+    // permutations of each other (but which are otherwise unique ). This
+    // dramatically prunes the search tree. It is permissible because we are not
+    // looking for the exact sequence of moves in the solution--only the number
+    // of moves.
+    std::string Hash() const
+    {
+        std::string retval(7, '@');
+
+        // Make a letter for each MG pair (0..16) as @..P.
+        // Sort the above, then add the elevator as suffix (0-3).
+        for (auto index = 0U; index < 4; index++)
+        {
+            for (auto strpos = 0U; strpos < 7; strpos++)
+            {
+                unsigned short microchip = 1 << (strpos * 2);
+                unsigned short generator = microchip << 1;
+
+                if (IsObjectAtIndex(microchip, index))
+                    retval[strpos] = index + ((retval[strpos] == '@') ? 'A' : retval[strpos]);
+                if (IsObjectAtIndex(generator, index))
+                    retval[strpos] = 4 * index + ((retval[strpos] == '@') ? 'A' : retval[strpos]);
+            }
+        }
+
+        std::sort(retval.begin(), retval.end());
+        retval.push_back('0' + GetElevatorIndex());
+
+        return retval;
+    }
+
 private:
     union
     {
@@ -93,7 +119,7 @@ struct QueueNode
     unsigned numMoves;
 };
 
-std::set<unsigned long long> seen;
+std::set<std::string> seen;
 std::queue<QueueNode> queue;
 unsigned bestSolution = INT_MAX;
 
@@ -139,7 +165,7 @@ unsigned Solve(const State &initState)
         QueueNode node = queue.front();
         queue.pop();
 
-        auto hash = node.state.GetHash();
+        auto hash = node.state.Hash();
         if (seen.find(hash) != seen.end())
             continue;
 
@@ -213,6 +239,6 @@ int main()
     std::cout << "Part Two: " << part2 << std::endl;
     assert(part2 == 71);
 
-    std::cout << std::endl << "It took " << (clock() - startTime) / CLOCKS_PER_SEC << " sec." << std::endl;
+    std::cout << std::endl << "It took " << (clock() - startTime) / (CLOCKS_PER_SEC / 1000) << " ms." << std::endl;
     return 0;
 }
