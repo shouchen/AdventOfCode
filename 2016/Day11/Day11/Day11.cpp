@@ -7,7 +7,7 @@
 #include <cassert>
 
 // These must be ordered by microchip-generator pairs (microchip followed by
-// its corresponding generator).
+// its corresponding generator). The algorithm and code below expect this.
 enum : unsigned short
 {
     Polonium_M =   0x0001,
@@ -32,14 +32,17 @@ const unsigned short NotElevator = ~Elevator;
 const unsigned short AllMicrochips = 0x1555;
 const unsigned short AllGenerators = 0x2aaa;
 
+const auto MaxObjects = 7U;
+const auto NumFloors = 4U;
+
 struct State
 {
     inline unsigned GetElevatorIndex() const 
     {
-        if (floor[3] & Elevator) return 3;
-        if (floor[2] & Elevator) return 2;
-        if (floor[1] & Elevator) return 1;
-        return 0;
+        for (auto f = 0U; f < NumFloors; f++)
+            if (floor[f] & Elevator)
+                return f;
+        return UINT_MAX;
     }
     
     inline void PlaceObjectAtFloor(unsigned short name, unsigned f)
@@ -60,57 +63,56 @@ struct State
 
     inline bool IsSolved()
     {
-        return !(floor[0] & NotElevator) && !(floor[1] & NotElevator) && !(floor[2] & NotElevator);
+        for (auto f = 0U; f < NumFloors - 1; f++)
+            if (floor[f])
+                return false;
+        return true;
     }
 
-    inline bool IsIndexValid(unsigned index)
+    inline bool IsValidAtIndex(unsigned index)
     {
-        unsigned short generators = floor[index] & AllGenerators;
-        if (!generators) return true;
+        auto generators = floor[index] & AllGenerators;
+        if (!generators)
+            return true;
 
-        unsigned short microchips = floor[index] & AllMicrochips;
-        unsigned short microchipsWithoutTheirGenerator = microchips & ~(generators >> 1);
+        auto microchips = floor[index] & AllMicrochips;
+        auto microchipsWithoutTheirGenerator = microchips & ~(generators >> 1);
 
         return !microchipsWithoutTheirGenerator;
     }
 
     // Special hash function that hashes to the same value all states that are
-    // permutations of each other (but which are otherwise unique ). This
-    // dramatically prunes the search tree. It is permissible because we are not
-    // looking for the exact sequence of moves in the solution--only the number
-    // of moves.
-    std::string Hash() const
+    // permutations of each other (but which are otherwise unique), which
+    // dramatically prunes the search tree. This is permissible because we are
+    // not looking for the exact sequence of moves in the solution--only the
+    // number of moves (which would be the same for any congruent permutation).
+    //
+    // The hash returned is the floor of each of the objects (using 4 bits
+    // apiece), followed by the elevator position in the remaining 8 bits. If an
+    // object isn't on any floor (as for part 1), the floor is zero.
+    unsigned long long Hash() const
     {
-        std::string retval(7, '@');
+        std::vector<unsigned char> retval(MaxObjects + 1);
+        retval[7] = GetElevatorIndex();
 
-        // Make a letter for each MG pair (0..16) as @..P.
-        // Sort the above, then add the elevator as suffix (0-3).
-        for (auto index = 0U; index < 4; index++)
+        for (auto index = 0U; index < NumFloors; index++)
         {
-            for (auto strpos = 0U; strpos < 7; strpos++)
+            for (auto strpos = 0U; strpos < MaxObjects; strpos++)
             {
-                unsigned short microchip = 1 << (strpos * 2);
-                unsigned short generator = microchip << 1;
+                auto microchip = 1 << (strpos * 2);
+                auto generator = microchip << 1;
 
-                if (IsObjectAtIndex(microchip, index))
-                    retval[strpos] = index + ((retval[strpos] == '@') ? 'A' : retval[strpos]);
-                if (IsObjectAtIndex(generator, index))
-                    retval[strpos] = 4 * index + ((retval[strpos] == '@') ? 'A' : retval[strpos]);
+                if (IsObjectAtIndex(microchip, index)) retval[strpos] += index + 1;
+                if (IsObjectAtIndex(generator, index)) retval[strpos] += (index + 1) << 4;
             }
         }
 
-        std::sort(retval.begin(), retval.end());
-        retval.push_back('0' + GetElevatorIndex());
-
-        return retval;
+        std::sort(retval.begin(), retval.end() - 1);
+        return *reinterpret_cast<unsigned long long *>(retval.data());
     }
 
 private:
-    union
-    {
-        unsigned short floor[4] = { 0, 0, 0, 0 };
-        unsigned long long hash;
-    };
+    unsigned short floor[NumFloors] = { 0, 0, 0, 0 };
 };
 
 struct QueueNode
@@ -119,7 +121,7 @@ struct QueueNode
     unsigned numMoves;
 };
 
-std::set<std::string> seen;
+std::set<unsigned long long> seen;
 std::queue<QueueNode> queue;
 unsigned bestSolution = INT_MAX;
 
@@ -127,7 +129,7 @@ inline void TryMoveSecondObject(QueueNode node, unsigned short name, unsigned ol
 {
     node.state.MoveObject(name, oldIndex, newIndex);
 
-    if (node.state.IsIndexValid(oldIndex) && node.state.IsIndexValid(newIndex))
+    if (node.state.IsValidAtIndex(oldIndex) && node.state.IsValidAtIndex(newIndex))
         queue.push(node);
 }
 
@@ -137,7 +139,7 @@ inline void TryMoveFirstObject(QueueNode node, unsigned short name, unsigned old
     node.state.MoveObject(Elevator, oldIndex, newIndex);
     node.numMoves++;
 
-    if (node.state.IsIndexValid(oldIndex) && node.state.IsIndexValid(newIndex))
+    if (node.state.IsValidAtIndex(oldIndex) && node.state.IsValidAtIndex(newIndex))
         queue.push(node);
 
     for (unsigned short curr = name << 1; curr < Elevator; curr <<= 1)
@@ -232,13 +234,14 @@ int main()
     double startTime = clock();
 
     auto part1 = DoPart1();
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 47);
-
     auto part2 = DoPart2();
+
+    std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
-    assert(part2 == 71);
 
     std::cout << std::endl << "It took " << (clock() - startTime) / (CLOCKS_PER_SEC / 1000) << " ms." << std::endl;
+
+    assert(part1 == 47);
+    assert(part2 == 71);
     return 0;
 }
