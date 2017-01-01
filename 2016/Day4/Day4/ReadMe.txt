@@ -1,40 +1,40 @@
-========================================================================
-    CONSOLE APPLICATION : Day4 Project Overview
-========================================================================
+--- Day 4: Security Through Obscurity ---
 
-AppWizard has created this Day4 application for you.
+Finally, you come across an information kiosk with a list of rooms. Of course, the list is encrypted and full of decoy data, but the instructions to decode the list are barely hidden nearby. Better remove the decoy data first.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day4 application.
+Each room consists of an encrypted name (lowercase letters separated by dashes) followed by a dash, a sector ID, and a checksum in square brackets.
+
+A room is real (not a decoy) if the checksum is the five most common letters in the encrypted name, in order, with ties broken by alphabetization. For example:
+  - aaaaa-bbb-z-y-x-123[abxyz] is a real room because the most common letters are a (5), b (3), and then a tie between x, y, and z, which are listed alphabetically.
+  - a-b-c-d-e-f-g-h-987[abcde] is a real room because although the letters are all tied (1 of each), the first five are listed alphabetically.
+  - not-a-real-room-404[oarel] is a real room.
+  - totally-real-room-200[decoy] is not.
+
+Of the real rooms from the list above, the sum of their sector IDs is 1514.
+
+What is the sum of the sector IDs of the real rooms?
+
+Your puzzle answer was 158835.
 
 
-Day4.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+--- Part Two ---
 
-Day4.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+With all the decoy data out of the way, it's time to decrypt this list and get moving.
 
-Day4.cpp
-    This is the main application source file.
+The room names are encrypted by a state-of-the-art shift cipher, which is nearly unbreakable without the right software. However, the information kiosk designers at Easter Bunny HQ were not expecting to deal with a master cryptographer like yourself.
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+To decrypt a room name, rotate each letter forward through the alphabet a number of times equal to the room's sector ID. A becomes B, B becomes C, Z becomes A, and so on. Dashes become spaces.
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day4.pch and a precompiled types file named StdAfx.obj.
+For example, the real name for qzmt-zixmtkozy-ivhz-343 is very encrypted name.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+What is the sector ID of the room where North Pole objects are stored?
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Your puzzle answer was 993.
 
-/////////////////////////////////////////////////////////////////////////////
+Both parts of this puzzle are complete! They provide two gold stars: **
+
+At this point, all that is left is for you to admire your advent calendar.
+
+If you still want to see it, you can get your puzzle input.
+
+You can also [Share on Twitter Google+ Reddit] this puzzle.

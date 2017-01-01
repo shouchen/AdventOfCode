@@ -1,40 +1,46 @@
-========================================================================
-    CONSOLE APPLICATION : Day24 Project Overview
-========================================================================
+--- Day 24: Air Duct Spelunking ---
 
-AppWizard has created this Day24 application for you.
+You've finally met your match; the doors that provide access to the roof are locked tight, and all of the controls and related electronics are inaccessible. You simply can't reach them.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day24 application.
+The robot that cleans the air ducts, however, can.
+
+It's not a very fast little robot, but you reconfigure it to be able to interface with some of the exposed wires that have been routed through the HVAC system. If you can direct it to each of those locations, you should be able to bypass the security controls.
+
+You extract the duct layout for this area from some blueprints you acquired and create a map with the relevant locations marked (your puzzle input). 0 is your current location, from which the cleaning robot embarks; the other numbers are (in no particular order) the locations the robot needs to visit at least once each. Walls are marked as #, and open passages are marked as .. Numbers behave like open passages.
+
+For example, suppose you have a map like the following:
+###########
+#0.1.....2#
+#.#######.#
+#4.......3#
+###########
 
 
-Day24.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+To reach all of the points of interest as quickly as possible, you would have the robot take the following path:
+  - 0 to 4 (2 steps)
+  - 4 to 1 (4 steps; it can't move diagonally)
+  - 1 to 2 (6 steps)
+  - 2 to 3 (2 steps)
 
-Day24.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+Since the robot isn't very fast, you need to find it the shortest route. This path is the fewest steps (in the above example, a total of 14) required to start at 0 and then visit every other location at least once.
 
-Day24.cpp
-    This is the main application source file.
+Given your actual map, and starting from location 0, what is the fewest number of steps required to visit every non-0 number marked on the map at least once?
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+Your puzzle answer was 502.
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day24.pch and a precompiled types file named StdAfx.obj.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+--- Part Two ---
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Of course, if you leave the cleaning robot somewhere weird, someone is bound to notice.
 
-/////////////////////////////////////////////////////////////////////////////
+What is the fewest number of steps required to start at 0, visit every non-0 number marked on the map at least once, and then return to 0?
+
+Your puzzle answer was 724.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
+At this point, all that is left is for you to admire your advent calendar.
+
+If you still want to see it, you can get your puzzle input.
+
+You can also [Share on Twitter Google+ Reddit] this puzzle.

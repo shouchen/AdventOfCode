@@ -1,40 +1,55 @@
-========================================================================
-    CONSOLE APPLICATION : Day13 Project Overview
-========================================================================
+--- Day 13: A Maze of Twisty Little Cubicles ---
 
-AppWizard has created this Day13 application for you.
+You arrive at the first floor of this new building to discover a much less welcoming environment than the shiny atrium of the last one. Instead, you are in a maze of twisty little cubicles, all alike.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day13 application.
+Every location in this area is addressed by a pair of non-negative integers (x,y). Each such coordinate is either a wall or an open space. You can't move diagonally. The cube maze starts at 0,0 and seems to extend infinitely toward positive x and y; negative values are invalid, as they represent a location outside the building. You are in a small waiting area at 1,1.
+
+While it seems chaotic, a nearby morale-boosting poster explains, the layout is actually quite logical. You can determine whether a given x,y coordinate will be a wall or an open space using a simple system:
+  - Find x*x + 3*x + 2*x*y + y + y*y.
+  - Add the office designer's favorite number (your puzzle input).
+  - Find the binary representation of that sum; count the number of bits that are 1.   - If the number of bits that are 1 is even, it's an open space.
+  - If the number of bits that are 1 is odd, it's a wall.
 
 
-Day13.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+For example, if the office designer's favorite number were 10, drawing walls as # and open spaces as ., the corner of the building containing 0,0 would look like this:
+  0123456789
+0 .#.####.##
+1 ..#..#...#
+2 #....##...
+3 ###.#.###.
+4 .##..#..#.
+5 ..##....#.
+6 #...##.###
 
-Day13.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
 
-Day13.cpp
-    This is the main application source file.
+Now, suppose you wanted to reach 7,4. The shortest route you could take is marked as O:
+  0123456789
+0 .#.####.##
+1 .O#..#...#
+2 #OOO.##...
+3 ###O#.###.
+4 .##OO#OO#.
+5 ..##OOO.#.
+6 #...##.###
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day13.pch and a precompiled types file named StdAfx.obj.
+Thus, reaching 7,4 would take a minimum of 11 steps (starting from your current location, 1,1).
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+What is the fewest number of steps required for you to reach 31,39?
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Your puzzle answer was 86.
 
-/////////////////////////////////////////////////////////////////////////////
+
+--- Part Two ---
+
+How many locations (distinct x,y coordinates, including your starting location) can you reach in at most 50 steps?
+
+Your puzzle answer was 127.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
+At this point, all that is left is for you to admire your advent calendar.
+
+Your puzzle input was 1364.
+
+You can also [Share on Twitter Google+ Reddit] this puzzle.

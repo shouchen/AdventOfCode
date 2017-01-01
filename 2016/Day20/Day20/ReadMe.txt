@@ -1,40 +1,32 @@
-========================================================================
-    CONSOLE APPLICATION : Day20 Project Overview
-========================================================================
+--- Day 20: Firewall Rules ---
 
-AppWizard has created this Day20 application for you.
+You'd like to set up a small hidden computer here so you can use it to get back into the network later. However, the corporate firewall only allows communication with certain external IP addresses.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day20 application.
+You've retrieved the list of blocked IPs from the firewall, but the list seems to be messy and poorly maintained, and it's not clear which IPs are allowed. Also, rather than being written in dot-decimal notation, they are written as plain 32-bit integers, which can have any value from 0 through 4294967295, inclusive.
+
+For example, suppose only the values 0 through 9 were valid, and that you retrieved the following blacklist:
+5-8
+0-2
+4-7
 
 
-Day20.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+The blacklist specifies ranges of IPs (inclusive of both the start and end value) that are not allowed. Then, the only IPs that this firewall allows are 3 and 9, since those are the only numbers not in any range.
 
-Day20.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+Given the list of blocked IPs you retrieved from the firewall (your puzzle input), what is the lowest-valued IP that is not blocked?
 
-Day20.cpp
-    This is the main application source file.
+Your puzzle answer was 32259706.
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day20.pch and a precompiled types file named StdAfx.obj.
+--- Part Two ---
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+How many IPs are allowed by the blacklist?
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Your puzzle answer was 113.
 
-/////////////////////////////////////////////////////////////////////////////
+Both parts of this puzzle are complete! They provide two gold stars: **
+
+At this point, all that is left is for you to admire your advent calendar.
+
+If you still want to see it, you can get your puzzle input.
+
+You can also [Share on Twitter Google+ Reddit] this puzzle.

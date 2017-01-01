@@ -1,40 +1,39 @@
-========================================================================
-    CONSOLE APPLICATION : Day3 Project Overview
-========================================================================
+--- Day 3: Squares With Three Sides ---
 
-AppWizard has created this Day3 application for you.
+Now that you can think clearly, you move deeper into the labyrinth of hallways and office furniture that makes up this part of Easter Bunny HQ. This must be a graphic design department; the walls are covered in specifications for triangles.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day3 application.
+Or are they?
+
+The design document gives the side lengths of each triangle it describes, but... 5 10 25? Some of these aren't triangles. You can't help but mark the impossible ones.
+
+In a valid triangle, the sum of any two sides must be larger than the remaining side. For example, the "triangle" given above is impossible, because 5 + 10 is not larger than 25.
+
+In your puzzle input, how many of the listed triangles are possible?
+
+Your puzzle answer was 869.
 
 
-Day3.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+--- Part Two ---
 
-Day3.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+Now that you've helpfully marked up their design documents, it occurs to you that triangles are specified in groups of three vertically. Each set of three numbers in a column specifies a triangle. Rows are unrelated.
 
-Day3.cpp
-    This is the main application source file.
+For example, given the following specification, numbers with the same hundreds digit would be part of the same triangle:
+101 301 501
+102 302 502
+103 303 503
+201 401 601
+202 402 602
+203 403 603
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day3.pch and a precompiled types file named StdAfx.obj.
+In your puzzle input, and instead reading by columns, how many of the listed triangles are possible?
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+Your puzzle answer was 1544.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Both parts of this puzzle are complete! They provide two gold stars: **
 
-/////////////////////////////////////////////////////////////////////////////
+At this point, all that is left is for you to admire your advent calendar.
+
+If you still want to see it, you can get your puzzle input.
+
+You can also [Share on Twitter Google+ Reddit] this puzzle.

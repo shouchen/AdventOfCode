@@ -160,7 +160,7 @@ private:
 int _tmain(int argc, _TCHAR *argv[])
 {
     Program program;
-    Assembler::AssembleProgram("Input.txt", program);
+    Assembler::AssembleProgram("input.txt", program);
 
     Computer computer;
     computer.ExecuteProgram(program);

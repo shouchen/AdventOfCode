@@ -1,40 +1,51 @@
-========================================================================
-    CONSOLE APPLICATION : Day6 Project Overview
-========================================================================
+--- Day 6: Signals and Noise ---
 
-AppWizard has created this Day6 application for you.
+Something is jamming your communications with Santa. Fortunately, your signal is only partially jammed, and protocol in situations like this is to switch to a simple repetition code to get the message through.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day6 application.
+In this model, the same message is sent repeatedly. You've recorded the repeating message signal (your puzzle input), but the data seems quite corrupted - almost too badly to recover. Almost.
+
+All you need to do is figure out which character is most frequent for each position. For example, suppose you had recorded the following messages:
+eedadn
+drvtee
+eandsr
+raavrd
+atevrs
+tsrnev
+sdttsa
+rasrtv
+nssdts
+ntnada
+svetve
+tesnvt
+vntsnd
+vrdear
+dvrsen
+enarar
 
 
-Day6.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+The most common character in the first column is e; in the second, a; in the third, s, and so on. Combining these characters returns the error-corrected message, easter.
 
-Day6.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+Given the recording in your puzzle input, what is the error-corrected version of the message being sent?
 
-Day6.cpp
-    This is the main application source file.
+Your puzzle answer was liwvqppc.
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day6.pch and a precompiled types file named StdAfx.obj.
+--- Part Two ---
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+Of course, that would be the message - if you hadn't agreed to use a modified repetition code instead.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+In this modified code, the sender instead transmits what looks like random data, but for each character, the character they actually want to send is slightly less likely than the others. Even after signal-jamming noise, you can look at the letter distributions in each column and choose the least common letter to reconstruct the original message.
 
-/////////////////////////////////////////////////////////////////////////////
+In the above example, the least common character in the first column is a; in the second, d, and so on. Repeating this process for the remaining characters produces the original message, advent.
+
+Given the recording in your puzzle input and this new decoding methodology, what is the original message that Santa is trying to send?
+
+Your puzzle answer was caqfbzlh.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
+At this point, all that is left is for you to admire your advent calendar.
+
+If you still want to see it, you can get your puzzle input.
+
+You can also [Share on Twitter Google+ Reddit] this puzzle.
