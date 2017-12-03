@@ -5,21 +5,16 @@
 
 unsigned do_part1(unsigned m)
 {
-    int top = 0, bottom = 0, left = 0, right = 0;
     std::map<unsigned, int> dist;
 
+    int top = 0, bottom = 0, left = 0, right = 1;
+    int x = 1, y = 0;
     dist[1] = 0;
-    int x = 0, y = 0;
-    unsigned n = 1;
+
+    unsigned n = 2;
 
     for (;;)
     {
-        // right
-        do { dist[n++] = abs(x++) + abs(y); } while (x <= right);
-        right++;
-
-        if (n > m) break;
-
         // up
         do { dist[n++] = abs(x) + abs(y--); } while (y >= top);
         top--;
@@ -37,6 +32,12 @@ unsigned do_part1(unsigned m)
         bottom++;
 
         if (n > m) break;
+
+        // right
+        do { dist[n++] = abs(x++) + abs(y); } while (x <= right);
+        right++;
+
+        if (n > m) break;
     }
 
     return dist[m];
@@ -48,23 +49,19 @@ unsigned part2 = 0;
 unsigned sum_neighbors(int x, int y, unsigned input)
 {
     unsigned sum = 0;
- 
-    if (board.find({ x - 1, y - 1}) != board.end())
-        sum += board[{x - 1, y - 1}];
-    if (board.find({ x, y - 1 }) != board.end())
-        sum += board[{x, y - 1}];
-    if (board.find({ x + 1, y - 1 }) != board.end())
-        sum += board[{x + 1, y - 1}];
-    if (board.find({ x - 1, y }) != board.end())
-        sum += board[{x - 1, y}];
-    if (board.find({ x + 1, y }) != board.end())
-        sum += board[{x + 1, y}];
-    if (board.find({ x - 1, y + 1}) != board.end())
-        sum += board[{x - 1, y + 1}];
-    if (board.find({ x, y + 1}) != board.end())
-        sum += board[{x, y + 1}];
-    if (board.find({ x + 1, y + 1}) != board.end())
-        sum += board[{x + 1, y + 1}];
+
+    for (int i = -1; i <= 1; i++)
+    {
+        for (int j = -1; j <= 1; j++)
+        {
+            if (i || j)
+            {
+                auto f = board.find({ x + i, y + j });
+                if (f != board.end())
+                    sum += f->second;
+            }
+        }
+    }
 
     if (!part2 && sum > input)
         part2 = sum;
