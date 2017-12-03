@@ -6,14 +6,19 @@
 
 unsigned do_part1(unsigned input)
 {
-    if (input == 1) return 0;
-
-    int top = 0, bottom = 0, left = 0, right = 1;
-    int x = 1, y = 0;
-    unsigned n = 1;
+    int top = 0, bottom = 0, left = 0, right = 0;
+    int x = 0, y = 0;
+    unsigned n = 0;
 
     for (;;)
     {
+        // right
+        for (; x <= right; x++)
+            if (++n == input)
+                return abs(x) + abs(y);
+
+        right++;
+
         // up
         for (; y >= top; y--)
             if (++n == input)
@@ -34,20 +39,12 @@ unsigned do_part1(unsigned input)
                 return abs(x) + abs(y);
 
         bottom++;
-
-        // right
-        for (; x <= right; x++)
-            if (++n == input)
-                return abs(x) + abs(y);
-
-        right++;
     }
 }
 
 std::map<std::pair<int, int>, unsigned> board;
-unsigned part2 = 0;
 
-unsigned sum_neighbors(int x, int y, unsigned input)
+unsigned sum_neighbors(int x, int y)
 {
     unsigned sum = 0;
 
@@ -64,9 +61,6 @@ unsigned sum_neighbors(int x, int y, unsigned input)
         }
     }
 
-    if (!part2 && sum > input)
-        part2 = sum;
-
     return sum;
 }
 
@@ -79,28 +73,44 @@ unsigned do_part2(unsigned input)
     for (;;)
     {
         // up
-        do { board[{x, y}] = sum_neighbors(x, y, input); } while (--y >= top);
+        for (; y >= top; y--)
+        {
+            auto sum = sum_neighbors(x, y);
+            if (sum > input) return sum;
+            board[{x, y}] = sum;
+        }
+
         top--;
 
-        if (part2) return part2;
-
         // left
-        do { board[{x, y}] = sum_neighbors(x, y, input); } while (--x >= left);
+        for (; x >= left; x--)
+        {
+            auto sum = sum_neighbors(x, y);
+            if (sum > input) return sum;
+            board[{x, y}] = sum;
+        }
+
         left--;
 
-        if (part2) return part2;
-
         // down
-        do { board[{x, y}] = sum_neighbors(x, y, input); } while (++y <= bottom);
+        for (; y <= bottom; y++)
+        {
+            auto sum = sum_neighbors(x, y);
+            if (sum > input) return sum;
+            board[{x, y}] = sum;
+        }
+
         bottom++;
 
-        if (part2) return part2;
-
         // right
-        do { board[{x, y}] = sum_neighbors(x, y, input); } while (++x <= right);
-        right++;
+        for (; x <= right; x++)
+        {
+            auto sum = sum_neighbors(x, y);
+            if (sum > input) return sum;
+            board[{x, y}] = sum;
+        }
 
-        if (part2) return part2;
+        right++;
     }
 }
 
