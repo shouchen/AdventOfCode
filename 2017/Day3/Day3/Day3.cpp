@@ -4,49 +4,42 @@
 #include <vector>
 #include <map>
 
-unsigned do_part1(unsigned m)
+unsigned do_part1(unsigned input)
 {
-    if (m == 1) return 0;
-
-    unsigned part1 = 0;
+    if (input == 1) return 0;
 
     int top = 0, bottom = 0, left = 0, right = 1;
     int x = 1, y = 0;
-
     unsigned n = 1;
 
     for (;;)
     {
         // up
-        while (y >= top)
-        {
-            auto curr = abs(x) + abs(y--);
-            if (++n == m) return curr;
-        }
+        for (; y >= top; y--)
+            if (++n == input)
+                return abs(x) + abs(y);
+
         top--;
 
         // left
-        while (x >= left)
-        {
-            auto curr = abs(x--) + abs(y);
-            if (++n == m) return curr;
-        }
+        for (; x >= left; x--)
+            if (++n == input)
+                return abs(x) + abs(y);
+
         left--;
 
         // down
-        while (y <= bottom)
-        {
-            auto curr = abs(x) + abs(y++);
-            if (++n == m) return curr;
-        }
+        for (; y <= bottom; y++)
+            if (++n == input)
+                return abs(x) + abs(y);
+
         bottom++;
 
         // right
-        while (x <= right)
-        {
-            auto curr = abs(x++) + abs(y);
-            if (++n == m) return curr;
-        }
+        for (; x <= right; x++)
+            if (++n == input)
+                return abs(x) + abs(y);
+
         right++;
     }
 }
