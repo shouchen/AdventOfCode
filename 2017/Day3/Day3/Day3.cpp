@@ -1,46 +1,54 @@
 #include "stdafx.h"
 #include <cassert>
 #include <iostream>
+#include <vector>
 #include <map>
 
 unsigned do_part1(unsigned m)
 {
-    std::map<unsigned, int> dist;
+    if (m == 1) return 0;
+
+    unsigned part1 = 0;
 
     int top = 0, bottom = 0, left = 0, right = 1;
     int x = 1, y = 0;
-    dist[1] = 0;
 
-    unsigned n = 2;
+    unsigned n = 1;
 
     for (;;)
     {
         // up
-        do { dist[n++] = abs(x) + abs(y--); } while (y >= top);
+        while (y >= top)
+        {
+            auto curr = abs(x) + abs(y--);
+            if (++n == m) return curr;
+        }
         top--;
 
-        if (n > m) break;
-
         // left
-        do { dist[n++] = abs(x--) + abs(y); } while (x >= left);
+        while (x >= left)
+        {
+            auto curr = abs(x--) + abs(y);
+            if (++n == m) return curr;
+        }
         left--;
 
-        if (n > m) break;
-
         // down
-        do { dist[n++] = abs(x) + abs(y++); } while (y <= bottom);
+        while (y <= bottom)
+        {
+            auto curr = abs(x) + abs(y++);
+            if (++n == m) return curr;
+        }
         bottom++;
 
-        if (n > m) break;
-
         // right
-        do { dist[n++] = abs(x++) + abs(y); } while (x <= right);
+        while (x <= right)
+        {
+            auto curr = abs(x++) + abs(y);
+            if (++n == m) return curr;
+        }
         right++;
-
-        if (n > m) break;
     }
-
-    return dist[m];
 }
 
 std::map<std::pair<int, int>, unsigned> board;
