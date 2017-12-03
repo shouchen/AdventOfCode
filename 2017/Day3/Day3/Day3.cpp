@@ -1,45 +1,28 @@
 #include "stdafx.h"
 #include <cassert>
 #include <iostream>
-#include <vector>
 #include <map>
 
 unsigned do_part1(unsigned input)
 {
-    int top = 0, bottom = 0, left = 0, right = 0;
-    int x = 0, y = 0;
-    unsigned n = 0;
+    if (input == 1) return 0; // why one-off?
 
-    for (;;)
-    {
-        // right
-        for (; x <= right; x++)
-            if (++n == input)
-                return abs(x) + abs(y);
+    // 1. Find largest complete odd square (1^2, 3^2, 5^2, etc.).
+    unsigned square = sqrt(input);
+    if (square % 2 == 0) square--; // if even, round down to odd
 
-        right++;
+    // 2. Starting with overflow, there are 4 congruent runs (ULDR). Get zero-based overflow and run length.
+    unsigned overflow = input - square * square - 1;
+    unsigned run_length = square + 1;
 
-        // up
-        for (; y >= top; y--)
-            if (++n == input)
-                return abs(x) + abs(y);
+    // 3. Get offset into one of the runs (mod since don't care which)
+    unsigned offset = overflow % run_length;
 
-        top--;
-
-        // left
-        for (; x >= left; x--)
-            if (++n == input)
-                return abs(x) + abs(y);
-
-        left--;
-
-        // down
-        for (; y <= bottom; y++)
-            if (++n == input)
-                return abs(x) + abs(y);
-
-        bottom++;
-    }
+    // 4. First half is run-1-offset, second half is offset+1.
+    if (offset < run_length / 2)
+        return run_length - 1 - offset;
+    else
+        return offset + 1;
 }
 
 std::map<std::pair<int, int>, unsigned> board;
@@ -120,6 +103,9 @@ int main()
     assert(do_part1(12) == 3);
     assert(do_part1(23) == 2);
     assert(do_part1(1024) == 31);
+
+    for (int i = 1; i < 50; i++)
+        std::cout << do_part1(i) << std::endl;
 
     auto part1 = do_part1(347991);
     auto part2 = do_part2(347991);
