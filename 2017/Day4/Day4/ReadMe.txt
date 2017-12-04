@@ -1,40 +1,31 @@
-========================================================================
-    CONSOLE APPLICATION : Day4 Project Overview
-========================================================================
+--- Day 4: High-Entropy Passphrases ---
 
-AppWizard has created this Day4 application for you.
+A new system policy has been put in place that requires all accounts to use a passphrase instead of simply a password. A passphrase consists of a series of words (lowercase letters) separated by spaces.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day4 application.
+To ensure security, a valid passphrase must contain no duplicate words.
 
+For example:
 
-Day4.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+aa bb cc dd ee is valid.
+aa bb cc dd aa is not valid - the word aa appears more than once.
+aa bb cc dd aaa is valid - aa and aaa count as different words.
 
-Day4.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+The system's full passphrase list is available as your puzzle input. How many passphrases are valid?
 
-Day4.cpp
-    This is the main application source file.
+Your puzzle answer was 337.
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+--- Part Two ---
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day4.pch and a precompiled types file named StdAfx.obj.
+For added security, yet another system policy has been put in place. Now, a valid passphrase must contain no two words that are anagrams of each other - that is, a passphrase is invalid if any word's letters can be rearranged to form any other word in the passphrase.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+For example:
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+abcde fghij is a valid passphrase.
+abcde xyz ecdab is not valid - the letters from the third word can be rearranged to form the first word.
+a ab abc abd abf abj is a valid passphrase, because all letters need to be used when forming another word.
+iiii oiii ooii oooi oooo is valid.
+oiii ioii iioi iiio is not valid - any of these words can be rearranged to form any other word.
 
-/////////////////////////////////////////////////////////////////////////////
+Under this new system policy, how many passphrases are valid?
+
+Your puzzle answer was 231.

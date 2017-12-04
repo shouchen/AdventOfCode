@@ -4,43 +4,40 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <vector>
+#include <set>
 #include <algorithm>
 
-int do_stuff(const std::string &filename, bool anagrams)
+bool validate_password(const std::string password, bool check_anagrams)
 {
-    int valid = 0;
+    std::stringstream ss(password);
+    std::set<std::string> words;
+    std::string word;
+
+    while (ss >> word)
+    {
+        if (check_anagrams)
+            std::sort(word.begin(), word.end());
+
+        if (words.find(word) != words.end())
+            return false;
+
+        words.insert(word);
+    }
+
+    return true;
+}
+
+unsigned count_valid_passwords(const std::string &filename, bool check_anagrams)
+{
+    auto valid = 0U;
 
     std::ifstream f(filename);
-    std::string input;
+    std::string password;
 
-    while (std::getline(f, input))
+    while (std::getline(f, password))
     {
-        std::stringstream ss(input);
-
-        std::vector<std::string> words;
-        std::string word;
-        while (ss >> word)
-        {
-            if (anagrams) std::sort(word.begin(), word.end());
-            words.push_back(word);
-        }
-
-        bool dupe = false;
-        for (auto i = 0U; i < words.size(); i++)
-        {
-            std::sort(words.begin(), words.end());
-            for (auto j = i + 1; j < words.size(); j++)
-            {
-                if (strcmp(words[i].c_str(), words[j].c_str()) == 0)
-                {
-                    dupe = true;
-                    break;
-                }
-            }
-        }
-
-        if (!dupe) valid++;
+        if (validate_password(password, check_anagrams))
+            valid++;
     }
 
     return valid;
@@ -48,11 +45,20 @@ int do_stuff(const std::string &filename, bool anagrams)
 
 int main()
 {
-    assert(do_stuff("input-test.txt", false) == 2);
-    assert(do_stuff("input-test2.txt", true) == 3);
+    assert(validate_password("aa bb cc dd ee", false) == true);
+    assert(validate_password("aa bb cc dd aa", false) == false);
+    assert(validate_password("aa bb cc dd aaa", false) == true);
+    assert(count_valid_passwords("input-test.txt", false) == 2);
 
-    auto part1 = do_stuff("input.txt", false);
-    auto part2 = do_stuff("input.txt", true);
+    assert(validate_password("abcde fghij", true) == true);
+    assert(validate_password("abcde xyz ecdab", true) == false);
+    assert(validate_password("a ab abc abd abf abj", true) == true);
+    assert(validate_password("iiii oiii ooii oooi oooo", true) == true);
+    assert(validate_password("oiii ioii iioi iiio", true) == false);
+    assert(count_valid_passwords("input-test2.txt", true) == 3);
+
+    auto part1 = count_valid_passwords("input.txt", false);
+    auto part2 = count_valid_passwords("input.txt", true);
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
