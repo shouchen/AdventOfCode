@@ -3,26 +3,38 @@
 #include <iostream>
 #include <map>
 
+// Algorithm is based on mathematical pattern:
+//     +-------+-+
+//     |4 3 2 3|4|
+//     | +---+-+ |
+//     |3|2 1|2|3|
+//     | +-+-+ + +
+//     |2|1|0|1|2|
+//     | | +-+-+ +
+//     |3|2|1 2|3|
+//     | +-+---+-+
+//     |4|3 2 3 4|
+//     +-+-------+
 unsigned do_part1(unsigned input)
 {
-    if (input == 1) return 0; // why one-off?
-
-    // 1. Find largest complete odd square (1^2, 3^2, 5^2, etc.).
+    // 1. Find largest odd square (1^2, 3^2, 5^2, etc.) less than or equal to input.
     unsigned square = sqrt(input);
     if (square % 2 == 0) square--; // if even, round down to odd
 
-    // 2. Starting with overflow, there are 4 congruent runs (ULDR). Get zero-based overflow and run length.
-    unsigned overflow = input - square * square - 1;
-    unsigned run_length = square + 1;
+    // 2. Determine how far beyond that the input is.
+    auto overflow = input - square * square;
 
-    // 3. Get offset into one of the runs (mod since don't care which)
-    unsigned offset = overflow % run_length;
+    // 3. If no overflow, distance is square - 1.
+    if (!overflow) return square - 1;
 
-    // 4. First half is run-1-offset, second half is offset+1.
-    if (offset < run_length / 2)
-        return run_length - 1 - offset;
-    else
-        return offset + 1;
+    // 3. Starting with overflow, there are 4 congruent runs (ULDR). Get run length.
+    auto run_length = square + 1;
+
+    // 4. Get zero-based offset into one of the runs (we don't care which of the 4 it is).
+    auto offset = (overflow - 1) % run_length;
+
+    // 5. First half of run is decreasing, and second half increasing. Compute distance.
+    return (offset < run_length / 2) ? (run_length - 1 - offset) : (offset + 1);
 }
 
 std::map<std::pair<int, int>, unsigned> board;
@@ -103,9 +115,6 @@ int main()
     assert(do_part1(12) == 3);
     assert(do_part1(23) == 2);
     assert(do_part1(1024) == 31);
-
-    for (int i = 1; i < 50; i++)
-        std::cout << do_part1(i) << std::endl;
 
     auto part1 = do_part1(347991);
     auto part2 = do_part2(347991);
