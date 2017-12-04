@@ -18,7 +18,7 @@
 unsigned do_part1(unsigned input)
 {
     // 1. Find largest odd square (1^2, 3^2, 5^2, etc.) less than or equal to input.
-    unsigned square = sqrt(input);
+    auto square = (unsigned)sqrt(input);
     if (square % 2 == 0) square--; // if even, round down to odd
 
     // 2. Determine how far beyond that the input is.
@@ -27,13 +27,13 @@ unsigned do_part1(unsigned input)
     // 3. If no overflow, distance is square - 1.
     if (!overflow) return square - 1;
 
-    // 3. Starting with overflow, there are 4 congruent runs (ULDR). Get run length.
+    // 4. Starting with overflow, there are 4 congruent runs (ULDR). Get run length.
     auto run_length = square + 1;
 
-    // 4. Get zero-based offset into one of the runs (we don't care which of the 4 it is).
+    // 5. Get zero-based offset into one of the runs (we don't care which of the 4 it is).
     auto offset = (overflow - 1) % run_length;
 
-    // 5. First half of run is decreasing, and second half increasing. Compute distance.
+    // 6. First half of run is decreasing, and second half increasing. Compute distance.
     return (offset < run_length / 2) ? (run_length - 1 - offset) : (offset + 1);
 }
 
@@ -61,51 +61,34 @@ unsigned sum_neighbors(int x, int y)
 
 unsigned do_part2(unsigned input)
 {
-    int top = 0, bottom = 0, left = 0, right = 1;
-    int x = 1, y = 0;
-    board[{0, 0}] = 1;
+    // Initialize origin to 1.
+    int x_dir = 1, y_dir = 0;
+    int x = 0, y = 0;
+    board[{x, y}] = 1;
 
-    for (;;)
+    // Proceed with 4 runs of 2, 4 runs of 4, 4 runs of 6, etc.
+    for (auto run_length = 2; ; run_length += 2)
     {
-        // up
-        for (; y >= top; y--)
+        x++, y++;
+
+        // Up, Down, Left, Right
+        for (int i = 0; i < 4; i++)
         {
-            auto sum = sum_neighbors(x, y);
-            if (sum > input) return sum;
-            board[{x, y}] = sum;
+            // Turn counterclockwise.
+            int temp = x_dir;
+            x_dir = y_dir;
+            y_dir = -temp;
+
+            // Process a single run.
+            for (int j = 0; j < run_length; j++)
+            {
+                x += x_dir, y += y_dir;
+
+                auto sum = sum_neighbors(x, y);
+                if (sum > input) return sum;
+                board[{x, y}] = sum;
+            }
         }
-
-        top--;
-
-        // left
-        for (; x >= left; x--)
-        {
-            auto sum = sum_neighbors(x, y);
-            if (sum > input) return sum;
-            board[{x, y}] = sum;
-        }
-
-        left--;
-
-        // down
-        for (; y <= bottom; y++)
-        {
-            auto sum = sum_neighbors(x, y);
-            if (sum > input) return sum;
-            board[{x, y}] = sum;
-        }
-
-        bottom++;
-
-        // right
-        for (; x <= right; x++)
-        {
-            auto sum = sum_neighbors(x, y);
-            if (sum > input) return sum;
-            board[{x, y}] = sum;
-        }
-
-        right++;
     }
 }
 
