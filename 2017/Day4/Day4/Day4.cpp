@@ -43,7 +43,7 @@ unsigned count_valid_passwords(const std::string &filename, bool check_anagrams)
     return valid;
 }
 
-int main()
+void check_test_cases()
 {
     assert(validate_password("aa bb cc dd ee", false) == true);
     assert(validate_password("aa bb cc dd aa", false) == false);
@@ -56,6 +56,11 @@ int main()
     assert(validate_password("iiii oiii ooii oooi oooo", true) == true);
     assert(validate_password("oiii ioii iioi iiio", true) == false);
     assert(count_valid_passwords("input-test2.txt", true) == 3);
+}
+
+int main()
+{
+    check_test_cases();
 
     auto part1 = count_valid_passwords("input.txt", false);
     auto part2 = count_valid_passwords("input.txt", true);

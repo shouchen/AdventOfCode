@@ -92,15 +92,21 @@ unsigned do_part2(unsigned input)
     }
 }
 
-int main()
+void check_test_cases()
 {
     assert(do_part1(1) == 0);
     assert(do_part1(12) == 3);
     assert(do_part1(23) == 2);
     assert(do_part1(1024) == 31);
+}
 
-    auto part1 = do_part1(347991);
-    auto part2 = do_part2(347991);
+int main()
+{
+    check_test_cases();
+
+    auto input = 347991;
+    auto part1 = do_part1(input);
+    auto part2 = do_part2(input);
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;

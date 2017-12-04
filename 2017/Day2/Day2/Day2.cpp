@@ -78,13 +78,18 @@ unsigned Spreadsheet::RowEvaluator2(const std::vector<unsigned> row)
     return 0;
 }
 
-int main()
+void check_test_cases()
 {
     Spreadsheet input_test("input-test.txt");
     assert(input_test.ComputeChecksum1() == 18);
 
     Spreadsheet input_test2("input-test2.txt");
     assert(input_test2.ComputeChecksum2() == 9);
+}
+
+int main()
+{
+    check_test_cases();
 
     Spreadsheet input("input.txt");
     auto part1 = input.ComputeChecksum1();
