@@ -41,11 +41,11 @@ std::map<std::pair<int, int>, unsigned> board;
 
 unsigned sum_neighbors(int x, int y)
 {
-    unsigned sum = 0;
+    auto sum = 0U;
 
-    for (int i = -1; i <= 1; i++)
+    for (auto i = -1; i <= 1; i++)
     {
-        for (int j = -1; j <= 1; j++)
+        for (auto j = -1; j <= 1; j++)
         {
             if (i || j)
             {
@@ -62,8 +62,8 @@ unsigned sum_neighbors(int x, int y)
 unsigned do_part2(unsigned input)
 {
     // Initialize origin to 1.
-    int x_dir = 1, y_dir = 0;
-    int x = 0, y = 0;
+    auto x_dir = 1, y_dir = 0;
+    auto x = 0, y = 0;
     board[{x, y}] = 1;
 
     // Proceed with 4 runs of 2, 4 runs of 4, 4 runs of 6, etc.
@@ -72,15 +72,15 @@ unsigned do_part2(unsigned input)
         x++, y++;
 
         // Up, Down, Left, Right
-        for (int i = 0; i < 4; i++)
+        for (auto i = 0; i < 4; i++)
         {
             // Turn counterclockwise.
-            int temp = x_dir;
+            auto temp = x_dir;
             x_dir = y_dir;
             y_dir = -temp;
 
             // Process a single run.
-            for (int j = 0; j < run_length; j++)
+            for (auto j = 0; j < run_length; j++)
             {
                 x += x_dir, y += y_dir;
 
@@ -92,17 +92,12 @@ unsigned do_part2(unsigned input)
     }
 }
 
-void check_test_cases()
+int main()
 {
     assert(do_part1(1) == 0);
     assert(do_part1(12) == 3);
     assert(do_part1(23) == 2);
     assert(do_part1(1024) == 31);
-}
-
-int main()
-{
-    check_test_cases();
 
     auto input = 347991;
     auto part1 = do_part1(input);
