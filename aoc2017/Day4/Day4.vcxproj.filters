@@ -13,9 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Data">
+      <UniqueIdentifier>{9a9a78fa-d519-4ee8-aaeb-fb67aded6158}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="input.txt">
+      <Filter>Data</Filter>
+    </Text>
+    <Text Include="input-test.txt">
+      <Filter>Data</Filter>
+    </Text>
+    <Text Include="input-test2.txt">
+      <Filter>Data</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -29,7 +41,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Day5.cpp">
+    <ClCompile Include="Day4.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

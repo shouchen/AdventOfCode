@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{71EDE540-7509-4E65-A2D4-EB81849FF0FC}</ProjectGuid>
+    <ProjectGuid>{32B4DDDD-1A6A-4527-BEEB-3A61B76A03E1}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Day1</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Text Include="input.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

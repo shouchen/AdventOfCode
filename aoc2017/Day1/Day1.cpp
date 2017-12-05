@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 
-typedef  unsigned (*OtherIndexComputer)(int curr, int length);
+typedef  unsigned(*OtherIndexComputer)(int curr, int length);
 
 unsigned get_other_index1(int curr, int length)
 {
@@ -32,7 +32,7 @@ unsigned compute_captcha(const std::string &input, OtherIndexComputer computer)
     return sum;
 }
 
-void check_test_cases()
+int main()
 {
     assert(compute_captcha("1122", get_other_index1) == 3);
     assert(compute_captcha("1111", get_other_index1) == 4);
@@ -44,11 +44,6 @@ void check_test_cases()
     assert(compute_captcha("123425", get_other_index2) == 4);
     assert(compute_captcha("123123", get_other_index2) == 12);
     assert(compute_captcha("12131415", get_other_index2) == 4);
-}
-
-int main()
-{
-    check_test_cases();
 
     std::ifstream f("input.txt");
     std::string input;

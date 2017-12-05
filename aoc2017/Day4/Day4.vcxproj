@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8882F2D4-FE3E-494E-9C94-B55D83C20A82}</ProjectGuid>
+    <ProjectGuid>{3278C52E-9ED2-4753-AE66-59F5386473A3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Day3</RootNamespace>
+    <RootNamespace>Day4</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -142,6 +142,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Text Include="input-test.txt" />
+    <Text Include="input-test2.txt" />
+    <Text Include="input.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -149,7 +152,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Day3.cpp" />
+    <ClCompile Include="Day4.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

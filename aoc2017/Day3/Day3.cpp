@@ -21,7 +21,7 @@ unsigned do_part1(unsigned input)
     auto square = (unsigned)sqrt(input);
     if (square % 2 == 0) square--; // if even, round down to odd
 
-    // 2. Determine how far beyond that the input is.
+                                   // 2. Determine how far beyond that the input is.
     auto overflow = input - square * square;
 
     // 3. If no overflow, distance is square - 1.
