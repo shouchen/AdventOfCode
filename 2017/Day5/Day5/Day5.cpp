@@ -8,7 +8,7 @@
 unsigned process_file(const std::string &filename, bool for_part2)
 {
     std::ifstream f(filename);
-    int offset;
+    auto offset = 0;
     std::vector<int> data;
 
     while (f >> offset)
