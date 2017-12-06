@@ -4,14 +4,14 @@
 #include <iostream>
 #include <fstream>
 
-typedef  unsigned(*OtherIndexComputer)(int curr, int length);
+typedef  unsigned(*OtherIndexComputer)(int curr, unsigned length);
 
-unsigned get_other_index1(int curr, int length)
+unsigned get_other_index1(int curr, unsigned length)
 {
     return (curr + 1) % length;
 }
 
-unsigned get_other_index2(int curr, int length)
+unsigned get_other_index2(int curr, unsigned length)
 {
     return (curr + length / 2) % length;
 }
@@ -22,7 +22,7 @@ unsigned compute_captcha(const std::string &input, OtherIndexComputer computer)
 
     for (auto i = 0U; i < input.length(); i++)
     {
-        auto other_index = computer(i, input.length());
+        auto other_index = computer(i, unsigned(input.length()));
         if (input[i] == input[other_index])
         {
             sum += input[i] - '0';
