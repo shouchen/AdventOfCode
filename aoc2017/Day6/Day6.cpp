@@ -3,56 +3,54 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <set>
 #include <map>
+#include <algorithm>
 
 void process_file(const std::string &filename, unsigned &part1, unsigned &part2)
 {
-    std::vector<int> banks;
-
+    // Read the input.
+    std::vector<unsigned> banks;
     std::ifstream f(filename);
-    unsigned count;
+    unsigned blocks;
 
-    while (f >> count)
-        banks.push_back(count);
+    while (f >> blocks)
+        banks.push_back(blocks);
 
-    std::map<std::vector<int>, unsigned> seen;
-    auto iter = 0U;
-    auto diff = 0U;
-    for (;;)
+    // Create a place to save the configuration history.
+    std::map<std::vector<unsigned>, unsigned> seen;
+
+    // Do process repeatedly until we see a repeated configuration.
+    for (part1 = 0U; seen.find(banks) == seen.end(); part1++)
     {
-        auto found = seen.find(banks);
-        if (found != seen.end())
+        // Record what we've seen and when.
+        seen[banks] = part1;
+
+        // Redistribute the max bank's blocks.
+        auto max_bank = std::max_element(banks.begin(), banks.end());
+        auto dividend = unsigned(*max_bank / banks.size());
+        auto remainder = unsigned(*max_bank % banks.size());
+        *max_bank = 0;
+
+        auto i = max_bank;
+        do
         {
-            diff = iter - seen[banks];
-            part1 = iter;
-            part2 = diff;
-            return;
-        }
+            // Wrap around circularly.
+            if (++i == banks.end())
+                i = banks.begin();
 
-        seen[banks] = iter;
+            // Dividend blocks go to every bank.
+            (*i) += dividend;
 
-        unsigned max = 0;
-        for (auto i = 1; i < banks.size(); i++)
-        {
-            if (banks[i] > banks[max])
-                max = i;
-        }
-
-        auto over = banks[max];
-        banks[max] = 0;
-        auto curr = (max + 1) % banks.size();
-
-        while (over)
-        {
-            banks[curr]++;
-            over--;
-
-            curr = (curr + 1) % banks.size();
-        }
-
-        ++iter;
+            // Remainder blocks go to banks immediately after max (until exhausted).
+            if (remainder)
+            {
+                (*i)++;
+                remainder--;
+            }
+        } while (i != max_bank);
     }
+
+    part2 = part1 - seen[banks];
 }
 
 int main()
