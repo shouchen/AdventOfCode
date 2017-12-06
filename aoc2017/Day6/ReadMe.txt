@@ -1,40 +1,39 @@
-========================================================================
-    CONSOLE APPLICATION : Day6 Project Overview
-========================================================================
+--- Day 6: Memory Reallocation ---
 
-AppWizard has created this Day6 application for you.
+A debugger program here is having an issue: it is trying to repair a memory reallocation routine, but it keeps getting stuck in an infinite loop.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day6 application.
+In this area, there are sixteen memory banks; each memory bank can hold any number of blocks. The goal of the reallocation routine is to balance the blocks between the memory banks.
 
+The reallocation routine operates in cycles. In each cycle, it finds the memory bank with the most blocks (ties won by the lowest-numbered memory bank) and redistributes those blocks among the banks. To do this, it removes all of the blocks from the selected bank, then moves to the next (by index) memory bank and inserts one of the blocks. It continues doing this until it runs out of blocks; if it reaches the last memory bank, it wraps around to the first one.
 
-Day6.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+The debugger would like to know how many redistributions can be done before a blocks-in-banks configuration is produced that has been seen before.
 
-Day6.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+For example, imagine a scenario with only four memory banks:
 
-Day6.cpp
-    This is the main application source file.
+The banks start with 0, 2, 7, and 0 blocks. The third bank has the most blocks, so it is chosen for redistribution.
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+Starting with the next bank (the fourth bank) and then continuing to the first bank, the second bank, and so on, the 7 blocks are spread out over the memory banks. The fourth, first, and second banks get two blocks each, and the third bank gets one back. The final result looks like this: 2 4 1 2.
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day6.pch and a precompiled types file named StdAfx.obj.
+Next, the second bank is chosen because it contains the most blocks (four). Because there are four memory banks, each gets one block. The result is: 3 1 2 3.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+Now, there is a tie between the first and fourth memory banks, both of which have three blocks. The first bank wins the tie, and its three blocks are distributed evenly over the other three banks, leaving it with none: 0 2 3 4.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+The fourth bank is chosen, and its four blocks are distributed such that each of the four banks receives one: 1 3 4 1.
 
-/////////////////////////////////////////////////////////////////////////////
+The third bank is chosen, and the same thing happens: 2 4 1 2.
+
+At this point, we've reached a state we've seen before: 2 4 1 2 was already seen. The infinite loop is detected after the fifth block redistribution cycle, and so the answer in this example is 5.
+
+Given the initial block counts in your puzzle input, how many redistribution cycles must be completed before a configuration is produced that has been seen before?
+
+Your puzzle answer was 6681.
+
+--- Part Two ---
+
+Out of curiosity, the debugger would also like to know the size of the loop: starting from a state that has already been seen, how many block redistribution cycles must be performed before that same state is seen again?
+
+In the example above, 2 4 1 2 is seen again after four cycles, and so the answer in that example would be 4.
+
+How many cycles are in the infinite loop that arises from the configuration in your puzzle input?
+
+Your puzzle answer was 2392.
