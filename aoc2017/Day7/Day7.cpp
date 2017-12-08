@@ -13,11 +13,10 @@ struct Node
 {
     std::string name;
     int weight;
-    std::vector<std::string> children;
+    std::vector<std::string> children; // more efficient to make this a Node pointer
 };
 
-std::map<std::string, Node *> nodemap;
-std::set<std::string> childlist;
+std::map<std::string, Node *> nodemap; // this leaks allocations, of course
 
 // returns the total weight of the node passed in plus children
 int compute_child_weights(const std::string &name)
@@ -79,8 +78,9 @@ std::string find_different_child_weight(const std::string &name, int &diff)
 
 void do_processing(const std::string &filename, std::string &part1, int &part2)
 {
+    std::set<std::string> childlist;
+
     nodemap.clear();
-    childlist.clear();
 
     std::ifstream f(filename);
     std::string line;
@@ -100,8 +100,10 @@ void do_processing(const std::string &filename, std::string &part1, int &part2)
             std::string name;
             while (ss >> name)
             {
+                // remove trailing comma
                 if (name[name.size() - 1] == ',')
-                    name = name.substr(0, name.size() - 1); // remove comma
+                    name = name.substr(0, name.size() - 1);
+
                 node->children.push_back(name);
                 childlist.insert(name);
             }
