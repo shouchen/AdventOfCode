@@ -13,29 +13,26 @@ struct Node
 {
     std::string name;
     int weight;
-    std::vector<std::string> children; // more efficient to make this a Node pointer
+    std::vector<Node *> children;
 };
 
 std::map<std::string, Node *> nodemap; // this leaks allocations, of course
 
 // returns the total weight of the node passed in plus children
-int compute_child_weights(const std::string &name)
+int compute_child_weights(Node *node)
 {
-    Node *node = nodemap[name];
-
     int weight = node->weight;
-    for (auto child_name : node->children)
-        weight += compute_child_weights(child_name);
+    for (auto child : node->children)
+        weight += compute_child_weights(child);
 
     return weight;
 }
 
-// Returns the name of the child node that has a different weight than its siblings,
-// or "" if they are all equal. Q: What if exactly 2 and they are different? Which one
+// Returns the child node that has a different weight than its siblings,
+// or nullptr if they are all equal. Q: What if exactly 2 and they are different? Which one
 // is wrong?
-std::string find_different_child_weight(const std::string &name, int &diff)
+Node *find_different_child_weight(Node *node, int &diff)
 {
-    Node *node = nodemap[name];
     if (node->children.size() > 2)
     {
         std::map<int, int> weight_count;
@@ -55,25 +52,22 @@ std::string find_different_child_weight(const std::string &name, int &diff)
         else
         {
             diff = 0;
-            return "";
+            return nullptr;
         }
 
         for (auto iter = node->children.begin(); iter != node->children.end(); iter++)
         {
-            auto temp = compute_child_weights(*iter);
-            if (temp == wrong)
+            if (compute_child_weights(*iter) == wrong)
             {
-                if (iter == node->children.begin())
-                    diff = wrong - compute_child_weights(node->children[node->children.size() - 1]);
-                else
-                    diff = wrong - compute_child_weights(*node->children.begin());
+                diff = wrong - compute_child_weights((iter == node->children.begin())
+                    ? node->children[node->children.size() - 1] : *node->children.begin());
                 return *iter;
             }
         }
     }
 
     diff = 0;
-    return "";
+    return nullptr;
 }
 
 void do_processing(const std::string &filename, std::string &part1, int &part2)
@@ -90,9 +84,22 @@ void do_processing(const std::string &filename, std::string &part1, int &part2)
         std::stringstream ss(line);
         char c;
 
-        Node *node = new Node();
-        ss >> node->name >> c >> node->weight >> c;
-        nodemap[node->name] = node;
+
+        std::string name;
+        auto weight = 0U;
+        ss >> name >> c >> weight >> c;
+
+        // Update existing node or create a new one
+        auto node_iter = nodemap.find(name);
+        Node *node = nullptr;
+        if (node_iter == nodemap.end())
+        {
+            node = new Node();
+            nodemap[name] = node;
+            node->name = name;
+        }
+
+        node->weight = weight;
 
         std::string arrow;
         if ((ss >> arrow) && arrow == "->")
@@ -104,7 +111,21 @@ void do_processing(const std::string &filename, std::string &part1, int &part2)
                 if (name[name.size() - 1] == ',')
                     name = name.substr(0, name.size() - 1);
 
-                node->children.push_back(name);
+                // use existing child node or create a new one
+                auto child_node_iter = nodemap.find(name);
+                Node *child_node = nullptr;
+                if (child_node_iter == nodemap.end())
+                {
+                    child_node = new Node();
+                    child_node->name = name;
+                    child_node->weight = 0; // will be changed later when this node is read in
+                }
+                else
+                {
+                    child_node = child_node_iter->second;
+                }
+
+                node->children.push_back(child_node);
                 childlist.insert(name);
             }
         }
@@ -122,17 +143,17 @@ void do_processing(const std::string &filename, std::string &part1, int &part2)
 
     // Part 2: Follow the tree from the root. At each node, if there's an imbalance, go to the 
     // one-off child. Stop when balanced. This should get to sphbbz.
-    std::string curr = part1;
+    auto curr = nodemap[part1];
     for (;;)
     {
         int diff = 0;
-        std::string next = find_different_child_weight(curr, diff);
-        if (next == "")
+        auto next = find_different_child_weight(curr, diff);
+        if (!next)
         {
             int diff = 0;
-            find_different_child_weight(part1, diff);
+            find_different_child_weight(nodemap[part1], diff);
 
-            part2 = nodemap[curr]->weight - diff;
+            part2 = curr->weight - diff;
             return;
         }
 
