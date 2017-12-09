@@ -142,7 +142,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="input-test.txt" />
     <Text Include="input.txt" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>

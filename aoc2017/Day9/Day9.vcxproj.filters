@@ -22,9 +22,6 @@
     <Text Include="input.txt">
       <Filter>Data</Filter>
     </Text>
-    <Text Include="input-test.txt">
-      <Filter>Data</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
