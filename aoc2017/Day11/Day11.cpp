@@ -4,52 +4,17 @@
 #include <fstream>
 #include <string>
 
-int x = 0, y = 0;
-
-int get_dist()
+int get_dist(int x, int y)
 {
-    // test
-    if (abs(x) >= abs(y))
-        return abs(x);
-    else
-        return (abs(y) - abs(x) + 1) / 2 + abs(x);
+    x = abs(x);
+    y = abs(y);
 
-    ////
-    int xx = x, yy = y;
-
-    int dist = 0;
-    while (xx != 0 || yy != 0)
-    {
-        if (xx > 0)
-        {
-            xx--;
-            yy = (yy > 0) ? (yy - 1) : (yy + 1);
-        }
-        else if (xx < 0)
-        {
-            xx++;
-            yy = (yy > 0) ? (yy - 1) : (yy + 1);
-        }
-        else if (yy > 0)
-        {
-            yy -= 2;
-        }
-        else if (yy < 0)
-        {
-            yy += 2;
-        }
-        else
-            assert(false);
-
-        dist++;
-    }
-
-    return dist;
+    return (x > y) ? x : (y - x + 1) / 2 + x;
 }
 
 void do_moves(const std::string &moves, int &distance, int &max_distance)
 {
-    x = 0, y = 0;
+    int x = 0, y = 0;
     max_distance = INT_MIN;
 
     int curr = 0;
@@ -100,12 +65,10 @@ void do_moves(const std::string &moves, int &distance, int &max_distance)
             assert(false);
         }
 
-        auto dist = get_dist();
-        if (dist > max_distance)
-            max_distance = dist;
+        distance = get_dist(x, y);
+        if (distance > max_distance)
+            max_distance = distance;
     }
-
-    distance = get_dist();
 }
 
 int main()
@@ -126,16 +89,18 @@ int main()
 
     std::string input;
     std::ifstream f("input.txt");
-    f >> input;
-    do_moves(input, distance, max_distance);
+    if (f >> input)
+    {
+        do_moves(input, distance, max_distance);
 
-    auto part1 = distance;
-    std::cout << "Part 1: " << part1 << std::endl;
-    assert(part1 == 682);
+        auto part1 = distance;
+        std::cout << "Part 1: " << part1 << std::endl;
+        assert(part1 == 682);
 
-    auto part2 = max_distance;
-    std::cout << "Part 2: " << part2 << std::endl;
-    assert(part2 == 1406);
+        auto part2 = max_distance;
+        std::cout << "Part 2: " << part2 << std::endl;
+        assert(part2 == 1406);
+    }
 
     return 0;
 }
