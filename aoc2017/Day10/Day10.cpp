@@ -6,47 +6,87 @@
 #include <sstream>
 #include <iomanip>
 
-std::vector<int> data;
-std::vector<int> inputs;
-
-void reverse(int start, int len)
+std::vector<int> initialize_data(int data_size)
 {
-    int left = start, right = (start + len - 1) % data.size();
-    int count = 0;
+    std::vector<int> data;
+    for (int i = 0; i < data_size; i++)
+        data.push_back(i);
+
+    return data;
+}
+
+std::vector<int> read_input_text(const std::string &filename)
+{
+    std::vector<int> inputs;
+    std::ifstream f(filename);
+    std::string input;
+
+    while (std::getline(f, input, ','))
+        inputs.push_back(atoi(input.c_str()));
+
+    return inputs;
+}
+
+std::vector<int> read_input_binary(const std::string &filename)
+{
+    std::vector<int> inputs;
+    std::string input;
+    std::ifstream f(filename);
+
+    f >> input;
+
+    for (auto c : input)
+        inputs.push_back(int(c));
+
+    return inputs;
+}
+
+void add_salt(std::vector<int> &inputs)
+{
+    const static std::vector<int> salt = { 17, 31, 73, 47, 23 };
+    for (auto i : salt)
+        inputs.push_back(i);
+}
+
+void reverse(std::vector<int> &data, int start, int len)
+{
+    auto a = start, b = int((start + len - 1) % data.size());
+    auto count = 0;
 
     do
     {
-        auto temp = data[left];
-        data[left] = data[right];
-        data[right] = temp;
-        if (++left >= data.size()) left = 0;
-        if (--right < 0) right = data.size() - 1;
+        std::swap(data[a], data[b]);
+
+        if (++a >= data.size()) a = 0;
+        if (--b < 0) b = int(data.size() - 1);
     } while (++count < len / 2);
 }
 
-void dump_data()
+void do_rounds(std::vector<int> &data, const std::vector<int> &inputs, int rounds)
 {
-    for (int i = 0; i < data.size(); i++)
-        std::cout << data[i];
-    std::cout << std::endl;
+    auto curr = 0, skip_size = 0;
+
+    for (auto i = 0; i < rounds; i++)
+    {
+        for (auto input : inputs)
+        {
+            reverse(data, curr, input);
+            curr = (curr + input + skip_size++) % data.size();
+        }
+    }
 }
 
-void add_salt(std::vector<int> &data)
+std::vector<int> compress_hash(const std::vector<int> &sparse_hash)
 {
-    data.push_back(17);
-    data.push_back(31);
-    data.push_back(73);
-    data.push_back(47);
-    data.push_back(23);
-}
+    std::vector<int> dense_hash;
 
-void compress_hash(const std::vector<int> &sparse_hash, std::vector<int> &dense_hash)
-{
-    for (int i = 0; i < 16; i++)
+    for (auto i = 0; i < 16; i++)
         dense_hash.push_back(0);
 
-    for (int i = 0; i < 256; i++)
-        dense_hash[i / 16] ^= data[i];
+    for (auto i = 0; i < 256; i++)
+        dense_hash[i / 16] ^= sparse_hash[i];
+
+    return dense_hash;
 }
 
 std::string hexify(const std::vector<int> data)
@@ -58,67 +98,36 @@ std::string hexify(const std::vector<int> data)
     return ss.str();
 }
 
-int do_part1(int data_size, std::vector<int> inputs)
+int do_part1(int data_size, const std::string &filename)
 {
-    data.clear();
-    for (int i = 0; i < data_size; i++)
-        data.push_back(i);
-    dump_data();
+    auto data = initialize_data(data_size);
+    auto inputs = read_input_text(filename);
 
-    auto curr = 0;
-    auto skip_size = 0;
-    for (auto input : inputs)
-    {
-        reverse(curr, input);
-        dump_data();
-        curr = (curr + input + skip_size++) % data.size();
-    }
-
+    do_rounds(data, inputs, 1);
     return data[0] * data[1];
 }
 
-std::string do_part2(const std::string &input2)
+std::string do_part2(int data_size, const std::string &filename)
 {
-    data.clear();
-    for (int i = 0; i < 256; i++)
-        data.push_back(i);
-
-    dump_data();
-
-    inputs.clear();
-    for (auto c : input2)
-        inputs.push_back(int(c));
+    auto data = initialize_data(data_size);
+    auto inputs = read_input_binary(filename);
 
     add_salt(inputs);
 
-    auto curr = 0;
-    auto skip_size = 0;
+    do_rounds(data, inputs, 64);
 
-    for (int i = 0; i < 64; i++)
-    {
-        for (auto input : inputs)
-        {
-            reverse(curr, input);
-            curr = (curr + input + skip_size++) % data.size();
-        }
-    }
-
-    std::vector<int> dense_hash;
-    compress_hash(data, dense_hash);
-
+    auto dense_hash = compress_hash(data);
     return hexify(dense_hash);
 }
 
 int main()
 {
-    auto part1 = do_part1(5, { 3, 4, 1, 5 });
-    assert(part1 == 12);
+    assert(do_part1(5, "input-test.txt") == 12);
 
-    part1 = do_part1(256, { 63, 144, 180, 149, 1, 255, 167, 84, 125, 65, 188, 0, 2, 254, 229, 24 });
+    auto part1 = do_part1(256, "input.txt");
+    auto part2 = do_part2(256, "input.txt");
+
     std::cout << "Part 1: " << part1 << std::endl;
-    assert(part1 == 4480);
-
-    auto part2 = do_part2("63,144,180,149,1,255,167,84,125,65,188,0,2,254,229,24");
     std::cout << "Part 2: " << part2 << std::endl;
 
     assert(part1 == 4480);
