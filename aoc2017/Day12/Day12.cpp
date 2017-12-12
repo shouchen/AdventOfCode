@@ -7,9 +7,6 @@
 #include <map>
 #include <set>
 
-std::map<unsigned, std::vector<unsigned>> data;
-std::set<unsigned> visited;
-
 std::map<unsigned, std::vector<unsigned>> read_input(const std::string &filename)
 {
     std::map<unsigned, std::vector<unsigned>> data;
@@ -32,51 +29,45 @@ std::map<unsigned, std::vector<unsigned>> read_input(const std::string &filename
     return data;
 }
 
-void do_visit(unsigned x)
+void do_visit(unsigned x, std::map<unsigned, std::vector<unsigned>> &data, std::set<unsigned> &visited)
 {
-    auto y = visited.find(x);
-    if (y != visited.end())
-        return;
-
-    visited.insert(x);
-    for (auto n : data[x])
-        do_visit(n);
-}
-
-unsigned do_part1()
-{
-    visited.clear();
-    do_visit(0);
-    return unsigned(visited.size());
-}
-
-unsigned do_part2()
-{
-    visited.clear();
-
-    auto num_groups = 0U;
-
-    for (auto p : data)
+    if (visited.find(x) == visited.end())
     {
-        if (visited.find(p.first) != visited.end())
-            continue;
-
-        num_groups++;
-        do_visit(p.first);
+        visited.insert(x);
+        for (auto n : data[x])
+            do_visit(n, data, visited);
     }
+}
 
-    return num_groups;
+void do_both_parts(std::map<unsigned, std::vector<unsigned>> &data, unsigned &group_zero_size, unsigned &num_groups)
+{
+    std::set<unsigned> visited;
+    do_visit(0, data, visited);
+    group_zero_size = unsigned(visited.size());
+
+    num_groups = 1U;
+
+    for (auto item : data)
+    {
+        if (visited.find(item.first) == visited.end())
+        {
+            num_groups++;
+            do_visit(item.first, data, visited);
+        }
+    }
 }
 
 int main()
 {
-    data = read_input("input-test.txt");
-    assert(do_part1() == 6);
-    assert(do_part2() == 2);
+    auto part1 = 0U, part2 = 0U;
+
+    auto data = read_input("input-test.txt");
+    do_both_parts(data, part1, part2);
+    assert(part1 == 6);
+    assert(part2 == 2);
 
     data = read_input("input.txt");
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    do_both_parts(data, part1, part2);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;

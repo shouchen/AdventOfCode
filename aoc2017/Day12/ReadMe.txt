@@ -1,40 +1,48 @@
-========================================================================
-    CONSOLE APPLICATION : Day12 Project Overview
-========================================================================
+--- Day 12: Digital Plumber ---
 
-AppWizard has created this Day12 application for you.
+Walking along the memory banks of the stream, you find a small village that is experiencing a little confusion: some programs can't communicate with each other.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day12 application.
+Programs in this village communicate using a fixed system of pipes. Messages are passed between programs using these pipes, but most programs aren't connected to each other directly. Instead, programs pass messages between each other until the message reaches the intended recipient.
 
+For some reason, though, some of these messages aren't ever reaching their intended recipient, and the programs suspect that some pipes are missing. They would like you to investigate.
 
-Day12.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+You walk through the village and record the ID of each program and the IDs with which it can communicate directly (your puzzle input). Each program has one or more programs with which it can communicate, and these pipes are bidirectional; if 8 says it can communicate with 11, then 11 will say it can communicate with 8.
 
-Day12.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+You need to figure out how many programs are in the group that contains program ID 0.
 
-Day12.cpp
-    This is the main application source file.
+For example, suppose you go door-to-door like a travelling salesman and record the following list:
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+0 <-> 2
+1 <-> 1
+2 <-> 0, 3, 4
+3 <-> 2, 4
+4 <-> 2, 3, 6
+5 <-> 6
+6 <-> 4, 5
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day12.pch and a precompiled types file named StdAfx.obj.
+In this example, the following programs are in the group that contains program ID 0:
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+Program 0 by definition.
+Program 2, directly connected to program 0.
+Program 3 via program 2.
+Program 4 via program 2.
+Program 5 via programs 6, then 4, then 2.
+Program 6 via programs 4, then 2.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Therefore, a total of 6 programs are in this group; all but program 1, which has a pipe that connects it to itself.
 
-/////////////////////////////////////////////////////////////////////////////
+How many programs are in the group that contains program ID 0?
+
+Your puzzle answer was 380.
+
+--- Part Two ---
+
+There are more programs than just the ones in the group containing program ID 0. The rest of them have no way of reaching that group, and still might have no way of reaching each other.
+
+A group is a collection of programs that can all communicate via pipes either directly or indirectly. The programs you identified just a moment ago are all part of the same group. Now, they would like you to determine the total number of groups.
+
+In the example above, there were 2 groups: one consisting of programs 0,2,3,4,5,6, and the other consisting solely of program 1.
+
+How many groups are there in total?
+
+Your puzzle answer was 181.
