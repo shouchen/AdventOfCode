@@ -4,30 +4,19 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
-#include <iomanip>
 #include <map>
 #include <set>
 
-std::map<int, std::vector<int>> data;
-std::set<int> visited;
+std::map<unsigned, std::vector<unsigned>> data;
+std::set<unsigned> visited;
 
-void do_visit(int x)
+std::map<unsigned, std::vector<unsigned>> read_input(const std::string &filename)
 {
-    std::cout << x << std::endl;
-    auto y = visited.find(x);
-    if (y != visited.end())
-        return;
-
-    visited.insert(x);
-    for (auto n : data[x])
-        do_visit(n);
-}
-
-int main()
-{
-    std::ifstream f("input.txt");
+    std::map<unsigned, std::vector<unsigned>> data;
+    std::ifstream f(filename);
     std::string s, arrow, comma;
-    int pipe1, pipe2;
+    auto pipe1 = 0U, pipe2 = 0U;
+
     while (std::getline(f, s))
     {
         std::istringstream ss(s);
@@ -40,12 +29,32 @@ int main()
         }
     }
 
-    do_visit(0);
-    auto part1 = visited.size();
-    std::cout << "Part 1: " << part1 << std::endl;
-    assert(part1 == 380);
+    return data;
+}
 
-    int num_groups = 1;
+void do_visit(unsigned x)
+{
+    auto y = visited.find(x);
+    if (y != visited.end())
+        return;
+
+    visited.insert(x);
+    for (auto n : data[x])
+        do_visit(n);
+}
+
+unsigned do_part1()
+{
+    visited.clear();
+    do_visit(0);
+    return unsigned(visited.size());
+}
+
+unsigned do_part2()
+{
+    visited.clear();
+
+    auto num_groups = 0U;
 
     for (auto p : data)
     {
@@ -53,22 +62,26 @@ int main()
             continue;
 
         num_groups++;
-        std::cout << "new group #" << num_groups << " at " << p.first << std::endl;
         do_visit(p.first);
     }
 
-    std::cout << std::endl;
+    return num_groups;
+}
 
-    //assert(do_part1(5, "input-test.txt") == 12);
+int main()
+{
+    data = read_input("input-test.txt");
+    assert(do_part1() == 6);
+    assert(do_part2() == 2);
 
-    //auto part1 = do_part1(256, "input.txt");
-    //auto part2 = do_part2(256, "input.txt");
+    data = read_input("input.txt");
+    auto part1 = do_part1();
+    auto part2 = do_part2();
 
-    //std::cout << "Part 1: " << part1 << std::endl;
-    //std::cout << "Part 2: " << part2 << std::endl;
+    std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 2: " << part2 << std::endl;
 
-    //assert(part1 == 4480);
-    //assert(part2 == "c500ffe015c83b60fad2e4b7d59dabc4");
-    //return 0;
-
-} // part1 380, part2 181
+    assert(part1 == 380);
+    assert(part2 == 181);
+    return 0;
+}
