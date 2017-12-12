@@ -12,67 +12,68 @@
 struct Node
 {
     std::string name;
-    int weight;
+    unsigned weight, cume_weight;
     std::vector<Node *> children;
+
+    Node(const std::string &name, int weight) : name(name), weight(weight), cume_weight(0) {}
 };
 
 std::map<std::string, Node *> nodemap; // this leaks allocations, of course
+Node *root;
 
-// returns the total weight of the node passed in plus children
-int compute_child_weights(Node *node)
+// Returns nullptr if no children, or if all are equal. Also gets the difference if any.
+// Q: What if exactly 2 and they are different? Which one is wrong?
+Node *find_child_node_with_different_weight(Node *node, int &diff)
 {
-    int weight = node->weight;
+    std::map<unsigned, unsigned> weight_to_count;
     for (auto child : node->children)
-        weight += compute_child_weights(child);
+        weight_to_count[child->cume_weight]++;
 
-    return weight;
-}
-
-// Returns the child node that has a different weight than its siblings,
-// or nullptr if they are all equal. Q: What if exactly 2 and they are different? Which one
-// is wrong?
-Node *find_different_child_weight(Node *node, int &diff)
-{
-    if (node->children.size() > 2)
+    // All were the same weight
+    if (weight_to_count.size() == 1)
     {
-        std::map<int, int> weight_count;
-        std::vector<int> child_weights;
-        for (auto iter = node->children.begin(); iter != node->children.end(); iter++)
-            child_weights.push_back(compute_child_weights(*iter));
-
-        int wrong;
-        std::sort(child_weights.begin(), child_weights.end());
-        auto first = child_weights[0], second = child_weights[1];
-        auto next_to_last = child_weights[child_weights.size() - 2], last = child_weights[child_weights.size() - 1];
-
-        if (first == second && second != last)
-            wrong = last;
-        else if (next_to_last == last && last != first)
-            wrong = first;
-        else
-        {
-            diff = 0;
-            return nullptr;
-        }
-
-        for (auto iter = node->children.begin(); iter != node->children.end(); iter++)
-        {
-            if (compute_child_weights(*iter) == wrong)
-            {
-                diff = wrong - compute_child_weights((iter == node->children.begin())
-                    ? node->children[node->children.size() - 1] : *node->children.begin());
-                return *iter;
-            }
-        }
+        diff = 0;
+        return nullptr;
     }
 
+    // Check if there were more than two different weights
+    assert(weight_to_count.size() == 2);
+
+    unsigned common_weight, oddball_weight;
+    for (auto i : weight_to_count)
+    {
+        if (i.second == 1)
+            oddball_weight = i.first;
+        else
+            common_weight = i.first;
+    }
+
+    // Find oddball node
+    for (auto child : node->children)
+        if (child->cume_weight == oddball_weight)
+        {
+            diff = oddball_weight - common_weight;
+            return child;
+        }
+
+    // Should never get here
+    assert(false);
     diff = 0;
     return nullptr;
 }
 
-void do_processing(const std::string &filename, std::string &part1, int &part2)
+unsigned set_cume_weight(Node *node)
 {
-    std::set<std::string> childlist;
+    node->cume_weight = node->weight;
+    for (auto child : node->children)
+        node->cume_weight += set_cume_weight(child);
+
+    return node->cume_weight;
+}
+
+void process_input(const std::string &filename)
+{
+    std::set<std::string> childset;
 
     nodemap.clear();
 
@@ -82,29 +83,24 @@ void do_processing(const std::string &filename, std::string &part1, int &part2)
     while (std::getline(f, line))
     {
         std::stringstream ss(line);
-        char c;
-
-
         std::string name;
+        char openParenth, closeParenth;
         auto weight = 0U;
-        ss >> name >> c >> weight >> c;
+        ss >> name >> openParenth >> weight >> closeParenth;
 
-        // Update existing node or create a new one
-        auto node_iter = nodemap.find(name);
         Node *node = nullptr;
-        if (node_iter == nodemap.end())
+        if (nodemap.find(name) == nodemap.end())
         {
-            node = new Node();
+            node = new Node(name, weight);
             nodemap[name] = node;
-            node->name = name;
         }
-
+        else
+            node = nodemap[name];
         node->weight = weight;
 
         std::string arrow;
         if ((ss >> arrow) && arrow == "->")
         {
-            std::string name;
             while (ss >> name)
             {
                 // remove trailing comma
@@ -116,9 +112,8 @@ void do_processing(const std::string &filename, std::string &part1, int &part2)
                 Node *child_node = nullptr;
                 if (child_node_iter == nodemap.end())
                 {
-                    child_node = new Node();
-                    child_node->name = name;
-                    child_node->weight = 0; // will be changed later when this node is read in
+                    child_node = new Node(name, 0);
+                    nodemap[name] = child_node;
                 }
                 else
                 {
@@ -126,51 +121,63 @@ void do_processing(const std::string &filename, std::string &part1, int &part2)
                 }
 
                 node->children.push_back(child_node);
-                childlist.insert(name);
+                childset.insert(name);
             }
         }
     }
 
-    // Part 1: Find node that doesn't appear on any children
+    // Find root node (the one that doesn't appear as child of another one)
     for (auto iter : nodemap)
     {
-        if (childlist.find(iter.second->name) == childlist.end())
+        if (childset.find(iter.second->name) == childset.end())
         {
-            part1 = iter.second->name;
+            root = iter.second;
             break;
         }
     }
 
-    // Part 2: Follow the tree from the root. At each node, if there's an imbalance, go to the 
-    // one-off child. Stop when balanced. This should get to sphbbz.
-    auto curr = nodemap[part1];
+    // Set cume_weights recursively
+    set_cume_weight(root);
+}
+
+std::string do_part1()
+{
+    return root->name;
+}
+
+// Follow the tree from the root. At each node, if there's an imbalance, go to the 
+// one-off child. Stop when balanced. This should get to sphbbz.
+unsigned do_part2()
+{
+    auto curr = root;
+    int diff = 0;
+
     for (;;)
     {
-        int diff = 0;
-        auto next = find_different_child_weight(curr, diff);
+        auto next = find_child_node_with_different_weight(curr, diff);
         if (!next)
-        {
-            int diff = 0;
-            find_different_child_weight(nodemap[part1], diff);
-
-            part2 = curr->weight - diff;
-            return;
-        }
+            break;
 
         curr = next;
     }
+
+    find_child_node_with_different_weight(root, diff);
+    return curr->weight - diff;
 }
 
 int main()
 {
-    std::string part1;
-    int part2 = 0;
+    process_input("input-test.txt");
+    auto part1 = do_part1();
+    auto part2 = do_part2();
 
-    do_processing("input-test.txt", part1, part2);
     assert(part1 == "tknk");
     assert(part2 = 60);
 
-    do_processing("input.txt", part1, part2);
+    process_input("input.txt");
+    part1 = do_part1();
+    part2 = do_part2();
+
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
 

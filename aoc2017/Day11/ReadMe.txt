@@ -1,40 +1,33 @@
-========================================================================
-    CONSOLE APPLICATION : Day11 Project Overview
-========================================================================
+--- Day 11: Hex Ed ---
+Crossing the bridge, you've barely reached the other side of the stream when a program comes up to you, clearly in distress. "It's my child process," she says, "he's gotten lost in an infinite grid!"
 
-AppWizard has created this Day11 application for you.
+Fortunately for her, you have plenty of experience with infinite grids.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day11 application.
+Unfortunately for you, it's a hex grid.
 
+The hexagons ("hexes") in this grid are aligned such that adjacent hexes can be found to the north, northeast, southeast, south, southwest, and northwest:
 
-Day11.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+  \ n  /
+nw +--+ ne
+  /    \
+-+      +-
+  \    /
+sw +--+ se
+  / s  \
 
-Day11.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+You have the path the child process took. Starting where he started, you need to determine the fewest number of steps required to reach him. (A "step" means to move from the hex you are in to any adjacent hex.)
 
-Day11.cpp
-    This is the main application source file.
+For example:
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+ne,ne,ne is 3 steps away.
+ne,ne,sw,sw is 0 steps away (back where you started).
+ne,ne,s,s is 2 steps away (se,se).
+se,sw,se,sw,sw is 3 steps away (s,s,sw).
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day11.pch and a precompiled types file named StdAfx.obj.
+Your puzzle answer was 682.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+--- Part Two ---
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+How many steps away is the furthest he ever got from his starting position?
 
-/////////////////////////////////////////////////////////////////////////////
+Your puzzle answer was 1406.
