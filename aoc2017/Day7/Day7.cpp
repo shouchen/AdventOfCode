@@ -7,176 +7,143 @@
 #include <vector>
 #include <map>
 #include <set>
-#include <algorithm>
 
-struct Node
+struct NodeData
 {
-    std::string name;
     unsigned weight, cume_weight;
-    std::vector<Node *> children;
-
-    Node(const std::string &name, int weight) : name(name), weight(weight), cume_weight(0) {}
+    std::vector<std::string> children;
 };
 
-std::map<std::string, Node *> nodemap; // this leaks allocations, of course
-Node *root;
+std::string root;
+std::map<std::string, NodeData> node_data;
 
-// Returns nullptr if no children, or if all are equal. Also gets the difference if any.
-// Q: What if exactly 2 and they are different? Which one is wrong?
-Node *find_child_node_with_different_weight(Node *node, int &diff)
+unsigned set_cume_weights_recursively(const std::string &node_name)
 {
-    std::map<unsigned, unsigned> weight_to_count;
-    for (auto child : node->children)
-        weight_to_count[child->cume_weight]++;
+    NodeData &node = node_data[node_name];
+    node.cume_weight = node.weight;
 
-    // All were the same weight
-    if (weight_to_count.size() == 1)
-    {
-        diff = 0;
-        return nullptr;
-    }
+    for (auto child : node.children)
+        node.cume_weight += set_cume_weights_recursively(child);
 
-    // Check if there were more than two different weights
-    assert(weight_to_count.size() == 2);
-
-    unsigned common_weight, oddball_weight;
-    for (auto i : weight_to_count)
-    {
-        if (i.second == 1)
-            oddball_weight = i.first;
-        else
-            common_weight = i.first;
-    }
-
-    // Find oddball node
-    for (auto child : node->children)
-        if (child->cume_weight == oddball_weight)
-        {
-            diff = oddball_weight - common_weight;
-            return child;
-        }
-
-    // Should never get here
-    assert(false);
-    diff = 0;
-    return nullptr;
+    return node.cume_weight;
 }
 
-unsigned set_cume_weight(Node *node)
+void read_input(const std::string &filename)
 {
-    node->cume_weight = node->weight;
-    for (auto child : node->children)
-        node->cume_weight += set_cume_weight(child);
+    node_data.clear();
 
-    return node->cume_weight;
-}
-
-void process_input(const std::string &filename)
-{
     std::set<std::string> childset;
-
-    nodemap.clear();
-
     std::ifstream f(filename);
-    std::string line;
+    std::string token, name;
 
-    while (std::getline(f, line))
+    while (f >> token)
     {
-        std::stringstream ss(line);
-        std::string name;
-        char openParenth, closeParenth;
-        auto weight = 0U;
-        ss >> name >> openParenth >> weight >> closeParenth;
-
-        Node *node = nullptr;
-        if (nodemap.find(name) == nodemap.end())
+        if (token == "->")
         {
-            node = new Node(name, weight);
-            nodemap[name] = node;
+            std::string child_name;
+            bool eol = false;
+            while (!eol && f >> child_name)
+            {
+                if (child_name[child_name.length() - 1] == ',')
+                    child_name = child_name.substr(0, child_name.length() - 1);
+                else
+                    eol = true;
+
+                node_data[name].children.push_back(child_name);
+                childset.insert(child_name);
+            }
         }
         else
-            node = nodemap[name];
-        node->weight = weight;
-
-        std::string arrow;
-        if ((ss >> arrow) && arrow == "->")
         {
-            while (ss >> name)
+            name = token;
+            auto &data = node_data[name];
+
+            auto openParenth = '(', closeParenth = ')';
+            f >> openParenth >> data.weight >> closeParenth;
+            data.cume_weight = 0;
+        }
+    }
+
+    // Find root node (the one that doesn't appear as child of another one).
+    for (auto iter : node_data)
+    {
+        if (childset.find(iter.first) == childset.end())
+        {
+            root = iter.first;
+            break;
+        }
+    }
+
+    set_cume_weights_recursively(root);
+}
+
+std::string find_oddball_child_node(const std::string &node_name, int &diff)
+{
+    std::string child;
+    diff = 0;
+
+    std::map<unsigned, unsigned> weight_to_count;
+    NodeData &node = node_data[node_name];
+
+    for (auto &child : node.children)
+    {
+        auto child_node = node_data[child];
+        weight_to_count[child_node.cume_weight]++;
+    }
+
+    if (weight_to_count.size() == 2)
+    {
+        // Find oddball weight
+        unsigned common_weight, oddball_weight;
+        for (auto i : weight_to_count)
+        {
+            if (i.second == 1)
+                oddball_weight = i.first;
+            else
+                common_weight = i.first;
+        }
+
+        // Find oddball node
+        for (auto iter : node.children)
+        {
+            if (node_data[iter].cume_weight == oddball_weight)
             {
-                // remove trailing comma
-                if (name[name.size() - 1] == ',')
-                    name = name.substr(0, name.size() - 1);
-
-                // use existing child node or create a new one
-                auto child_node_iter = nodemap.find(name);
-                Node *child_node = nullptr;
-                if (child_node_iter == nodemap.end())
-                {
-                    child_node = new Node(name, 0);
-                    nodemap[name] = child_node;
-                }
-                else
-                {
-                    child_node = child_node_iter->second;
-                }
-
-                node->children.push_back(child_node);
-                childset.insert(name);
+                child = iter;
+                diff = oddball_weight - common_weight;
+                break;
             }
         }
     }
 
-    // Find root node (the one that doesn't appear as child of another one)
-    for (auto iter : nodemap)
-    {
-        if (childset.find(iter.second->name) == childset.end())
-        {
-            root = iter.second;
-            break;
-        }
-    }
-
-    // Set cume_weights recursively
-    set_cume_weight(root);
+    return child;
 }
 
-std::string do_part1()
+unsigned compute_corrected_weight(const std::string &name)
 {
-    return root->name;
-}
+    std::string prev;
+    auto diff = 0, prev_diff = 0;
 
-// Follow the tree from the root. At each node, if there's an imbalance, go to the 
-// one-off child. Stop when balanced. This should get to sphbbz.
-unsigned do_part2()
-{
-    auto curr = root;
-    int diff = 0;
-
-    for (;;)
+    for (auto curr = root; curr.length(); curr = find_oddball_child_node(curr, diff))
     {
-        auto next = find_child_node_with_different_weight(curr, diff);
-        if (!next)
-            break;
-
-        curr = next;
+        prev = curr;
+        prev_diff = diff;
     }
 
-    find_child_node_with_different_weight(root, diff);
-    return curr->weight - diff;
+    return node_data[prev].weight - prev_diff;
 }
 
 int main()
 {
-    process_input("input-test.txt");
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    read_input("input-test.txt");
+    auto part1 = root;
+    auto part2 = compute_corrected_weight(root);
 
     assert(part1 == "tknk");
     assert(part2 = 60);
 
-    process_input("input.txt");
-    part1 = do_part1();
-    part2 = do_part2();
+    read_input("input.txt");
+    part1 = root;
+    part2 = compute_corrected_weight(root);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
