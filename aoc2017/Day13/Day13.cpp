@@ -6,49 +6,53 @@
 
 struct DepthInfo
 {
-    unsigned depth, range, scanner_cycle;
+    unsigned depth, range, scanner_period;
+    bool catches(unsigned delay = 0) const { return (depth + delay) % scanner_period == 0; }
 };
 
 typedef std::vector<DepthInfo> Firewall;
 
+bool catches(const Firewall &firewall, unsigned delay)
+{
+    for (const auto &item : firewall)
+        if (item.catches(delay))
+            return true;
+
+    return false;
+}
+
 Firewall read_input(const std::string &filename)
 {
-    std::ifstream f("filename");
+    std::ifstream f(filename);
     Firewall firewall;
     DepthInfo item;
     auto colon = ':';
 
     while (f >> item.depth >> colon >> item.range)
     {
-        item.scanner_cycle = (item.range - 1) * 2;
+        item.scanner_period = (item.range - 1) * 2;
         firewall.push_back(item);
     }
 
     return firewall;
 }
 
-const DepthInfo *caught_at(const Firewall &firewall, unsigned delay = 0)
-{
-    for (auto item : firewall)
-        if ((item.depth + delay) % item.scanner_cycle == 0)
-            return &item;
-
-    return nullptr;
-}
-
 unsigned do_part1(const Firewall &firewall)
 {
-    auto depth_info = caught_at(firewall);
-    return depth_info ? (depth_info->depth * depth_info->range) : 0;
+    auto severity = 0U;
+
+    for (const auto &item : firewall)
+        if (item.catches())
+            severity += item.depth * item.range;
+
+    return severity;
 }
 
 unsigned do_part2(const Firewall &firewall)
 {
-    for (auto delay = 0U; delay < UINT_MAX; delay++)
-        if (!caught_at(firewall, delay))
+    for (auto delay = 0U; ; delay++)
+        if (!catches(firewall, delay))
             return delay;
-
-    return UINT_MAX;
 }
 
 int main()
