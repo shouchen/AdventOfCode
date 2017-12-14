@@ -4,13 +4,13 @@
 #include <fstream>
 #include <vector>
 
-struct DepthInfo
+struct LayerInfo
 {
-    unsigned depth, range, scanner_period;
-    bool catches(unsigned delay = 0) const { return (depth + delay) % scanner_period == 0; }
+    unsigned layer, range, scanner_period;
+    bool catches(unsigned delay = 0) const { return (layer + delay) % scanner_period == 0; }
 };
 
-typedef std::vector<DepthInfo> Firewall;
+typedef std::vector<LayerInfo> Firewall;
 
 bool catches(const Firewall &firewall, unsigned delay)
 {
@@ -25,10 +25,10 @@ Firewall read_input(const std::string &filename)
 {
     std::ifstream f(filename);
     Firewall firewall;
-    DepthInfo item;
+    LayerInfo item;
     auto colon = ':';
 
-    while (f >> item.depth >> colon >> item.range)
+    while (f >> item.layer >> colon >> item.range)
     {
         item.scanner_period = (item.range - 1) * 2;
         firewall.push_back(item);
@@ -43,7 +43,7 @@ unsigned do_part1(const Firewall &firewall)
 
     for (const auto &item : firewall)
         if (item.catches())
-            severity += item.depth * item.range;
+            severity += item.layer * item.range;
 
     return severity;
 }
