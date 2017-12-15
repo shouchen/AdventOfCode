@@ -2,19 +2,19 @@
 #include <cassert>
 #include <iostream>
 
-inline unsigned long long generate_a(unsigned long long &a) { return (a * 16807) % 2147483647; }
-inline unsigned long long generate_b(unsigned long long &b) { return (b * 48271) % 2147483647; }
+inline void generate_a(unsigned &x) { x = (x * 16807ULL) % 2147483647; }
+inline void generate_b(unsigned &x) { x = (x * 48271ULL) % 2147483647; }
 
-inline bool judge(unsigned long long a, unsigned long long b) { return (a & 0xffff) == (b & 0xffff ); }
+inline bool judge(unsigned a, unsigned b) { return (a & 0xffff) == (b & 0xffff); }
 
-unsigned do_part1(unsigned long long a, unsigned long long b, unsigned n)
+unsigned do_part1(unsigned a, unsigned b, unsigned n)
 {
     auto count = 0U;
 
     while (n--)
     {
-        a = generate_a(a);
-        b = generate_b(b);
+        generate_a(a);
+        generate_b(b);
 
         if (judge(a, b))
             count++;
@@ -23,14 +23,14 @@ unsigned do_part1(unsigned long long a, unsigned long long b, unsigned n)
     return count;
 }
 
-unsigned do_part2(unsigned long long a, unsigned long long b, unsigned n)
+unsigned do_part2(unsigned a, unsigned b, unsigned n)
 {
     auto count = 0U;
 
     while (n--)
     {
-        do a = generate_a(a); while (a & 0x3);
-        do b = generate_b(b); while (b & 0x7);
+        do generate_a(a); while (a & 0x3);
+        do generate_b(b); while (b & 0x7);
 
         if (judge(a, b))
             count++;
