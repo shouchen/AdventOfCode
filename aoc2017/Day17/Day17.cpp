@@ -1,39 +1,33 @@
 #include "stdafx.h"
-#include <iostream>
 #include <cassert>
+#include <iostream>
+#include <list>
 
-struct Node
+unsigned do_part1(unsigned input)
 {
-    unsigned value;
-    Node *next;
-};
+    std::list<unsigned> list;
+    list.push_front(0);
 
-unsigned do_part1(unsigned input, unsigned n)
-{
-    auto list = new Node{ 0, nullptr };
-    list->next = list;
+    auto curr = list.begin();
 
-    auto curr = list;
-
-    for (auto i = 1U; i <= n; i++)
+    for (auto i = 1U; i <= 2017; i++)
     {
         for (auto steps = input % i; steps; --steps)
-            curr = curr->next;
+            if (++curr == list.end())
+                curr = list.begin();
 
-        auto new_node = new Node { i, curr->next };
-        curr->next = new_node;
-
-        curr = new_node;
+        curr = list.insert(++curr, i);
     }
 
-    return curr->next->value;
+    return *(++curr == list.end() ? list.begin() : curr);
 }
 
-unsigned do_part2(unsigned input, unsigned n)
+unsigned do_part2(unsigned input)
 {
+    // Only need to store what's in index 1 at any given time.
     auto curr = 0U, size = 1U, value_in_index1 = 0U;
 
-    for (auto i = 1U; i <= n; i++)
+    for (auto i = 1U; i <= 50000000; i++)
     {
         curr = (curr + input) % size++;
 
@@ -46,12 +40,13 @@ unsigned do_part2(unsigned input, unsigned n)
 
 int main()
 {
+    assert(do_part1(3) == 638);
+
     const auto input = 344U;
+    auto part1 = do_part1(input);
+    auto part2 = do_part2(input);
 
-    auto part1 = do_part1(input, 2017);
     std::cout << part1 << std::endl;
-
-    auto part2 = do_part2(input, 50000000);
     std::cout << part2 << std::endl;
 
     assert(part1 == 996);
