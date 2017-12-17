@@ -4,7 +4,7 @@
 
 struct Node
 {
-    int value;
+    unsigned value;
     Node *prev, *next;
 };
 
@@ -16,39 +16,34 @@ unsigned do_part1(unsigned input, unsigned n)
 
     auto curr = list;
 
-    Node *new_node = nullptr;
-
-    for (auto i = 1; i <= 2017; i++)
+    for (auto i = 1U; i <= n; i++)
     {
-        auto loop_max = input % i;
-        for (auto j = 0; j < loop_max; j++)
+        for (auto steps = input % i; steps; --steps)
             curr = curr->next;
 
-        new_node = new Node { i, curr->prev, curr->next };
+        auto new_node = new Node { i, curr->prev, curr->next };
         curr->prev->next = new_node;
         curr->next->prev = new_node;
 
         curr = new_node;
     }
 
-    return new_node->next->value;
+    return curr->next->value;
 }
 
 unsigned do_part2(unsigned input, unsigned n)
 {
-    auto curr = 0U, size = 1U, ret_val = 0U;
+    auto curr = 0U, size = 1U, value_in_index1 = 0U;
 
     for (auto i = 1U; i <= n; i++)
     {
-        curr = (curr + input) % size;
-        if (curr == 0)
-            ret_val = i;
+        curr = (curr + input) % size++;
 
-        curr++;
-        size++;
+        if (++curr == 1)
+            value_in_index1 = i;
     }
 
-    return ret_val;
+    return value_in_index1;
 }
 
 int main()
