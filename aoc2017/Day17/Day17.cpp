@@ -5,13 +5,12 @@
 struct Node
 {
     unsigned value;
-    Node *prev, *next;
+    Node *next;
 };
 
 unsigned do_part1(unsigned input, unsigned n)
 {
-    auto list = new Node{ 0, nullptr, nullptr };
-    list->prev = list;
+    auto list = new Node{ 0, nullptr };
     list->next = list;
 
     auto curr = list;
@@ -21,9 +20,8 @@ unsigned do_part1(unsigned input, unsigned n)
         for (auto steps = input % i; steps; --steps)
             curr = curr->next;
 
-        auto new_node = new Node { i, curr->prev, curr->next };
-        curr->prev->next = new_node;
-        curr->next->prev = new_node;
+        auto new_node = new Node { i, curr->next };
+        curr->next = new_node;
 
         curr = new_node;
     }
