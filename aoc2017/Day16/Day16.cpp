@@ -7,8 +7,6 @@
 #include <sstream>
 #include <algorithm>
 
-using namespace std::string_literals;
-
 std::string apply_once(std::string data, const std::string &input)
 {
     std::istringstream f(input);
@@ -21,7 +19,7 @@ std::string apply_once(std::string data, const std::string &input)
         {
         case 's':
             f >> n;
-            data = data.substr(data.size() - n) + data.substr(0, data.size() - n);
+            std::rotate(data.begin(), data.end() - n, data.end());
             break;
         case 'x':
             f >> m >> slash >> n;
@@ -62,7 +60,7 @@ std::string apply_multiple(std::string data, const std::string &input, unsigned 
 
 int main()
 {
-    auto input = ""s;
+    std::string input;
     std::ifstream f_test("input-test.txt");
     f_test >> input;
 
