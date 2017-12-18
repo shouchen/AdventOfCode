@@ -22,7 +22,7 @@ public:
     inline auto get_queue_sends() { return queue_sends; }
 
 private:
-    long long evaluate_expression(const std::string &expr);
+    long long evaluate(const std::string &expr);
 
     unsigned id, curr, queue_sends;
     long long last_value_sent;
@@ -52,26 +52,26 @@ void Process::do_instruction()
 
     if (opcode == "snd")
     {
-        last_value_sent = evaluate_expression(op1);
+        last_value_sent = evaluate(op1);
         if (other_q)
             other_q->push(last_value_sent);
         queue_sends++;
     }
     else if (opcode == "set")
     {
-        registers[op1[0]] = evaluate_expression(op2);
+        registers[op1[0]] = evaluate(op2);
     }
     else if (opcode == "add")
     {
-        registers[op1[0]] += evaluate_expression(op2);
+        registers[op1[0]] += evaluate(op2);
     }
     else if (opcode == "mul")
     {
-        registers[op1[0]] *= evaluate_expression(op2);
+        registers[op1[0]] *= evaluate(op2);
     }
     else if (opcode == "mod")
     {
-        registers[op1[0]] %= evaluate_expression(op2);
+        registers[op1[0]] %= evaluate(op2);
     }
     else if (opcode == "rcv")
     {
@@ -91,21 +91,21 @@ void Process::do_instruction()
         }
         else
         {
-            if (evaluate_expression(op1))
+            if (evaluate(op1))
                 state = Terminated;
         }
     }
     else if (opcode == "jgz")
     {
-        if (evaluate_expression(op1) > 0)
-            curr = unsigned(curr + evaluate_expression(op2) - 1);
+        if (evaluate(op1) > 0)
+            curr = unsigned(curr + evaluate(op2) - 1);
     }
 
     if (++curr >= program.size())
         state = Terminated;
 }
 
-long long Process::evaluate_expression(const std::string &expr)
+long long Process::evaluate(const std::string &expr)
 {
     return isalpha(expr[0]) ? registers[expr[0]] : _atoi64(expr.c_str());
 }
