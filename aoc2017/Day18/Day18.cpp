@@ -2,213 +2,180 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include <sstream>
 #include <map>
 #include <string>
-#include <sstream>
 #include <queue>
 
 std::vector<std::string> program;
 
-long long sound = -1;
-long long part1 = -1;
-
-unsigned part2;
-
-struct Process
+struct ProcessPart1
 {
-    Process(unsigned instance) : instance(instance) {}
-    void init();
-    bool do_instruction(bool for_part2); // part1 true = done; part2 true = blocked
+    enum State { Normal, Terminated, Blocked };
 
-    unsigned instance;
-    std::map<std::string, long long> registers;
-    unsigned curr;
-    std::queue<long long> myq, otherq;
+    static void bind(ProcessPart1 &p1, ProcessPart1 &p2);
+
+    ProcessPart1(unsigned instance = 0);
+
+    long long evaluate_expression(const std::string &expr);
+    void do_instruction();
+
+    void perform_snd(const std::string &expr1, const std::string &expr2);
+    void perform_set(const std::string &expr1, const std::string &expr2);
+    void perform_add(const std::string &expr1, const std::string &expr2);
+    void perform_mul(const std::string &expr1, const std::string &expr2);
+    void perform_mod(const std::string &expr1, const std::string &expr2);
+    virtual void perform_rcv(const std::string &expr1, const std::string &expr2);
+    void perform_jgz(const std::string &expr1, const std::string &expr2);
+
+    unsigned instance, curr, queue_sends;
+    long long last_value_sent;
+    std::map<char, long long> registers;
+    std::queue<long long> myq, *otherq;
+    State state;
 };
 
-std::queue<long long> q0, q1;
-Process p0(0), p1(1);
-
-void Process::init()
+struct ProcessPart2 : public ProcessPart1
 {
-    registers["a"] = 0;
-    registers["b"] = 0;
-    registers["c"] = 0;
-    registers["d"] = 0;
-    registers["e"] = 0;
-    registers["f"] = 0;
-    registers["g"] = 0;
-    registers["h"] = 0;
-    registers["i"] = 0;
-    registers["j"] = 0;
-    registers["k"] = 0;
-    registers["l"] = 0;
-    registers["m"] = 0;
-    registers["n"] = 0;
-    registers["o"] = 0;
-    registers["p"] = instance;
-    registers["q"] = 0;
-    registers["r"] = 0;
-    registers["s"] = 0;
-    registers["t"] = 0;
-    registers["u"] = 0;
-    registers["v"] = 0;
-    registers["w"] = 0;
-    registers["x"] = 0;
-    registers["y"] = 0;
-    registers["z"] = 0;
-    curr = 0;
+    ProcessPart2(unsigned instance) : ProcessPart1(instance) {}
+    void perform_rcv(const std::string &expr1, const std::string &expr2);
+};
+
+void ProcessPart1::bind(ProcessPart1 &a, ProcessPart1 &b)
+{
+    a.otherq = &b.myq;
+    b.otherq = &a.myq;
 }
 
-bool Process::do_instruction(bool for_part2)
+ProcessPart1::ProcessPart1(unsigned instance) :
+    instance(instance), curr(0), queue_sends(0), last_value_sent(-1), otherq(nullptr), state(Normal)
 {
-    std::string instruction, op1, op2;
-    long long val1, val2;
+    registers['p'] = instance;
+}
+
+long long ProcessPart1::evaluate_expression(const std::string &expr)
+{
+    return isalpha(expr[0]) ? registers[expr[0]] : _atoi64(expr.c_str());
+}
+
+void ProcessPart1::perform_snd(const std::string &expr1, const std::string &expr2)
+{
+    last_value_sent = evaluate_expression(expr1);
+    if (otherq) otherq->push(last_value_sent);
+    queue_sends++;
+}
+
+void ProcessPart1::perform_set(const std::string &expr1, const std::string &expr2)
+{
+    registers[expr1[0]] = evaluate_expression(expr2);
+}
+
+void ProcessPart1::perform_add(const std::string &expr1, const std::string &expr2)
+{
+    registers[expr1[0]] += evaluate_expression(expr2);
+}
+
+void ProcessPart1::perform_mul(const std::string &expr1, const std::string &expr2)
+{
+    registers[expr1[0]] *= evaluate_expression(expr2);
+}
+
+void ProcessPart1::perform_mod(const std::string &expr1, const std::string &expr2)
+{
+    registers[expr1[0]] %= evaluate_expression(expr2);
+}
+
+void ProcessPart1::perform_rcv(const std::string &expr1, const std::string &expr2)
+{
+    if (evaluate_expression(expr1) == 0)
+        return;
+
+    state = Terminated;
+}
+
+void ProcessPart2::perform_rcv(const std::string &expr1, const std::string &expr2)
+{
+    if (myq.empty())
+    {
+        state = Blocked;
+        curr--;
+        return;
+    }
+
+    auto reg = expr1[0];
+    registers[reg] = myq.front();
+    myq.pop();
+    state = Normal;
+}
+
+void ProcessPart1::perform_jgz(const std::string &expr1, const std::string &expr2)
+{
+    if (evaluate_expression(expr1) > 0)
+        curr = unsigned(curr + evaluate_expression(expr2) - 1);
+}
+
+void ProcessPart1::do_instruction()
+{
     std::istringstream ss(program[curr]);
-    ss >> instruction;
+    std::string instruction, op1, op2;
+    ss >> instruction >> op1 >> op2;
 
     if (instruction == "snd")
-    {
-        ss >> op1;
-        val1 = isalpha(op1[0]) ? registers[op1] : _atoi64(op1.c_str());
-
-        if (for_part2)
-        {
-            if (instance == 0)
-            {
-                q1.push(val1);
-            }
-            else
-            {
-                q0.push(val1);
-                part2++;
-            }
-        }
-        else
-        {
-            sound = val1;
-        }
-        curr++;
-    }
+        perform_snd(op1, op2);
     else if (instruction == "set")
-    {
-        ss >> op1 >> op2;
-        val2 = isalpha(op2[0]) ? registers[op2] : _atoi64(op2.c_str());
-        registers[op1] = val2;
-        curr++;
-    }
+        perform_set(op1, op2);
     else if (instruction == "add")
-    {
-        ss >> op1 >> op2;
-        val2 = isalpha(op2[0]) ? registers[op2] : _atoi64(op2.c_str());
-        registers[op1] += val2;
-        curr++;
-    }
+        perform_add(op1, op2);
     else if (instruction == "mul")
-    {
-        ss >> op1 >> op2;
-        val2 = isalpha(op2[0]) ? registers[op2] : _atoi64(op2.c_str());
-        registers[op1] *= val2;
-        curr++;
-    }
+        perform_mul(op1, op2);
     else if (instruction == "mod")
-    {
-        ss >> op1 >> op2;
-        val2 = isalpha(op2[0]) ? registers[op2] : _atoi64(op2.c_str());
-        registers[op1] %= val2;
-        curr++;
-    }
+        perform_mod(op1, op2);
     else if (instruction == "rcv")
-    {
-        ss >> op1;
-        val1 = isalpha(op1[0]) ? registers[op1] : _atoi64(op1.c_str());
-
-        if (for_part2)
-        {
-            if (instance == 0)
-            {
-                if (!q0.empty())
-                {
-                    registers[op1] = q0.front();
-                    q0.pop();
-                    curr++;
-                }
-                else return true;
-            }
-            else
-            {
-                if (!q1.empty())
-                {
-                    registers[op1] = q1.front();
-                    q1.pop();
-                    curr++;
-                }
-                else return true;
-            }
-        }
-        else
-        {
-            if (val1 != 0)
-            {
-                part1 = sound;
-                return true;
-            }
-
-        }
-    }
+        perform_rcv(op1, op2);
     else if (instruction == "jgz")
-    {
-        ss >> op1 >> op2;
-        val1 = isalpha(op1[0]) ? registers[op1] : _atoi64(op1.c_str());
-        val2 = isalpha(op2[0]) ? registers[op2] : _atoi64(op2.c_str());
-        if (val1 > 0)
-            curr += val2;
-        else
-            curr++;
-    }
+        perform_jgz(op1, op2);
 
-    return false;
+    if (++curr >= program.size())
+        state = Terminated;
 }
 
+long long do_part1()
+{
+    ProcessPart1 p(0);
+
+    while (p.state == ProcessPart1::Normal)
+        p.do_instruction();
+
+    return p.last_value_sent;
+}
+
+unsigned do_part2()
+{
+    ProcessPart2 p0(0), p1(1);
+    ProcessPart2::bind(p0, p1);
+
+    while (p0.state == ProcessPart1::Normal || p1.state == ProcessPart1::Normal)
+    {
+        p0.do_instruction();
+        p1.do_instruction();
+    }
+
+    return p1.queue_sends;
+}
 
 int main()
 {
-    p0.init();
-    p1.init();
-
     std::ifstream f("input.txt");
-    std::string instruction, op1, op2;
+    std::string instruction;
 
     while (getline(f, instruction))
         program.push_back(instruction);
 
-    while (p0.curr < program.size() && p1.curr < program.size())
-    {
-        bool blocked0, blocked1;
-
-        if (p0.curr < program.size())
-            blocked0 = p0.do_instruction(true);
-
-        if (p1.curr < program.size())
-            blocked1 = p1.do_instruction(true);
-
-        if (blocked0 && blocked1)
-            break;
-    }
-
-    std::cout << "Part 2:" << part2 << std::endl;
-
-    // PART ONE
-    p0.init();
-
-    while (p0.curr < program.size())
-    {
-        if (p0.do_instruction(false) == true)
-            break;
-    }
+    auto part1 = do_part1();
+    auto part2 = do_part2();
 
     std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 2: " << part2 << std::endl;
 
     assert(part1 == 9423);
     assert(part2 == 7620);
