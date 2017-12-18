@@ -7,172 +7,154 @@
 #include <string>
 #include <queue>
 
-std::vector<std::string> program;
-
-struct ProcessPart1
+class Process
 {
+public:
     enum State { Normal, Terminated, Blocked };
 
-    static void bind(ProcessPart1 &p1, ProcessPart1 &p2);
+    static void bind_send_receive(Process &p1, Process &p2);
 
-    ProcessPart1(unsigned instance = 0);
-
-    long long evaluate_expression(const std::string &expr);
+    Process(std::vector<std::string> &program, unsigned id = 0);
     void do_instruction();
 
-    void perform_snd(const std::string &expr1, const std::string &expr2);
-    void perform_set(const std::string &expr1, const std::string &expr2);
-    void perform_add(const std::string &expr1, const std::string &expr2);
-    void perform_mul(const std::string &expr1, const std::string &expr2);
-    void perform_mod(const std::string &expr1, const std::string &expr2);
-    virtual void perform_rcv(const std::string &expr1, const std::string &expr2);
-    void perform_jgz(const std::string &expr1, const std::string &expr2);
+    inline auto get_state() { return state; }
+    inline auto get_last_value_sent() { return last_value_sent; }
+    inline auto get_queue_sends() { return queue_sends; }
 
-    unsigned instance, curr, queue_sends;
+private:
+    long long evaluate_expression(const std::string &expr);
+
+    unsigned id, curr, queue_sends;
     long long last_value_sent;
-    std::map<char, long long> registers;
-    std::queue<long long> myq, *otherq;
     State state;
+    std::vector<std::string> &program;
+    std::map<char, long long> registers;
+    std::queue<long long> my_q, *other_q;
 };
 
-struct ProcessPart2 : public ProcessPart1
+void Process::bind_send_receive(Process &a, Process &b)
 {
-    ProcessPart2(unsigned instance) : ProcessPart1(instance) {}
-    void perform_rcv(const std::string &expr1, const std::string &expr2);
-};
-
-void ProcessPart1::bind(ProcessPart1 &a, ProcessPart1 &b)
-{
-    a.otherq = &b.myq;
-    b.otherq = &a.myq;
+    a.other_q = &b.my_q;
+    b.other_q = &a.my_q;
 }
 
-ProcessPart1::ProcessPart1(unsigned instance) :
-    instance(instance), curr(0), queue_sends(0), last_value_sent(-1), otherq(nullptr), state(Normal)
+Process::Process(std::vector<std::string> &program, unsigned id) :
+    id(id), curr(0), queue_sends(0), last_value_sent(-1), state(Normal), program(program), other_q(nullptr)
 {
-    registers['p'] = instance;
+    registers['p'] = id;
 }
 
-long long ProcessPart1::evaluate_expression(const std::string &expr)
-{
-    return isalpha(expr[0]) ? registers[expr[0]] : _atoi64(expr.c_str());
-}
-
-void ProcessPart1::perform_snd(const std::string &expr1, const std::string &expr2)
-{
-    last_value_sent = evaluate_expression(expr1);
-    if (otherq) otherq->push(last_value_sent);
-    queue_sends++;
-}
-
-void ProcessPart1::perform_set(const std::string &expr1, const std::string &expr2)
-{
-    registers[expr1[0]] = evaluate_expression(expr2);
-}
-
-void ProcessPart1::perform_add(const std::string &expr1, const std::string &expr2)
-{
-    registers[expr1[0]] += evaluate_expression(expr2);
-}
-
-void ProcessPart1::perform_mul(const std::string &expr1, const std::string &expr2)
-{
-    registers[expr1[0]] *= evaluate_expression(expr2);
-}
-
-void ProcessPart1::perform_mod(const std::string &expr1, const std::string &expr2)
-{
-    registers[expr1[0]] %= evaluate_expression(expr2);
-}
-
-void ProcessPart1::perform_rcv(const std::string &expr1, const std::string &expr2)
-{
-    if (evaluate_expression(expr1) == 0)
-        return;
-
-    state = Terminated;
-}
-
-void ProcessPart2::perform_rcv(const std::string &expr1, const std::string &expr2)
-{
-    if (myq.empty())
-    {
-        state = Blocked;
-        curr--;
-        return;
-    }
-
-    auto reg = expr1[0];
-    registers[reg] = myq.front();
-    myq.pop();
-    state = Normal;
-}
-
-void ProcessPart1::perform_jgz(const std::string &expr1, const std::string &expr2)
-{
-    if (evaluate_expression(expr1) > 0)
-        curr = unsigned(curr + evaluate_expression(expr2) - 1);
-}
-
-void ProcessPart1::do_instruction()
+void Process::do_instruction()
 {
     std::istringstream ss(program[curr]);
-    std::string instruction, op1, op2;
-    ss >> instruction >> op1 >> op2;
+    std::string opcode, op1, op2;
+    ss >> opcode >> op1 >> op2;
 
-    if (instruction == "snd")
-        perform_snd(op1, op2);
-    else if (instruction == "set")
-        perform_set(op1, op2);
-    else if (instruction == "add")
-        perform_add(op1, op2);
-    else if (instruction == "mul")
-        perform_mul(op1, op2);
-    else if (instruction == "mod")
-        perform_mod(op1, op2);
-    else if (instruction == "rcv")
-        perform_rcv(op1, op2);
-    else if (instruction == "jgz")
-        perform_jgz(op1, op2);
+    if (opcode == "snd")
+    {
+        last_value_sent = evaluate_expression(op1);
+        if (other_q)
+            other_q->push(last_value_sent);
+        queue_sends++;
+    }
+    else if (opcode == "set")
+    {
+        registers[op1[0]] = evaluate_expression(op2);
+    }
+    else if (opcode == "add")
+    {
+        registers[op1[0]] += evaluate_expression(op2);
+    }
+    else if (opcode == "mul")
+    {
+        registers[op1[0]] *= evaluate_expression(op2);
+    }
+    else if (opcode == "mod")
+    {
+        registers[op1[0]] %= evaluate_expression(op2);
+    }
+    else if (opcode == "rcv")
+    {
+        if (other_q)
+        {
+            if (my_q.empty())
+            {
+                state = Blocked;
+                curr--;
+            }
+            else
+            {
+                state = Normal;
+                registers[op1[0]] = my_q.front();
+                my_q.pop();
+            }
+        }
+        else
+        {
+            if (evaluate_expression(op1))
+                state = Terminated;
+        }
+    }
+    else if (opcode == "jgz")
+    {
+        if (evaluate_expression(op1) > 0)
+            curr = unsigned(curr + evaluate_expression(op2) - 1);
+    }
 
     if (++curr >= program.size())
         state = Terminated;
 }
 
-long long do_part1()
+long long Process::evaluate_expression(const std::string &expr)
 {
-    ProcessPart1 p(0);
-
-    while (p.state == ProcessPart1::Normal)
-        p.do_instruction();
-
-    return p.last_value_sent;
+    return isalpha(expr[0]) ? registers[expr[0]] : _atoi64(expr.c_str());
 }
 
-unsigned do_part2()
+auto read_program(const std::string &filename)
 {
-    ProcessPart2 p0(0), p1(1);
-    ProcessPart2::bind(p0, p1);
+    std::ifstream f(filename);
+    std::string instruction;
+    std::vector<std::string> program;
 
-    while (p0.state == ProcessPart1::Normal || p1.state == ProcessPart1::Normal)
+    while (getline(f, instruction))
+        program.push_back(instruction);
+
+    return program;
+}
+
+long long do_part1(std::vector<std::string> &program)
+{
+    Process p(program);
+
+    while (p.get_state() == Process::Normal)
+        p.do_instruction();
+
+    return p.get_last_value_sent();
+}
+
+unsigned do_part2(std::vector<std::string> &program)
+{
+    Process p0(program, 0), p1(program, 1);
+    Process::bind_send_receive(p0, p1);
+
+    while (p0.get_state() == Process::Normal || p1.get_state() == Process::Normal)
     {
         p0.do_instruction();
         p1.do_instruction();
     }
 
-    return p1.queue_sends;
+    return p1.get_queue_sends();
 }
 
 int main()
 {
-    std::ifstream f("input.txt");
-    std::string instruction;
+    auto program = read_program("input-test.txt");
+    assert(do_part1(program) == 4);
+    assert(do_part2(program) == 1);
 
-    while (getline(f, instruction))
-        program.push_back(instruction);
-
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    program = read_program("input.txt");
+    auto part1 = do_part1(program);
+    auto part2 = do_part2(program);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
