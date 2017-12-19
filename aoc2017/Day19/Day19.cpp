@@ -25,17 +25,16 @@ void solve(const std::string &filename, std::string &path, unsigned &num_steps)
             num_steps++;
             if (isalpha(board[y][x]))
                 path.push_back(board[y][x]);
-            x += x_dir, y += y_dir;
-        } while (board[y][x] != '+' && board[y][x] != ' ');
+        } while (board[y += y_dir][x += x_dir] != '+' && board[y][x] != ' ');
 
         if (x_dir)
         {
             x_dir = 0;
-            y_dir = (y > 0 && board[y - 1][x] != ' ') ? -1 : 1;
+            y_dir = (y > 0 && board[y - 1][x] == ' ') ? 1 : -1;
         }
         else
         {
-            x_dir = (x > 0 && board[y][x - 1] != ' ') ? -1 : 1;
+            x_dir = (x > 0 && board[y][x - 1] == ' ') ? 1 : -1;
             y_dir = 0;
         }
     } while (board[y][x] == '+');
@@ -44,7 +43,7 @@ void solve(const std::string &filename, std::string &path, unsigned &num_steps)
 int main()
 {
     std::string part1;
-    unsigned part2;
+    auto part2 = 0U;
 
     solve("input-test.txt", part1, part2);
     assert(part1 == "ABCDEF");
