@@ -5,78 +5,52 @@
 #include <vector>
 #include <string>
 
-void process_input(const std::string &filename, std::string &path, unsigned &step_count)
+void solve(const std::string &filename, std::string &path, unsigned &num_steps)
 {
-    path.clear();
-    step_count = 0;
     std::vector<std::string> board;
-
     std::ifstream f(filename);
     std::string line;
+
     while (getline(f, line))
         board.push_back(line);
 
-    // get start
-    int row = 0, col = 0;
-    for (col = 0; ; col++)
-        if (board[row][col] == '|')
-            break;
+    auto x = int(board[0].find('|')), y = 0, x_dir = 0, y_dir = 1;
+    path.clear();
+    num_steps = 0;
 
-    int xdir = 0, ydir = 1;
-
-    for (;;)
+    do
     {
-        // go vertical
-        while (board[row][col] == '|' || board[row][col] == '-' || isalpha(board[row][col]))
+        do
         {
-            step_count++;
-            if (isalpha(board[row][col]))
-                path.push_back(board[row][col]);
-            row += ydir, col += xdir;
-        }
+            num_steps++;
+            if (isalpha(board[y][x]))
+                path.push_back(board[y][x]);
+            x += x_dir, y += y_dir;
+        } while (board[y][x] != '+' && board[y][x] != ' ');
 
-        if (board[row][col] != '+')
-            break;
-
-        // turn
-        if (col > 0 && board[row][col - 1] != ' ') xdir = -1, ydir = 0; // left
-        else if (col < board[row].size() - 1 && board[row][col + 1] != ' ') xdir = 1, ydir = 0; //right
-        else assert(false);
-
-        row += ydir, col += xdir;
-        step_count++;
-
-        // go horizontal
-        while (board[row][col] == '|' || board[row][col] == '-' || isalpha(board[row][col]))
+        if (x_dir)
         {
-            step_count++;
-            if (isalpha(board[row][col]))
-                path.push_back(board[row][col]);
-            row += ydir, col += xdir;
+            x_dir = 0;
+            y_dir = (y > 0 && board[y - 1][x] != ' ') ? -1 : 1;
         }
-
-        if (board[row][col] != '+')
-            break;
-
-        // turn
-        if (row > 0 && board[row - 1][col] != ' ') xdir = 0, ydir = -1; // up
-        else if (row < board.size() - 1 && board[row + 1][col] != ' ') xdir = 0, ydir = 1; //right
-        else assert(false);
-
-        row += ydir, col += xdir;
-        step_count++;
-    }
+        else
+        {
+            x_dir = (x > 0 && board[y][x - 1] != ' ') ? -1 : 1;
+            y_dir = 0;
+        }
+    } while (board[y][x] == '+');
 }
 
 int main()
 {
     std::string part1;
     unsigned part2;
-    process_input("input-test.txt", part1, part2);
+
+    solve("input-test.txt", part1, part2);
     assert(part1 == "ABCDEF");
     assert(part2 == 38);
 
-    process_input("input.txt", part1, part2);
+    solve("input.txt", part1, part2);
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
 
