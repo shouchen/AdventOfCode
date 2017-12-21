@@ -19,32 +19,19 @@ auto apply_transform(const std::string &input, const int *remapping)
     return output;
 }
 
-auto rotate(const std::string &input)
+void add_rule_for_all_input_orientations(std::string input, std::string &output)
 {
-    static const int four[] = { 2, 0, 3, 1 }, nine[] = { 6, 3, 0, 7, 4, 1, 8, 5, 2 };
-    return apply_transform(input, input.length() == 4 ? four : nine);
-}
+    static const int rotate4[] = { 2, 0, 3, 1 }, rotate9[] = { 6, 3, 0, 7, 4, 1, 8, 5, 2 };
+    static const int flip_horizontal4[] = { 2, 3, 0, 1 }, flip_horizontal9[] = { 6, 7, 8, 3, 4, 5, 0, 1, 2 };
+    static const int flip_vertical4[] = { 1, 0, 3, 2 }, flip_vertical9[] = { 2, 1, 0, 5, 4, 3, 8, 7, 6 };
 
-auto flip_horizontal(const std::string &input)
-{
-    static const int four[] = { 2, 3, 0, 1 }, nine[] = { 6, 7, 8, 3, 4, 5, 0, 1, 2 };
-    return apply_transform(input, input.length() == 4 ? four : nine);
-}
-
-auto flip_vertical(const std::string &input)
-{
-    static const int four[] = { 1, 0, 3, 2 }, nine[] = { 2, 1, 0, 5, 4, 3, 8, 7, 6 };
-    return apply_transform(input, input.length() == 4 ? four : nine);
-}
-
-void add_rule_for_all_orientations(std::string input, std::string &output)
-{
     if (rulebook.find(input) == rulebook.end())
     {
         rulebook[input] = output;
-        add_rule_for_all_orientations(rotate(input), output);
-        add_rule_for_all_orientations(flip_horizontal(input), output);
-        add_rule_for_all_orientations(flip_vertical(input), output);
+        auto is2x2 = input.length() == 4;
+        add_rule_for_all_input_orientations(apply_transform(input, is2x2 ? rotate4 : rotate9), output);
+        add_rule_for_all_input_orientations(apply_transform(input, is2x2 ? flip_horizontal4 : flip_horizontal9), output);
+        add_rule_for_all_input_orientations(apply_transform(input, is2x2 ? flip_vertical4 : flip_vertical9), output);
     }
 }
 
@@ -59,14 +46,15 @@ void read_rules(const std::string &filename)
     {
         input.erase(std::remove(input.begin(), input.end(), '/'), input.end());
         output.erase(std::remove(output.begin(), output.end(), '/'), output.end());
-        add_rule_for_all_orientations(input, output);
+        add_rule_for_all_input_orientations(input, output);
     }
 }
 
-void transform_subsquares(std::string &image)
+void do_iteration(std::string &image)
 {
     auto input_size = unsigned(sqrt(image.length()));
-    auto input_subsquare_size = (input_size % 2 == 0) ? 2U : 3U, output_subsquare_size = input_subsquare_size + 1;
+    auto input_subsquare_size = (input_size % 2 == 0) ? 2U : 3U;
+    auto output_subsquare_size = input_subsquare_size + 1;
     auto output_size = input_size * output_subsquare_size / input_subsquare_size;
 
     std::string next_image(output_size * output_size, ' ');
@@ -103,7 +91,7 @@ auto process_input(const std::string &filename, unsigned iterations)
 
     std::string image = ".#...####";
     while (iterations--)
-        transform_subsquares(image);
+        do_iteration(image);
 
     return std::count(image.begin(), image.end(), '#');
 }
