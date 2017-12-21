@@ -72,19 +72,6 @@ bool myfunction(const Particle &a, const Particle &b)
     auto velb = abs(b.v.x) + abs(b.v.y) + abs(b.v.z);
     auto posa = abs(a.p.x) + abs(a.p.y) + abs(a.p.z);
     auto posb = abs(b.p.x) + abs(b.p.y) + abs(b.p.z);
-    //auto acca2 = distance_from_origin(a.a);
-    //auto accb2 = distance_from_origin(b.a);
-    //auto vela2 = distance_from_origin(a.v);
-    //auto velb2 = distance_from_origin(b.v);
-    //auto posa2 = distance_from_origin(a.p);
-    //auto posb2 = distance_from_origin(b.p);
-
-    //assert(acca == acca2);
-    //assert(accb == accb2);
-    //assert(vela == vela2);
-    //assert(velb == velb2);
-    //assert(posa == posa2);
-    //assert(posb == posb2);
 
     if (acca < accb) return true;
     if (accb < acca) return false;
