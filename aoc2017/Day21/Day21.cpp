@@ -9,7 +9,7 @@
 
 std::map<std::string, std::string> rulebook;
 
-auto apply_transform(const std::string &input, const int *remapping)
+auto do_input_transform(const std::string &input, const int *remapping)
 {
     std::string output;
 
@@ -29,13 +29,13 @@ void add_rule_for_all_input_orientations(std::string input, std::string &output)
     {
         rulebook[input] = output;
         auto is2x2 = input.length() == 4;
-        add_rule_for_all_input_orientations(apply_transform(input, is2x2 ? rotate4 : rotate9), output);
-        add_rule_for_all_input_orientations(apply_transform(input, is2x2 ? flip_horizontal4 : flip_horizontal9), output);
-        add_rule_for_all_input_orientations(apply_transform(input, is2x2 ? flip_vertical4 : flip_vertical9), output);
+        add_rule_for_all_input_orientations(do_input_transform(input, is2x2 ? rotate4 : rotate9), output);
+        add_rule_for_all_input_orientations(do_input_transform(input, is2x2 ? flip_horizontal4 : flip_horizontal9), output);
+        add_rule_for_all_input_orientations(do_input_transform(input, is2x2 ? flip_vertical4 : flip_vertical9), output);
     }
 }
 
-void read_rules(const std::string &filename)
+void populate_rules(const std::string &filename)
 {
     rulebook.clear();
 
@@ -55,7 +55,7 @@ void do_iteration(std::string &image)
     auto input_size = unsigned(sqrt(image.length()));
     auto input_subsquare_size = (input_size % 2 == 0) ? 2U : 3U;
     auto output_subsquare_size = input_subsquare_size + 1;
-    auto output_size = input_size * output_subsquare_size / input_subsquare_size;
+    auto output_size = input_size / input_subsquare_size * output_subsquare_size;
 
     std::string next_image(output_size * output_size, ' ');
 
@@ -87,7 +87,7 @@ void do_iteration(std::string &image)
 
 auto process_input(const std::string &filename, unsigned iterations)
 {
-    read_rules(filename);
+    populate_rules(filename);
 
     std::string image = ".#...####";
     while (iterations--)
