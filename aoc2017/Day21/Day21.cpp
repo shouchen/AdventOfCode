@@ -4,228 +4,121 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <sstream>
 #include <map>
+#include <algorithm>
 
 std::map<std::string, std::string> rulebook;
 
-std::string rotate_cw(const std::string &input)
+auto apply_transform(const std::string &input, const int *remapping)
 {
     std::string output;
-    if (input.length() == 4)
-    {
-        output.push_back(input[2]);
-        output.push_back(input[0]);
-        output.push_back(input[3]);
-        output.push_back(input[1]);
-    }
-    else
-    {
-        assert(input.length() == 9);
-        output.push_back(input[6]);
-        output.push_back(input[3]);
-        output.push_back(input[0]);
-        output.push_back(input[7]);
-        output.push_back(input[4]);
-        output.push_back(input[1]);
-        output.push_back(input[8]);
-        output.push_back(input[5]);
-        output.push_back(input[2]);
-    }
+
+    for (auto i = 0; i < input.length(); i++)
+        output.push_back(input[remapping[i]]);
+
     return output;
 }
 
-std::string flip_horizontal(const std::string &input)
+auto rotate(const std::string &input)
 {
-    std::string output;
-    if (input.length() == 4)
+    static const int four[] = { 2, 0, 3, 1 }, nine[] = { 6, 3, 0, 7, 4, 1, 8, 5, 2 };
+    return apply_transform(input, input.length() == 4 ? four : nine);
+}
+
+auto flip_horizontal(const std::string &input)
+{
+    static const int four[] = { 2, 3, 0, 1 }, nine[] = { 6, 7, 8, 3, 4, 5, 0, 1, 2 };
+    return apply_transform(input, input.length() == 4 ? four : nine);
+}
+
+auto flip_vertical(const std::string &input)
+{
+    static const int four[] = { 1, 0, 3, 2 }, nine[] = { 2, 1, 0, 5, 4, 3, 8, 7, 6 };
+    return apply_transform(input, input.length() == 4 ? four : nine);
+}
+
+void add_rule_for_all_orientations(std::string input, std::string &output)
+{
+    if (rulebook.find(input) == rulebook.end())
     {
-        output.push_back(input[2]);
-        output.push_back(input[3]);
-        output.push_back(input[0]);
-        output.push_back(input[1]);
+        rulebook[input] = output;
+        add_rule_for_all_orientations(rotate(input), output);
+        add_rule_for_all_orientations(flip_horizontal(input), output);
+        add_rule_for_all_orientations(flip_vertical(input), output);
     }
-    else
+}
+
+void read_rules(const std::string &filename)
+{
+    rulebook.clear();
+
+    std::ifstream f(filename);
+    std::string input, arrow, output;
+
+    while (f >> input >> arrow >> output)
     {
-        assert(input.length() == 9);
-        output.push_back(input[6]);
-        output.push_back(input[7]);
-        output.push_back(input[8]);
-        output.push_back(input[3]);
-        output.push_back(input[4]);
-        output.push_back(input[5]);
-        output.push_back(input[0]);
-        output.push_back(input[1]);
-        output.push_back(input[2]);
+        input.erase(std::remove(input.begin(), input.end(), '/'), input.end());
+        output.erase(std::remove(output.begin(), output.end(), '/'), output.end());
+        add_rule_for_all_orientations(input, output);
     }
-    return output;
 }
 
-std::string flip_vertical(const std::string &input)
+void transform_subsquares(std::string &image)
 {
-    std::string output;
-    if (input.length() == 4)
+    auto input_size = unsigned(sqrt(image.length()));
+    auto input_subsquare_size = (input_size % 2 == 0) ? 2U : 3U, output_subsquare_size = input_subsquare_size + 1;
+    auto output_size = input_size * output_subsquare_size / input_subsquare_size;
+
+    std::string next_image(output_size * output_size, ' ');
+
+    for (auto row = 0U; row < input_size; row += input_subsquare_size)
     {
-        output.push_back(input[1]);
-        output.push_back(input[0]);
-        output.push_back(input[3]);
-        output.push_back(input[2]);
+        for (auto col = 0U; col < input_size; col += input_subsquare_size)
+        {
+            std::string original;
+            for (auto i = 0U; i < input_subsquare_size; i++)
+                for (auto j = 0U; j < input_subsquare_size; j++)
+                    original.push_back(image[(row + i) * input_size + (col + j)]);
+            auto transformed = rulebook[original];
+
+            auto start_out_row = row / input_subsquare_size * output_subsquare_size * output_size;
+            auto start_out_col = col / input_subsquare_size * output_subsquare_size;
+            const char *curr = transformed.c_str();
+
+            for (auto i = 0U; i < output_subsquare_size; i++)
+                for (auto j = 0U; j < output_subsquare_size; j++)
+                {
+                    auto index = start_out_row + i * output_size + start_out_col + j;
+                    next_image[index] = *curr++;
+                }
+        }
     }
-    else
-    {
-        assert(input.length() == 9);
-        output.push_back(input[2]);
-        output.push_back(input[1]);
-        output.push_back(input[0]);
-        output.push_back(input[5]);
-        output.push_back(input[4]);
-        output.push_back(input[3]);
-        output.push_back(input[8]);
-        output.push_back(input[7]);
-        output.push_back(input[6]);
-    }
-    return output;
+
+    image = next_image;
 }
 
-std::string apply_rule(const std::string &input)
+auto process_input(const std::string &filename, unsigned iterations)
 {
-    auto found = rulebook.find(input);
-    assert(found != rulebook.end());
-    return found->second;
-}
+    read_rules(filename);
 
-void add_rule(std::string input, std::string &output)
-{
-    if (rulebook.find(input) != rulebook.end())
-        return;
+    std::string image = ".#...####";
+    while (iterations--)
+        transform_subsquares(image);
 
-    rulebook[input] = output;
-    add_rule(rotate_cw(input), output);
-    add_rule(flip_horizontal(input), output);
-    add_rule(flip_vertical(input), output);
-}
-
-unsigned count_on(const std::string &s)
-{
-    unsigned ret_val = 0;
-    for (auto c : s)
-        if (c == '#')
-            ret_val++;
-    return ret_val;
-}
-
-unsigned process_input(const std::string &filename)
-{
+    return std::count(image.begin(), image.end(), '#');
 }
 
 int main()
 {
-    std::string image = ".#...####";
+    assert(process_input("input-test.txt", 2) == 12);
 
-    std::ifstream f("input.txt");
-    std::string line;
-    std::vector<std::string> rules;
-    while (getline(f, line))
-    {
-        char c;
-        std::string input, output;
-        auto input_size = line.find('/');
-        auto output_size = input_size + 1;
+    auto part1 = process_input("input.txt", 5);
+    auto part2 = process_input("input.txt", 18);
 
-        std::stringstream ss(line);
+    std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 2: " << part2 << std::endl;
 
-        for (auto row = 0; row < input_size; row++)
-        {
-            for (auto col = 0; col < input_size; col++)
-            {
-                ss >> c;
-                assert(c == '#' || c == '.');
-                input.push_back(c);
-            }
-            ss >> c;
-        }
-        ss >> c;
-
-        for (auto row = 0; row < output_size; row++)
-        {
-            for (auto col = 0; col < output_size; col++)
-            {
-                ss >> c;
-                assert(c == '#' || c == '.');
-                output.push_back(c);
-            }
-            ss >> c;
-        }
-
-        add_rule(input, output);
-    }
-
-    // PART ONE
-    for (auto iterations = 0; iterations < 5; iterations++)
-    {
-        auto size = unsigned(sqrt(image.length() + 0.1));
-        if (size % 2 == 0)
-        {
-            auto output_size = size * 3 / 2;
-            std::string next_image(output_size * output_size, ' ');
-            for (auto row = 0; row < size; row += 2)
-            {
-                for (auto col = 0; col < size; col += 2)
-                {
-                    std::string input;
-                    input.push_back(image[row * size + col]);
-                    input.push_back(image[row * size + col + 1]);
-                    input.push_back(image[(row + 1) * size + col]);
-                    input.push_back(image[(row + 1) * size + col + 1]);
-                    auto transform = apply_rule(input);
-                    int start_out_row = row / 2 * 3 * output_size, start_out_col = col / 2 * 3;
-                    const char *curr = transform.c_str();
-                    for (int i = 0; i < 3; i++)
-                        for (int j = 0; j < 3; j++)
-                        {
-                            auto index = start_out_row + i * output_size + start_out_col + j;
-                            next_image[index] = *curr++;
-                        }
-                }
-            }
-            image = next_image;
-        }
-        else if (size % 3 == 0)
-        {
-            auto output_size = size * 4 / 3;
-            std::string next_image(output_size * output_size, ' ');
-            for (auto row = 0; row < size; row += 3)
-            {
-                for (auto col = 0; col < size; col +=3 )
-                {
-                    std::string input;
-                    input.push_back(image[row * size + col]);
-                    input.push_back(image[row * size + col + 1]);
-                    input.push_back(image[row * size + col + 2]);
-                    input.push_back(image[(row + 1) * size + col]);
-                    input.push_back(image[(row + 1) * size + col + 1]);
-                    input.push_back(image[(row + 1) * size + col + 2]);
-                    input.push_back(image[(row + 2) * size + col]);
-                    input.push_back(image[(row + 2) * size + col + 1]);
-                    input.push_back(image[(row + 2) * size + col + 2]);
-                    auto transform = apply_rule(input);
-                    int start_out_row = row / 3 * 4 * output_size, start_out_col = col / 3 * 4;
-                    const char *curr = transform.c_str();
-                    for (int i = 0; i < 4; i++)
-                        for (int j = 0; j < 4; j++)
-                        {
-                            auto index = start_out_row + i * output_size + start_out_col + j;
-                            next_image[index] = *curr++;
-                        }
-                }
-            }
-            image = next_image;
-        }
-    }
-
-    auto part1 = count_on(image);
-    std::cout << part1 << std::endl;
-    //assert(part1 == 117);
-    //assert(part2 == 2026963);
+    assert(part1 == 117);
+    assert(part2 == 2026963);
     return 0;
 }
