@@ -2,203 +2,103 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <string>
 #include <map>
-#include <set>
-#include <algorithm>
 
-struct Coords
+enum State { Clean, Weakened, Infected, Flagged };
+
+struct XY
 {
     int x, y;
 
-    bool operator<(const Coords &rhs) const
+    void TurnLeft() { std::swap(x, y); y = -y; }
+    void TurnRight() { std::swap(x, y); x = -x; }
+    void TurnAround() { x = -x; y = -y; }
+
+    auto operator<(const XY &rhs) const
     {
         if (y < rhs.y) return true;
         if (y > rhs.y) return false;
         return x < rhs.x;
     }
+
+    auto &operator+=(const XY &rhs)
+    {
+        x += rhs.x;
+        y += rhs.y;
+        return *this;
+    }
 };
 
-enum State { Clean, Weakened, Infected, Flagged };
-
-unsigned do_part1(const std::string &filename, unsigned times)
+auto process_input(const std::string &filename, unsigned times, bool for_part1)
 {
-    std::set<Coords> infected;
-
+    std::map<XY, State> grid;
     std::ifstream f(filename);
     std::string line;
+    auto x = 0, y = 0;
 
-    int x = 0, y = 0;
     while (getline(f, line))
     {
         x = 0;
         for (auto c : line)
         {
-            if (c == '#')
-                infected.insert({ x, y });
+            if (c == '#') grid[{ x, y }] = Infected;
             x++;
         }
         y++;
     }
 
-    Coords curr = { x / 2, y / 2 };
-    Coords dir = { 0, -1 };
+    auto curr = XY { x / 2, y / 2 }, dir = XY { 0, -1 };
+    auto num_times_infected = 0U;
 
-    unsigned part1 = 0U;
-
-    for (unsigned i = 0U; i < times; i++)
+    for (auto i = 0U; i < times; i++)
     {
-        // Step 1. Turn right (if infected) or left (if clean).
-        bool curr_infected = infected.find(curr) != infected.end();
-        if (curr_infected)
-        {
-            if (dir.x == 0 && dir.y == -1)
-                dir = { 1, 0 };     // up -> right
-            else if (dir.x == 0 && dir.y == 1)
-                dir = { -1, 0 };  // down -> left
-            else if (dir.x == -1 && dir.y == 0)
-                dir = { 0, -1 }; // left -> up
-            else if (dir.x == 1 && dir.y == 0)
-                dir = { 0, 1 }; // right -> down
-        }
-        else
-        {
-            if (dir.x == 0 && dir.y == -1) dir = { -1, 0 };     // up -> left
-            else if (dir.x == 0 && dir.y == 1) dir = { 1, 0 };  // down -> right
-            else if (dir.x == -1 && dir.y == 0) dir = { 0, 1 }; // left -> down
-            else if (dir.x == 1 && dir.y == 0) dir = { 0, -1 }; // right -> up
-        }
+        auto found = grid.find(curr);
+        auto state = found == grid.end() ? Clean : found->second;
 
-        // Step 2. Toggle current node.
-        if (curr_infected)
-        {
-            infected.erase(curr);
-        }
-        else
-        {
-            infected.insert(curr);
-            part1++;
-        }
-
-        // Step 3. Move forward
-        curr.x += dir.x;
-        curr.y += dir.y;
-    }
-
-    return part1;
-}
-
-unsigned do_part2(const std::string &filename, unsigned times)
-{
-    std::map<Coords, State> state;
-
-    std::ifstream f(filename);
-    std::string line;
-
-    int x = 0, y = 0;
-    while (getline(f, line))
-    {
-        x = 0;
-        for (auto c : line)
-        {
-            if (c == '#')
-                state[{ x, y }] = Infected;
-            x++;
-        }
-        y++;
-    }
-
-    Coords curr = { x / 2, y / 2 };
-    Coords dir = { 0, -1 };
-
-    unsigned part2 = 0U;
-
-    for (unsigned i = 0U; i < times; i++)
-    {
-        // Step 1. Turn left if clean, right if infected, 180 if flagged.
-        State curr_state = Clean;
-        auto found = state.find(curr);
-        if (found != state.end())
-            curr_state = found->second;
-
-        switch (curr_state)
+        switch (state)
         {
         case Clean:
-            if (dir.x == 0 && dir.y == -1)
-                dir = { -1, 0 }; // up -> left
-            else if (dir.x == 0 && dir.y == 1)
-                dir = { 1, 0 };  // down -> right
-            else if (dir.x == -1 && dir.y == 0)
-                dir = { 0, 1 };  // left -> down
-            else if (dir.x == 1 && dir.y == 0)
-                dir = { 0, -1 }; // right -> up
+            dir.TurnLeft();
+            if (for_part1)
+                grid[curr] = Infected, num_times_infected++;
+            else
+                grid[curr] = Weakened;
             break;
         case Weakened:
+            grid[curr] = Infected;
+            num_times_infected++;
             break;
         case Infected:
-            if (dir.x == 0 && dir.y == -1)
-                dir = { 1, 0 };  // up -> right
-            else if (dir.x == 0 && dir.y == 1)
-                dir = { -1, 0 }; // down -> left
-            else if (dir.x == -1 && dir.y == 0)
-                dir = { 0, -1 }; // left -> up
-            else if (dir.x == 1 && dir.y == 0)
-                dir = { 0, 1 };  // right -> down
+            dir.TurnRight();
+            if (for_part1)
+                grid.erase(curr);
+            else
+                grid[curr] = Flagged;
             break;
         case Flagged:
-            if (dir.x == 0 && dir.y == -1)
-                dir = { 0, 1 };  // up -> down
-            else if (dir.x == 0 && dir.y == 1)
-                dir = { 0, -1 }; // down -> up
-            else if (dir.x == -1 && dir.y == 0)
-                dir = { 1, 0 };  // left -> right
-            else if (dir.x == 1 && dir.y == 0)
-                dir = { -1, 0 }; // right -> left
+            dir.TurnAround();
+            grid.erase(curr);
             break;
         }
 
-        // Step 2. Toggle current node.
-        switch (curr_state)
-        {
-        case Clean:
-            curr_state = Weakened;
-            state[curr] = curr_state;
-            break;
-        case Weakened:
-            curr_state = Infected;
-            state[curr] = curr_state;
-            part2++;
-            break;
-        case Infected:
-            curr_state = Flagged;
-            state[curr] = curr_state;
-            break;
-        case Flagged:
-            curr_state = Clean;
-            state.erase(curr);
-            break;
-        }
-
-        // Step 3. Move forward
-        curr.x += dir.x;
-        curr.y += dir.y;
+        curr += dir;
     }
 
-    return part2;
+    return num_times_infected;
 }
 
 int main()
 {
-    assert(do_part1("input-test.txt", 7) == 5);
-    assert(do_part1("input-test.txt", 70) == 41);
-    assert(do_part1("input-test.txt", 10000) == 5587);
+    assert(process_input("input-test.txt", 7, true) == 5);
+    assert(process_input("input-test.txt", 70, true) == 41);
+    assert(process_input("input-test.txt", 10000, true) == 5587);
 
-    assert(do_part2("input-test.txt", 100) == 26);
-    assert(do_part2("input-test.txt", 10000000) == 2511944);
+    assert(process_input("input-test.txt", 100, false) == 26);
+    assert(process_input("input-test.txt", 10000000, false) == 2511944);
 
-    auto part1 = do_part1("input.txt", 10000);
-    auto part2 = do_part2("input.txt", 10000000);
+    auto part1 = process_input("input.txt", 10000, true);
+    auto part2 = process_input("input.txt", 10000000, false);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
