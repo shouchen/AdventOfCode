@@ -90,6 +90,7 @@ auto process_input(const std::string &filename, unsigned iterations)
     populate_rules(filename);
 
     std::string image = ".#...####";
+
     while (iterations--)
         do_iteration(image);
 
