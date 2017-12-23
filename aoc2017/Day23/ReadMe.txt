@@ -1,40 +1,32 @@
-========================================================================
-    CONSOLE APPLICATION : Day23 Project Overview
-========================================================================
+--- Day 23: Coprocessor Conflagration ---
 
-AppWizard has created this Day23 application for you.
+You decide to head directly to the CPU and fix the printer from there. As you get close, you find an experimental coprocessor doing so much work that the local programs are afraid it will halt and catch fire. This would cause serious issues for the rest of the computer, so you head in and see what you can do.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day23 application.
+The code it's running seems to be a variant of the kind you saw recently on that tablet. The general functionality seems very similar, but some of the instructions are different:
 
+set X Y sets register X to the value of Y.
+sub X Y decreases register X by the value of Y.
+mul X Y sets register X to the result of multiplying the value contained in register X by the value of Y.
+jnz X Y jumps with an offset of the value of Y, but only if the value of X is not zero. (An offset of 2 skips the next instruction, an offset of -1 jumps to the previous instruction, and so on.)
 
-Day23.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+Only the instructions listed above are used. The eight registers here, named a through h, all start at 0.
 
-Day23.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+The coprocessor is currently set to some kind of debug mode, which allows for testing, but prevents it from doing any meaningful work.
 
-Day23.cpp
-    This is the main application source file.
+If you run the program (your puzzle input), how many times is the mul instruction invoked?
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+Your puzzle answer was 5929.
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day23.pch and a precompiled types file named StdAfx.obj.
+--- Part Two ---
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+Now, it's time to fix the problem.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+The debug mode switch is wired directly to register a. You flip the switch, which makes register a now start at 1 when the program is executed.
 
-/////////////////////////////////////////////////////////////////////////////
+Immediately, the coprocessor begins to overheat. Whoever wrote this program obviously didn't choose a very efficient implementation. You'll need to optimize the program if it has any hope of completing before Santa needs that printer working.
+
+The coprocessor's ultimate goal is to determine the final value left in register h once the program completes. Technically, if it had that... it wouldn't even need to run the program.
+
+After setting register a to 1, if the program were to run to completion, what value would be left in register h?
+
+Your puzzle answer was 907.

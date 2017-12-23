@@ -88,7 +88,7 @@ long long do_part1(std::vector<std::string> &program)
 // the program completes in a far more reasonable time. In all, this program is
 // simply making a count of the composite numbers that b takes on during the
 // outer loop.
-int do_part2()
+auto do_part2()
 {
     auto h = 0;
 
