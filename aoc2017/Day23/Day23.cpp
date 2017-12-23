@@ -13,18 +13,19 @@ public:
     Process(std::vector<std::string> &program);
     bool do_instruction();
 
-    inline auto get_times_multiplied() { return times_multiplied; }
+    inline auto get_num_multiplies() { return num_multiplies; }
 
 private:
-    long long evaluate(const std::string &expr);
+    int evaluate(const std::string &expr);
 
-    unsigned curr, times_multiplied;
+    int curr;
+    unsigned num_multiplies;
     std::vector<std::string> &program;
-    std::map<char, long long> registers;
+    std::map<char, int> registers;
 };
 
 Process::Process(std::vector<std::string> &program) :
-    curr(0), times_multiplied(0), program(program)
+    curr(0), num_multiplies(0), program(program)
 {
 }
 
@@ -45,7 +46,7 @@ bool Process::do_instruction()
     else if (opcode == "mul")
     {
         registers[op1[0]] *= evaluate(op2);
-        times_multiplied++;
+        num_multiplies++;
     }
     else if (opcode == "jnz")
     {
@@ -53,12 +54,12 @@ bool Process::do_instruction()
             curr = unsigned(curr + evaluate(op2) - 1);
     }
 
-    return ++curr < program.size();
+    return ++curr < program.size() && curr >= 0;
 }
 
-long long Process::evaluate(const std::string &expr)
+int Process::evaluate(const std::string &expr)
 {
-    return isalpha(expr[0]) ? registers[expr[0]] : _atoi64(expr.c_str());
+    return isalpha(expr[0]) ? registers[expr[0]] : atoi(expr.c_str());
 }
 
 auto read_program(const std::string &filename)
@@ -77,41 +78,42 @@ long long do_part1(std::vector<std::string> &program)
 {
     Process p(program);
     while (p.do_instruction());
-    return p.get_times_multiplied();
+    return p.get_num_multiplies();
 }
 
-bool is_prime(long long b)
+// This is the (manually) disassembled code that was given as the problem input
+// (with register a initialized to 1). Reading this simpler code, it's easy to
+// see that the deeply-nested part is just doing a (poorly-implemented) primality
+// check for b. By replacing this part of the original code with a faster check,
+// the program completes in a far more reasonable time. In all, this program is
+// simply making a count of the composite numbers that b takes on during the
+// outer loop.
+int do_part2()
 {
-    for (long long d = 2; d < sqrt(b); d++)
-        if (b % d == 0)
-            return 0;
+    auto h = 0;
 
-    return 1;
-}
-
-long long do_part2()
-{
-    long long h = 0;
-
-    for (long long b = 107900; b <= 124900; b += 17)
+    for (auto b = 107900; b <= 124900; b += 17)
     {
-        //long long f = 1;
+        auto f = true;
 
-        //for (long long d = 2; d != b && f; d++)
-        //{
-        //    for (long long e = 2; e != b && f; e++)
-        //    {
-        //        if (d * e == b)
-        //        {
-        //            f = 0;
-        //        }
-        //    }
-        //}
-        long long f = is_prime(b);
+#if USE_ORIGINAL_CODE
+        for (auto d = 2; d != b; d++)
+            for (auto e = 2; e != b; e++)
+                if (d * e == b)
+                    f = false;
+#else
+        for (auto d = 2; d < sqrt(b); d++)
+            if (b % d == 0)
+            {
+                f = false;
+                break;
+            }
+#endif
 
-        if (f == 0)
+        if (!f)
             h++;
     }
+
     return h;
 }
 
