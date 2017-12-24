@@ -2,128 +2,68 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <map>
-#include <set>
-#include <queue>
-#include <list>
 #include <vector>
-#include <string>
 #include <algorithm>
 
-struct Port
+struct Component
 {
     unsigned a, b;
-    bool used;
+    bool used = false;
 };
 
-std::vector<Port> ports;
-std::vector<Port> bridge;
+std::vector<Component> components;
 
-std::vector<Port> best_bridge;
-unsigned best_bridge_cost = 0;
+auto max_overall_strength = 0U;
+auto max_length = 0U;
+auto max_strength_among_longest = 0U;
 
-void recur(unsigned prev, unsigned total_so_far)
+void recur(unsigned ports, unsigned length, unsigned strength)
 {
-    if (total_so_far > best_bridge_cost)
-    {
-        best_bridge = bridge;
-        best_bridge_cost = total_so_far;
-    }
+    max_overall_strength = std::max(strength, max_overall_strength);
+    max_length = std::max(length, max_length);
 
-    for (auto &port : ports)
-    {
-        if (port.used)
-            continue;
+    if (length == max_length)
+        max_strength_among_longest = std::max(strength, max_strength_among_longest);
 
-        if (port.a == prev)
+    for (auto &c : components)
+    {
+        if (!c.used && (c.a == ports || c.b == ports))
         {
-            bridge.push_back(port);
-            port.used = true;
-            recur(port.b, total_so_far + port.a + port.b);
-            port.used = false;
-            bridge.pop_back();
-        }
-        else if (port.b == prev)
-        {
-            bridge.push_back(port);
-            port.used = true;
-            recur(port.a, total_so_far + port.a + port.b);
-            port.used = false;
-            bridge.pop_back();
+            c.used = true;
+            recur((c.a == ports) ? c.b : c.a, length + 1, strength + c.a + c.b);
+            c.used = false;
         }
     }
 }
 
-std::vector<Port> longest_bridge;
-unsigned longest_bridge_cost;
-
-void recur2(unsigned prev, unsigned total_so_far)
+void process_input(const std::string &filename)
 {
-    if (bridge.size() > longest_bridge.size())
-    {
-        longest_bridge = bridge;
-        longest_bridge_cost = total_so_far;
-    }
-    else if (bridge.size() == longest_bridge.size() &&
-        total_so_far > longest_bridge_cost)
-    {
-        longest_bridge = bridge;
-        longest_bridge_cost = total_so_far;
-    }
+    components.clear();
 
-    for (auto &port : ports)
-    {
-        if (port.used)
-            continue;
+    std::ifstream f(filename);
+    Component component;
+    auto slash = '/';
+    while (f >> component.a >> slash >> component.b)
+        components.push_back(component);
 
-        if (port.a == prev)
-        {
-            bridge.push_back(port);
-            port.used = true;
-            recur2(port.b, total_so_far + port.a + port.b);
-            port.used = false;
-            bridge.pop_back();
-        }
-        else if (port.b == prev)
-        {
-            bridge.push_back(port);
-            port.used = true;
-            recur2(port.a, total_so_far + port.a + port.b);
-            port.used = false;
-            bridge.pop_back();
-        }
-    }
-}
+    max_overall_strength = 0U;
+    max_length = 0U;
+    max_strength_among_longest = 0U;
 
-unsigned do_part1()
-{
-    recur(0, 0);
-    return best_bridge_cost;
-}
-
-unsigned do_part2()
-{
-    recur2(0, 0);
-    return longest_bridge_cost;
+    recur(0, 0, 0);
 }
 
 int main()
 {
-    std::ifstream f("input.txt");
-    Port port;
-    char slash;
-    port.used = false;
-    while (f >> port.a >> slash >> port.b)
-        ports.push_back(port);
+    process_input("input-test.txt");
+    assert(max_overall_bridge_strength == 31);
+    assert(max_bridge_strength_among_longest == 19);
 
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    process_input("input.txt");
+    std::cout << "Part 1: " << max_overall_strength << std::endl;
+    std::cout << "Part 2: " << max_strength_among_longest << std::endl;
 
-    std::cout << "Part 1: " << part1 << std::endl;
-    std::cout << "Part 2: " << part2 << std::endl;
-
-    assert(part1 == 1859);
-    assert(part2 == 1799);
+    assert(max_overall_bridge_strength == 1859);
+    assert(max_bridge_strength_among_longest == 1799);
     return 0;
 }
