@@ -3,11 +3,11 @@
 #include <iostream>
 #include <set>
 
-enum State { StateA, StateB, StateC, StateD, StateE, StateF };
+enum class State { A, B, C, D, E, F };
 
 std::set<unsigned> ones;
 
-unsigned value_at(unsigned index)
+unsigned get_value(unsigned index)
 {
     return ones.find(index) == ones.end() ? 0 : 1;
 }
@@ -22,103 +22,90 @@ void set_value(unsigned index, unsigned value)
 
 int main()
 {
-    State state = StateA;
+    State state = State::A;
     int index = 0;
 
     for (auto i = 0; i < 12481997; i++)
     {
         switch (state)
         {
-        case StateA:
-            if (value_at(index) == 0)
+        case State::A:
+            if (get_value(index) == 0)
             {
-                set_value(index, 1);
-                index++;
-                state = StateB;
+                set_value(index++, 1);
+                state = State::B;
             }
             else
             {
-                set_value(index, 0);
-                index--;
-                state = StateC;
+                set_value(index--, 0);
+                state = State::C;
             }
             break;
-        case StateB:
-            if (value_at(index) == 0)
+        case State::B:
+            if (get_value(index) == 0)
             {
-                set_value(index, 1);
-                index--;
-                state = StateA;
+                set_value(index--, 1);
+                state = State::A;
             }
             else
             {
-                set_value(index, 1);
-                index++;
-                state = StateD;
+                set_value(index++, 1);
+                state = State::D;
             }
             break;
-        case StateC:
-            if (value_at(index) == 0)
+        case State::C:
+            if (get_value(index) == 0)
             {
-                set_value(index, 0);
-                index--;
-                state = StateB;
+                set_value(index--, 0);
+                state = State::B;
             }
             else
             {
-                set_value(index, 0);
-                index--;
-                state = StateE;
+                set_value(index--, 0);
+                state = State::E;
             }
             break;
-        case StateD:
-            if (value_at(index) == 0)
+        case State::D:
+            if (get_value(index) == 0)
             {
-                set_value(index, 1);
-                index++;
-                state = StateA;
+                set_value(index++, 1);
+                state = State::A;
             }
             else
             {
-                set_value(index, 0);
-                index++;
-                state = StateB;
+                set_value(index++, 0);
+                state = State::B;
             }
             break;
-        case StateE:
-            if (value_at(index) == 0)
+        case State::E:
+            if (get_value(index) == 0)
             {
-                set_value(index, 1);
-                index--;
-                state = StateF;
+                set_value(index--, 1);
+                state = State::F;
             }
             else
             {
-                set_value(index, 1);
-                index--;
-                state = StateC;
+                set_value(index--, 1);
+                state = State::C;
             }
             break;
-        case StateF:
-            if (value_at(index) == 0)
+        case State::F:
+            if (get_value(index) == 0)
             {
-                set_value(index, 1);
-                index++;
-                state = StateD;
+                set_value(index++, 1);
+                state = State::D;
             }
             else
             {
-                set_value(index, 1);
-                index++;
-                state = StateA;
+                set_value(index++, 1);
+                state = State::A;
             }
             break;
         }
     }
 
     auto part1 = ones.size();
-
-    std::cout << part1 << std::endl;
+    std::cout << "Part 1: " << part1 << std::endl;
 
     assert(part1 == 3362);
     return 0;
