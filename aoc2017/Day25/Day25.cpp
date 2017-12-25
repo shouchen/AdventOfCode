@@ -7,9 +7,9 @@ enum class State { A, B, C, D, E, F };
 
 std::set<unsigned> ones;
 
-unsigned get_value(unsigned index)
+auto get_value(unsigned index)
 {
-    return ones.find(index) == ones.end() ? 0 : 1;
+    return ones.find(index) == ones.end() ? 0U : 1U;
 }
 
 void set_value(unsigned index, unsigned value)
@@ -22,8 +22,8 @@ void set_value(unsigned index, unsigned value)
 
 int main()
 {
-    State state = State::A;
-    int index = 0;
+    auto state = State::A;
+    auto index = 0;
 
     for (auto i = 0; i < 12481997; i++)
     {
