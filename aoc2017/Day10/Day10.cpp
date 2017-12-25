@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iomanip>
 
-std::vector<int> initialize_data(int data_size)
+auto initialize_data(int data_size)
 {
     std::vector<int> data;
     for (int i = 0; i < data_size; i++)
@@ -15,7 +15,7 @@ std::vector<int> initialize_data(int data_size)
     return data;
 }
 
-std::vector<int> read_input_text(const std::string &filename)
+auto read_input_text(const std::string &filename)
 {
     std::vector<int> inputs;
     std::ifstream f(filename);
@@ -27,7 +27,7 @@ std::vector<int> read_input_text(const std::string &filename)
     return inputs;
 }
 
-std::vector<int> read_input_binary(const std::string &filename)
+auto read_input_binary(const std::string &filename)
 {
     std::vector<int> inputs;
     std::string input;
@@ -76,7 +76,7 @@ void do_rounds(std::vector<int> &data, const std::vector<int> &inputs, int round
     }
 }
 
-std::vector<int> compress_hash(const std::vector<int> &sparse_hash)
+auto compress_hash(const std::vector<int> &sparse_hash)
 {
     std::vector<int> dense_hash;
 
@@ -89,7 +89,7 @@ std::vector<int> compress_hash(const std::vector<int> &sparse_hash)
     return dense_hash;
 }
 
-std::string hexify(const std::vector<int> data)
+auto hexify(const std::vector<int> data)
 {
     std::stringstream ss;
     for (auto item : data)
@@ -98,7 +98,7 @@ std::string hexify(const std::vector<int> data)
     return ss.str();
 }
 
-int do_part1(int data_size, const std::string &filename)
+auto do_part1(int data_size, const std::string &filename)
 {
     auto data = initialize_data(data_size);
     auto inputs = read_input_text(filename);
@@ -107,7 +107,7 @@ int do_part1(int data_size, const std::string &filename)
     return data[0] * data[1];
 }
 
-std::string do_part2(int data_size, const std::string &filename)
+auto do_part2(int data_size, const std::string &filename)
 {
     auto data = initialize_data(data_size);
     auto inputs = read_input_binary(filename);

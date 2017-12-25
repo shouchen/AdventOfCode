@@ -5,9 +5,9 @@
 inline void generate_a(unsigned &x) { x = (x * 16807ULL) % 2147483647; }
 inline void generate_b(unsigned &x) { x = (x * 48271ULL) % 2147483647; }
 
-inline bool judge(unsigned a, unsigned b) { return (a & 0xffff) == (b & 0xffff); }
+inline auto judge(unsigned a, unsigned b) { return (a & 0xffff) == (b & 0xffff); }
 
-unsigned do_part1(unsigned a, unsigned b, unsigned n)
+auto do_part1(unsigned a, unsigned b, unsigned n)
 {
     auto count = 0U;
 
@@ -23,7 +23,7 @@ unsigned do_part1(unsigned a, unsigned b, unsigned n)
     return count;
 }
 
-unsigned do_part2(unsigned a, unsigned b, unsigned n)
+auto do_part2(unsigned a, unsigned b, unsigned n)
 {
     auto count = 0U;
 

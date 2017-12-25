@@ -15,13 +15,13 @@
 //     | +-+---+-+
 //     |4|3 2 3 4|
 //     +-+-------+
-unsigned do_part1(unsigned input)
+auto do_part1(unsigned input)
 {
     // 1. Find largest odd square (1^2, 3^2, 5^2, etc.) less than or equal to input.
     auto square = (unsigned)sqrt(input);
     if (square % 2 == 0) square--; // if even, round down to odd
 
-                                   // 2. Determine how far beyond that the input is.
+    // 2. Determine how far beyond that the input is.
     auto overflow = input - square * square;
 
     // 3. If no overflow, distance is square - 1.
@@ -39,7 +39,7 @@ unsigned do_part1(unsigned input)
 
 std::map<std::pair<int, int>, unsigned> board;
 
-unsigned sum_neighbors(int x, int y)
+auto sum_neighbors(int x, int y)
 {
     auto sum = 0U;
 
@@ -59,7 +59,7 @@ unsigned sum_neighbors(int x, int y)
     return sum;
 }
 
-unsigned do_part2(unsigned input)
+auto do_part2(unsigned input)
 {
     // Initialize origin to 1.
     auto x_dir = 1, y_dir = 0;

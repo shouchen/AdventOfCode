@@ -10,16 +10,14 @@
 static const auto GRID_SIZE = 128U;
 bool grid[GRID_SIZE][GRID_SIZE];
 
-unsigned hex_to_unsigned(char hex_digit)
+auto hex_to_unsigned(char hex_digit)
 {
-    return (hex_digit > '9')
-        ? unsigned(hex_digit - 'a' + 10)
-        : unsigned(hex_digit - '0');
+    return unsigned(hex_digit - ((hex_digit > '9') ? ('a' - 10) : '0'));
 }
 
 unsigned clear_contiguous_region(int row, int col)
 {
-    unsigned count = 0;
+    auto count = 0U;
 
     if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE && grid[row][col])
     {

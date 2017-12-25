@@ -7,7 +7,7 @@ auto total_points = 0U, total_trash = 0U;
 
 void process_rest_of_trash_after_open_bracket(std::ifstream &f)
 {
-    char c;
+    auto c = ' ';
     while ((f >> c) && (c != '>'))
     {
         if (c == '!')
@@ -19,7 +19,7 @@ void process_rest_of_trash_after_open_bracket(std::ifstream &f)
 
 void process_rest_of_group_after_open_brace(std::ifstream &f, int points)
 {
-    char c;
+    auto c = ' ';
     while ((f >> c) && (c != '}'))
     {
         if (c == '<')
@@ -35,7 +35,7 @@ void solve_problem(const std::string &filename)
 {
     std::ifstream f("input.txt");
 
-    char open_brace;
+    auto open_brace = '{';
     f >> open_brace;
 
     process_rest_of_group_after_open_brace(f, 1);

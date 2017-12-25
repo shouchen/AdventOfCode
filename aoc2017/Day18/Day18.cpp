@@ -122,7 +122,7 @@ auto read_program(const std::string &filename)
     return program;
 }
 
-long long do_part1(std::vector<std::string> &program)
+auto do_part1(std::vector<std::string> &program)
 {
     Process p(program);
 
@@ -132,7 +132,7 @@ long long do_part1(std::vector<std::string> &program)
     return p.get_last_value_sent();
 }
 
-unsigned do_part2(std::vector<std::string> &program)
+auto do_part2(std::vector<std::string> &program)
 {
     Process p0(program, 0), p1(program, 1);
     Process::bind_send_receive(p0, p1);

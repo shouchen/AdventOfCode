@@ -7,11 +7,11 @@
 #include <sstream>
 #include <algorithm>
 
-std::string apply_once(std::string data, const std::string &input)
+auto apply_once(std::string data, const std::string &input)
 {
     std::istringstream f(input);
-    char cmd, a, b, slash, comma;
-    unsigned m, n;
+    auto cmd = ' ', a = 'a', b = 'b', slash = '/', comma = ',';
+    auto m = 0U, n = 0U;
 
     while (f >> cmd)
     {
@@ -40,7 +40,7 @@ std::string apply_once(std::string data, const std::string &input)
     return data;
 }
 
-std::string apply_multiple(std::string data, const std::string &input, unsigned n)
+auto apply_multiple(std::string data, const std::string &input, unsigned n)
 {
     // Record outputs. Pray for a short cycle. Repeat.
     std::vector<std::string> output;

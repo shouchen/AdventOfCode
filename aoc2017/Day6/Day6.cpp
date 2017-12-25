@@ -11,7 +11,7 @@ void process_file(const std::string &filename, unsigned &part1, unsigned &part2)
     // Read the input.
     std::vector<unsigned> banks;
     std::ifstream f(filename);
-    unsigned blocks;
+    auto blocks = 0U;
 
     while (f >> blocks)
         banks.push_back(blocks);

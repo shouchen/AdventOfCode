@@ -5,11 +5,11 @@
 #include <fstream>
 #include <vector>
 
-unsigned process_file(const std::string &filename, bool for_part2)
+auto process_file(const std::string &filename, bool for_part2)
 {
     std::ifstream f(filename);
-    auto offset = 0;
     std::vector<int> data;
+    auto offset = 0;
 
     while (f >> offset)
         data.push_back(offset);

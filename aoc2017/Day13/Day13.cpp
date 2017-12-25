@@ -7,12 +7,12 @@
 struct LayerInfo
 {
     unsigned layer, range, scanner_period;
-    bool catches(unsigned delay = 0) const { return (layer + delay) % scanner_period == 0; }
+    auto catches(unsigned delay = 0) const { return (layer + delay) % scanner_period == 0; }
 };
 
 typedef std::vector<LayerInfo> Firewall;
 
-bool catches(const Firewall &firewall, unsigned delay)
+auto catches(const Firewall &firewall, unsigned delay)
 {
     for (const auto &item : firewall)
         if (item.catches(delay))
@@ -21,7 +21,7 @@ bool catches(const Firewall &firewall, unsigned delay)
     return false;
 }
 
-Firewall read_input(const std::string &filename)
+auto read_input(const std::string &filename)
 {
     std::ifstream f(filename);
     Firewall firewall;
@@ -37,7 +37,7 @@ Firewall read_input(const std::string &filename)
     return firewall;
 }
 
-unsigned do_part1(const Firewall &firewall)
+auto do_part1(const Firewall &firewall)
 {
     auto severity = 0U;
 
@@ -48,7 +48,7 @@ unsigned do_part1(const Firewall &firewall)
     return severity;
 }
 
-unsigned do_part2(const Firewall &firewall)
+auto do_part2(const Firewall &firewall)
 {
     for (auto delay = 0U; ; delay++)
         if (!catches(firewall, delay))

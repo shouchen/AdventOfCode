@@ -4,19 +4,19 @@
 #include <iostream>
 #include <fstream>
 
-typedef  unsigned(*OtherIndexComputer)(int curr, unsigned length);
+typedef unsigned(*OtherIndexComputer)(int curr, unsigned length);
 
-unsigned get_other_index1(int curr, unsigned length)
+auto get_other_index1(int curr, unsigned length)
 {
     return (curr + 1) % length;
 }
 
-unsigned get_other_index2(int curr, unsigned length)
+auto get_other_index2(int curr, unsigned length)
 {
     return (curr + length / 2) % length;
 }
 
-unsigned compute_captcha(const std::string &input, OtherIndexComputer computer)
+auto compute_captcha(const std::string &input, OtherIndexComputer computer)
 {
     auto sum = 0U;
 
@@ -47,18 +47,16 @@ int main()
 
     std::ifstream f("input.txt");
     std::string input;
+    f >> input;
 
-    if (f >> input)
-    {
-        auto part_one = compute_captcha(input, get_other_index1);
-        auto part_two = compute_captcha(input, get_other_index2);
+    auto part_one = compute_captcha(input, get_other_index1);
+    auto part_two = compute_captcha(input, get_other_index2);
 
-        std::cout << "Part One: " << part_one << std::endl;
-        std::cout << "Part Two: " << part_two << std::endl;
+    std::cout << "Part One: " << part_one << std::endl;
+    std::cout << "Part Two: " << part_two << std::endl;
 
-        assert(part_one == 1141);
-        assert(part_two == 950);
-    }
+    assert(part_one == 1141);
+    assert(part_two == 950);
 
     return 0;
 }

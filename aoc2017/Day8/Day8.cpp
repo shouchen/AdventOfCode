@@ -20,7 +20,7 @@ void foo(const std::string &filename, int &part1, int &part2)
     {
         std::stringstream ss(line);
         std::string reg1, inc_dec, if_, reg2, cond;
-        int amount1, amount2;
+        auto amount1 = 0, amount2 = 0;
 
         ss >> reg1 >> inc_dec >> amount1 >> if_ >> reg2 >> cond >> amount2;
 

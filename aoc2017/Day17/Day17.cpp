@@ -3,7 +3,7 @@
 #include <iostream>
 #include <list>
 
-unsigned do_part1(unsigned input)
+auto do_part1(unsigned input)
 {
     std::list<unsigned> list;
     list.push_front(0);
@@ -22,7 +22,7 @@ unsigned do_part1(unsigned input)
     return *(++curr == list.end() ? list.begin() : curr);
 }
 
-unsigned do_part2(unsigned input)
+auto do_part2(unsigned input)
 {
     // Only need to store what's in index 1 at any given time.
     auto curr = 0U, size = 1U, value_in_index1 = 0U;
@@ -53,4 +53,3 @@ int main()
     assert(part2 == 1898341);
     return 0;
 }
-

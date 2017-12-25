@@ -7,7 +7,7 @@
 #include <map>
 #include <set>
 
-std::map<unsigned, std::vector<unsigned>> read_input(const std::string &filename)
+auto read_input(const std::string &filename)
 {
     std::map<unsigned, std::vector<unsigned>> data;
     std::ifstream f(filename);

@@ -20,7 +20,7 @@ std::map<std::string, NodeData> node_data;
 
 unsigned set_cume_weights_recursively(const std::string &node_name)
 {
-    NodeData &node = node_data[node_name];
+    auto &node = node_data[node_name];
     node.cume_weight = node.weight;
 
     for (auto child : node.children)
@@ -41,8 +41,9 @@ void read_input(const std::string &filename)
     {
         if (token == "->")
         {
+            auto eol = false;
             std::string child_name;
-            bool eol = false;
+
             while (!eol && f >> child_name)
             {
                 if (child_name[child_name.length() - 1] == ',')
@@ -78,13 +79,13 @@ void read_input(const std::string &filename)
     set_cume_weights_recursively(root);
 }
 
-std::string find_oddball_child_node(const std::string &node_name, int &diff)
+auto find_oddball_child_node(const std::string &node_name, int &diff)
 {
     std::string child;
     diff = 0;
 
     std::map<unsigned, unsigned> weight_to_count;
-    NodeData &node = node_data[node_name];
+    auto &node = node_data[node_name];
 
     for (auto &child : node.children)
     {
@@ -95,7 +96,7 @@ std::string find_oddball_child_node(const std::string &node_name, int &diff)
     if (weight_to_count.size() == 2)
     {
         // Find oddball weight
-        unsigned common_weight, oddball_weight;
+        auto common_weight = 0U, oddball_weight = 0U;
         for (auto i : weight_to_count)
         {
             if (i.second == 1)
@@ -119,7 +120,7 @@ std::string find_oddball_child_node(const std::string &node_name, int &diff)
     return child;
 }
 
-unsigned compute_corrected_weight(const std::string &name)
+auto compute_corrected_weight(const std::string &name)
 {
     std::string prev;
     auto diff = 0, prev_diff = 0;

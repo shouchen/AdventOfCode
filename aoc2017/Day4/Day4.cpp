@@ -7,7 +7,7 @@
 #include <set>
 #include <algorithm>
 
-bool validate_password(const std::string password, bool check_anagrams)
+auto validate_password(const std::string password, bool check_anagrams)
 {
     std::stringstream ss(password);
     std::set<std::string> words;
@@ -27,7 +27,7 @@ bool validate_password(const std::string password, bool check_anagrams)
     return true;
 }
 
-unsigned count_valid_passwords(const std::string &filename, bool check_anagrams)
+auto count_valid_passwords(const std::string &filename, bool check_anagrams)
 {
     auto valid = 0U;
 

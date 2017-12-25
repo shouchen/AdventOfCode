@@ -5,10 +5,10 @@
 #include <sstream>
 #include <algorithm>
 
-unsigned get_dist_from_origin(int x, int y)
+int get_dist_from_origin(int x, int y)
 {
     x = abs(x), y = abs(y);
-    return (x > y) ? x : (y - x + 1) / 2 + x;
+    return unsigned((x > y) ? x : (y - x + 1) / 2 + x);
 }
 
 void process_input(std::istream &input, unsigned &distance, unsigned &max_distance)
