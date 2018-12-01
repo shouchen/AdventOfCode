@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <numeric>
 #include <vector>
 #include <set>
 #include <cassert>
@@ -9,8 +10,6 @@ std::vector<long> input;
 
 void read_input_into_vector(const std::string &filename)
 {
-    input.clear();
-
     std::ifstream file(filename);
     auto a = 0L;
 
@@ -22,33 +21,26 @@ void read_input_into_vector(const std::string &filename)
 
 long do_part1()
 {
-    auto current = 0L;
-    for (auto item : input)
-    {
-        current += item;
-    }
-
-    return current;
+    return std::accumulate(input.begin(), input.end(), 0);
 }
 
 long do_part2()
 {
     std::set<long> seen;
     auto current = 0L;
-    seen.insert(current);
 
     while (true)
     {
-        for (auto item : input)
+        for (auto frequency : input)
         {
-            current += item;
-
             if (seen.find(current) != seen.end())
             {
                 return current;
             }
 
             seen.insert(current);
+
+            current += frequency;
         }
     }
 }
