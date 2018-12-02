@@ -4,8 +4,8 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 
 std::vector<std::string> input;
 
@@ -38,44 +38,36 @@ unsigned do_part1()
     return num_exactly2 * num_exactly3;
 }
 
-bool differ_by_one_char(const std::string &first, const std::string &second, std::string &common)
-{
-    if (first.length() != second.length()) return false;
-    int single_diff = -1;
-
-    for (int i = 0; i < first.length(); i++)
-    {
-        if (first[i] != second[i])
-        {
-            if (single_diff > -1)
-            {
-                single_diff = -1;
-                break;
-            }
-
-            single_diff = i;
-        }
-    }
-
-    if (single_diff > -1)
-    {
-        common = first;
-        common.erase(single_diff, 1);
-        return true;
-    }
-
-    return false;
-}
-
 std::string do_part2()
 {
     for (auto i = 0; i < input.size(); i++)
     {
         for (auto j = i + 1; j < input.size(); j++)
         {
-            std::string common;
-            if (differ_by_one_char(input[i], input[j], common))
-                return common;
+            if (input[i].length() == input[j].length())
+            {
+                auto single_diff_index = -1;
+
+                for (auto k = 0; k < input[i].length(); k++)
+                {
+                    if (input[i][k] != input[j][k])
+                    {
+                        if (single_diff_index > -1)
+                        {
+                            single_diff_index = -1;
+                            break;
+                        }
+
+                        single_diff_index = k;
+                    }
+                }
+
+                if (single_diff_index > -1)
+                {
+                    auto retval = input[i];
+                    return retval.erase(single_diff_index, 1);
+                }
+            }
         }
     }
 
