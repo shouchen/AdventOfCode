@@ -1,12 +1,11 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
-#include <numeric>
 #include <vector>
 #include <string>
-#include <set>
 #include <map>
 #include <cassert>
+#include <algorithm>
 
 std::vector<std::string> input;
 
@@ -16,77 +15,56 @@ void read_input_into_vector(const std::string &filename)
     std::string a;
 
     while (file >> a)
-    {
         input.push_back(a);
-    }
-}
-
-bool has_exactly_two_of_any_latter(const std::string &s)
-{
-    std::map<char, unsigned> count;
-
-    for (auto c : s)
-    {
-        count[c]++;
-    }
-
-    for (auto pair : count)
-    {
-        if (pair.second == 2)
-            return true;
-    }
-
-    return false;
-}
-
-bool has_exactly_three_of_any_latter(const std::string &s)
-{
-    std::map<char, unsigned> count;
-
-    for (auto c : s)
-    {
-        count[c]++;
-    }
-
-    for (auto pair : count)
-    {
-        if (pair.second == 3)
-            return true;
-    }
-
-    return false;
 }
 
 unsigned do_part1()
 {
-    unsigned two = 0, three = 0;
+    auto num_exactly2 = 0U, num_exactly3 = 0U;
+
     for (auto id : input)
     {
-        if (has_exactly_two_of_any_latter(id))
-            two++;
-        if (has_exactly_three_of_any_latter(id))
-            three++;
+        std::map<char, unsigned> count;
+
+        for (auto c : id)
+            count[c]++;
+
+        if (std::any_of(count.begin(), count.end(), [&](const std::pair<const char, unsigned> &x) { return x.second == 2; }))
+            num_exactly2++;
+        if (std::any_of(count.begin(), count.end(), [&](const std::pair<const char, unsigned> &x) { return x.second == 3; }))
+            num_exactly3++;
     }
-    return two * three;
+
+    return num_exactly2 * num_exactly3;
 }
 
-int differ_by_one_char(const std::string &first, const std::string &second)
+bool differ_by_one_char(const std::string &first, const std::string &second, std::string &common)
 {
     if (first.length() != second.length()) return false;
-    int diff = -1;
+    int single_diff = -1;
 
     for (int i = 0; i < first.length(); i++)
     {
         if (first[i] != second[i])
         {
-            if (diff > -1)
-                return -1;
+            if (single_diff > -1)
+            {
+                single_diff = -1;
+                break;
+            }
 
-            diff = i;
+            single_diff = i;
         }
     }
 
-    return diff;
+    if (single_diff > -1)
+    {
+        common = first;
+        common.erase(single_diff, 1);
+        return true;
+    }
+
+    return false;
 }
 
 std::string do_part2()
@@ -95,18 +73,9 @@ std::string do_part2()
     {
         for (auto j = i + 1; j < input.size(); j++)
         {
-            auto diff = differ_by_one_char(input[i], input[j]);
-            if (diff > -1)
-            {
-                std::string retval;
-                for (int k = 0; k < input[i].length(); k++)
-                {
-                    if (k != diff)
-                        retval.push_back(input[i][k]);
-                }
-
-                return retval;
-            }
+            std::string common;
+            if (differ_by_one_char(input[i], input[j], common))
+                return common;
         }
     }
 
@@ -117,13 +86,13 @@ int main()
 {
     read_input_into_vector("input.txt");
 
-    //auto part1 = do_part1();
+    auto part1 = do_part1();
     auto part2 = do_part2();
 
-    //std::cout << "Part One: " << part1 << std::endl;
+    std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
 
-    //assert(part1 == 5750); // 5750
-    //assert(part2 == 563); // tzyvunogzariwkpcbdewmjhxi
+    assert(part1 == 5750);
+    assert(part2 == "tzyvunogzariwkpcbdewmjhxi");
     return 0;
 }
