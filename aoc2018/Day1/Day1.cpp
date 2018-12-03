@@ -14,9 +14,7 @@ void read_input_into_vector(const std::string &filename)
     auto a = 0L;
 
     while (file >> a)
-    {
         input.push_back(a);
-    }
 }
 
 long do_part1()
@@ -29,17 +27,14 @@ long do_part2()
     std::set<long> seen;
     auto current = 0L;
 
-    while (true)
+    for (;;)
     {
         for (auto frequency : input)
         {
             if (seen.find(current) != seen.end())
-            {
                 return current;
-            }
 
             seen.insert(current);
-
             current += frequency;
         }
     }
