@@ -9,19 +9,19 @@ std::map<std::pair<int, int>, int> cloth;
 std::set<std::pair<int, int>> overlapped_squares;
 std::set<int> non_overlapped_ids;
 
-void read_input(const std::string &filename)
+void process_input(const std::string &filename)
 {
     std::ifstream file(filename);
-    char pound, at, comma, colon, by;
-    int id, x, y, width, height;
+    auto pound = '#', at = '@', comma = ',', colon = ':', by = 'x';
+    auto id = 0, x = 0, y = 0, width = 0, height = 0;
 
     while (file >> pound >> id >> at >> x >> comma >> y >> colon >> width >> by >> height)
     {
         non_overlapped_ids.insert(id);
         
-        for (int row = 0; row < height; row++)
+        for (auto row = 0; row < height; row++)
         {
-            for (int column = 0; column < width; column++)
+            for (auto column = 0; column < width; column++)
             {
                 auto loc = std::make_pair(x + column, y + row);
                 if (cloth.find(loc) == cloth.end())
@@ -41,7 +41,7 @@ void read_input(const std::string &filename)
 
 int main()
 {
-    read_input("input.txt");
+    process_input("input.txt");
 
     auto part1 = overlapped_squares.size();
     auto part2 = *non_overlapped_ids.begin();
