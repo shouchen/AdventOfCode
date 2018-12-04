@@ -7,45 +7,20 @@
 #include <algorithm>
 #include <cassert>
 
-unsigned days_in_month[] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+static const unsigned days_in_month[] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-std::vector<std::string> input;
+struct TableRow
+{
+    unsigned guard = 0;
+    char minute[60] = { ' ' };
+};
+
+std::map<std::pair<unsigned, unsigned>, TableRow> table; // maps m+d -> TableRow
+
 std::map<std::pair<unsigned, unsigned>, unsigned> guard; // m+d -> guard
 std::map<std::pair<unsigned, unsigned>, std::string> grid; // grid
+
 std::map<unsigned, unsigned> total_sleep;
-
-void read_input_into_vector(const std::string &filename)
-{
-    std::ifstream file(filename);
-    unsigned year, month, day, hour, minute;
-    char dash, colon, open_brace, close_brace;
-    std::string a;
-
-    unsigned id;
-
-    while (file >> open_brace >> year >> dash >> month >> dash >> day >> hour >> colon >> minute >> close_brace)
-    {
-        std::string s, begins, shift, asleep, up;
-        char pound;
-
-        file >> s;
-
-        if (s == "Guard")
-        {
-            file >> pound >> id >> begins >> shift;
-        }
-        else if (s == "falls")
-        {
-            file >> asleep;
-        }
-        else if (s == "wakes")
-        {
-            file >> up;
-        }
-        else
-            assert(false);
-    }
-}
 
 void start_shift(const std::string &filename)
 {
@@ -78,8 +53,12 @@ void start_shift(const std::string &filename)
                 }
             }
 
-            guard[std::make_pair(month, day)] = id;
-            grid[std::make_pair(month, day)] = "w                                                           "; // 60
+            auto date = std::make_pair(month, day);
+
+            guard[date] = id;
+            grid[date] = "                                                            "; // 60
+
+            table[date].guard = id;
         }
         else if (s == "falls")
         {
@@ -116,11 +95,13 @@ void sleep_wake(const std::string &filename)
         {
             file >> asleep;
             grid[std::make_pair(month, day)][minute] = 's';
+            table[std::make_pair(month, day)].minute[minute] = 's';
         }
         else if (s == "wakes")
         {
             file >> up;
             grid[std::make_pair(month, day)][minute] = 'w';
+            table[std::make_pair(month, day)].minute[minute] = 'w';
         }
     }
 }
