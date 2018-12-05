@@ -1,13 +1,12 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include <array>
 #include <string>
 #include <map>
 #include <algorithm>
+#include <iterator>
 #include <cassert>
-
-static const unsigned days_in_month[] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 struct TableRow
 {
@@ -15,15 +14,12 @@ struct TableRow
     char minute[60] = { ' ' };
 };
 
-std::map<std::pair<unsigned, unsigned>, TableRow> table; // maps m+d -> TableRow
+std::map<std::pair<unsigned, unsigned>, TableRow> table; // maps month+day -> TableRow
 
-std::map<std::pair<unsigned, unsigned>, unsigned> guard; // m+d -> guard
-std::map<std::pair<unsigned, unsigned>, std::string> grid; // grid
-
-std::map<unsigned, unsigned> total_sleep;
-
-void start_shift(const std::string &filename)
+void read_input(const std::string &filename)
 {
+    static const unsigned days_in_month[] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
     std::ifstream file(filename);
     unsigned year, month, day, hour, minute;
     char dash, colon, open_brace, close_brace;
@@ -43,8 +39,7 @@ void start_shift(const std::string &filename)
             file >> pound >> id >> begins >> shift;
             if (hour == 23)
             {
-                hour = 0;
-                minute = 0;
+                hour = minute = 0;
                 day++;
                 if (day > days_in_month[month])
                 {
@@ -53,167 +48,105 @@ void start_shift(const std::string &filename)
                 }
             }
 
-            auto date = std::make_pair(month, day);
-
-            guard[date] = id;
-            grid[date] = "                                                            "; // 60
-
-            table[date].guard = id;
+            table[std::make_pair(month, day)].guard = id;
         }
         else if (s == "falls")
         {
             file >> asleep;
-        }
-        else if (s == "wakes")
-        {
-            file >> up;
-        }
-    }
-}
-
-void sleep_wake(const std::string &filename)
-{
-    std::ifstream file(filename);
-    unsigned year, month, day, hour, minute;
-    char dash, colon, open_brace, close_brace;
-    std::string a;
-
-    unsigned id;
-
-    while (file >> open_brace >> year >> dash >> month >> dash >> day >> hour >> colon >> minute >> close_brace)
-    {
-        std::string s, begins, shift, asleep, up;
-        char pound;
-
-        file >> s;
-
-        if (s == "Guard")
-        {
-            file >> pound >> id >> begins >> shift;
-        }
-        else if (s == "falls")
-        {
-            file >> asleep;
-            grid[std::make_pair(month, day)][minute] = 's';
             table[std::make_pair(month, day)].minute[minute] = 's';
         }
         else if (s == "wakes")
         {
             file >> up;
-            grid[std::make_pair(month, day)][minute] = 'w';
             table[std::make_pair(month, day)].minute[minute] = 'w';
+        }
+    }
+
+    for (auto row : table)
+    {
+        bool awake = true;
+        for (auto &c : table[row.first].minute)
+        {
+            if (c == 'w') awake = true;
+            else if (c == 's') awake = false;
+            else c = awake ? 'w' : 's';
         }
     }
 }
 
 unsigned do_part1()
 {
-    for (auto item : grid)
+    std::map<unsigned, unsigned> total_sleep_per_guard;
+    for (auto item : table)
     {
-        auto date = item.first;
-        auto id = guard[date];
-        auto &s = grid[date];
+        auto &table_row = item.second;
+        auto id = table_row.guard;
 
-        bool awake = true;
-        unsigned count = 0;
-        for (int i = 0; i < 60; i++)
-        {
-            if (s[i] == 'w') awake = true;
-            else if (s[i] == 's') awake = false;
-            else s[i] = awake ? 'w' : 's';
-
-            if (!awake)
-                count++;
-        }
-
-        total_sleep[id] += count;
+        for (auto c : table_row.minute)
+            if (c == 's')
+                total_sleep_per_guard[id]++;
     }
 
-    unsigned highest_sleep = 0;
-    unsigned highest_id = 0;
-    for (auto item : total_sleep)
-    {
-        if (item.second > highest_sleep)
-        {
-            highest_sleep = item.second;
-            highest_id = item.first;
-        }
-    }
+    auto sleepiest1 = std::max_element(
+        total_sleep_per_guard.begin(), 
+        total_sleep_per_guard.end(),
+        [&](std::pair<const unsigned, unsigned> const &lhs,
+            std::pair<const unsigned, unsigned> const &rhs) {
+        return lhs.second < rhs.second;
+        });
+    auto sleepiest_guard = sleepiest1->first;
 
-    std::cout << highest_sleep << " " << highest_id << std::endl;
-
-    // Now what minute is guard #id asleep the most?
-    unsigned asleep_count[60];
-    for (int i = 0; i < 60; i++)
-        asleep_count[i] = 0;
-
-    for (auto item : grid)
+    // Get cumulative data for the sleepiest guard
+    std::array<unsigned, 60> asleep_count;
+    for (auto item : table)
     {
         auto date = item.first;
-        if (guard[date] == highest_id)
+        if (table[date].guard == sleepiest_guard)
         {
             for (int i = 0; i < 60; i++)
             {
-                if (grid[date][i] == 's')
+                if (table[date].minute[i] == 's')
                     asleep_count[i]++;
             }
         }
     }
 
-    unsigned sleepiest_minute = 0;
-    unsigned sleepy_count = 0;
-    for (int i = 0; i < 60; i++)
-    {
-        if (asleep_count[i] > sleepy_count)
-        {
-            sleepy_count = asleep_count[i];
-            sleepiest_minute = i;
-        }
-    }
+    // Now, what minute is the sleepiest guard the sleepiest?
+    auto sleepiest2 = std::max_element(asleep_count.begin(), asleep_count.end());
+    auto sleepiest_minute = static_cast<unsigned>(std::distance(asleep_count.begin(), sleepiest2));
 
-    return sleepiest_minute * highest_id;
+    return sleepiest_minute * sleepiest_guard;
 }
 
 unsigned do_part2()
 {
-    // build map of (guard) -> count of sleep at each minute
-    std::map<unsigned, unsigned[60]> p2;
-
-    for (auto item : grid)
+    std::map<std::pair<unsigned, unsigned>, unsigned> guard_and_minute_to_sleep_count;
+    for (auto &item : table)
     {
         auto date = item.first;
-        auto id = guard[date];
+        auto id = table[date].guard;
 
         for (int i = 0; i < 60; i++)
-            if (grid[date][i] == 's')
-            {
-                p2[id][i]++;
-            }
+            if (table[date].minute[i] == 's')
+                guard_and_minute_to_sleep_count[std::make_pair(id, i)]++;
     }
 
-    unsigned sleepy_guard = 0;
-    unsigned sleepy_guard_sleepiness = 0;
-    unsigned sleepy_minute = 0;
-    for (auto item : p2)
-    {
-        for (int i = 0; i < 60; i++)
-        {
-            if (item.second[i] > sleepy_guard_sleepiness)
-            {
-                sleepy_guard_sleepiness = item.second[i];
-                sleepy_guard = item.first;
-                sleepy_minute = i;
-            }
-        }
-    }
+    auto sleepiest = std::max_element(
+        guard_and_minute_to_sleep_count.begin(),
+        guard_and_minute_to_sleep_count.end(),
+        [&](std::pair<const std::pair<unsigned, unsigned>, unsigned> const &lhs, 
+            std::pair<const std::pair<unsigned, unsigned>, unsigned> const &rhs) {
+            return lhs.second < rhs.second;
+        });
 
+    auto sleepy_guard = sleepiest->first.first;
+    auto sleepy_minute = sleepiest->first.second;
     return sleepy_guard * sleepy_minute;
 }
 
 int main()
 {
-    start_shift("input.txt");
-    sleep_wake("input.txt");
+    read_input("input.txt");
 
     auto part1 = do_part1();
     auto part2 = do_part2();
