@@ -5,24 +5,24 @@
 #include <set>
 #include <cassert>
 
-bool process_file(unsigned &size, char *exclude = NULL, std::set<char> *excluded = NULL)
+bool process_file(unsigned &size, std::set<char> *excluded = NULL)
 {
     std::ifstream file("input.txt");
     std::string s;
-    char c;
+    char c, exclude = ' ';
     
-    if (exclude)
-        *exclude = ' ';
+    if (excluded)
+        exclude = ' ';
 
     while (file >> c)
     {
-        if (exclude && *exclude == ' ' && excluded->find(tolower(c)) == excluded->end())
+        if (excluded && exclude == ' ' && excluded->find(tolower(c)) == excluded->end())
         {
-            *exclude = tolower(c);
+            exclude = tolower(c);
             excluded->insert(tolower(c));
         }
 
-        if (exclude && *exclude != ' ' && tolower(c) == *exclude)
+        if (excluded && exclude != ' ' && tolower(c) == exclude)
             continue;
 
         if (!s.empty())
@@ -39,7 +39,7 @@ bool process_file(unsigned &size, char *exclude = NULL, std::set<char> *excluded
     }
 
     size = static_cast<unsigned>(s.size());
-    return exclude && *exclude != ' ';
+    return excluded && exclude != ' ';
 }
 
 unsigned do_part1()
@@ -56,7 +56,7 @@ unsigned do_part2()
     char exclude = ' ';
     auto lowest_size = std::numeric_limits<unsigned>::max();
 
-    while (process_file(size, &exclude, &excluded))
+    while (process_file(size, &excluded))
     {
         if (size < lowest_size)
             lowest_size = size;
