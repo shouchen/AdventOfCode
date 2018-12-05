@@ -1,91 +1,69 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
-#include <list>
+#include <string>
 #include <set>
 #include <cassert>
 
-bool apply_rule(std::list<char> &s)
+bool process_file(unsigned &size, char *exclude = NULL, std::set<char> *excluded = NULL)
 {
-    bool modified = false;
+    std::ifstream file("input.txt");
+    std::string s;
+    char c;
+    
+    if (exclude)
+        *exclude = ' ';
 
-    std::list<char>::iterator prev = s.end();
-    for (std::list<char>::iterator curr = s.begin(); curr != s.end(); curr++)
+    while (file >> c)
     {
-        if (prev != s.end())
+        if (exclude && *exclude == ' ' && excluded->find(tolower(c)) == excluded->end())
         {
-            if (*prev != *curr && toupper(*prev) == toupper(*curr))
+            *exclude = tolower(c);
+            excluded->insert(tolower(c));
+        }
+
+        if (exclude && *exclude != ' ' && tolower(c) == *exclude)
+            continue;
+
+        if (!s.empty())
+        {
+            auto prev = s.back();
+            if (c != prev && tolower(c) == tolower(prev))
             {
-                s.erase(prev);
-                s.erase(curr);
-                return true;
+                s.pop_back();
+                continue;
             }
         }
 
-        prev = curr;
+        s.push_back(c);
     }
 
-    return modified;
+    size = static_cast<unsigned>(s.size());
+    return exclude && *exclude != ' ';
 }
-
-//dabAcCaCBAcCcaDA  The first 'cC' is removed.
-//dabAaCBAcCcaDA    This creates 'Aa', which is removed.
-//dabCBAcCcaDA      Either 'cC' or 'Cc' are removed(the result is the same).
-//dabCBAcaDA        No further actions can be taken.
-
-std::set<char> letter; // save for part2
 
 unsigned do_part1()
 {
-    std::ifstream file("input.txt");
-
-    std::list<char> s;
-    char c;
-    while (file >> c)
-    {
-        s.push_back(c);
-        letter.insert(tolower(c));
-    }
-
-    while (apply_rule(s));
-    return static_cast<unsigned>(s.size());
-}
-
-unsigned do_work(char omit)
-{
-    std::ifstream file("input.txt");
-
-    std::list<char> s;
-    char c;
-    while (file >> c)
-    {
-        if (tolower(c) != omit)
-            s.push_back(c);
-    }
-
-    while (apply_rule(s));
-    return static_cast<unsigned>(s.size());
+    unsigned size = 0;
+    process_file(size);
+    return size;
 }
 
 unsigned do_part2()
 {
-    unsigned smallestsize = 1000000;
-    unsigned smallestletter = ' ';
+    std::set<char> excluded;
+    unsigned size = 0;
+    char exclude = ' ';
+    auto lowest_size = std::numeric_limits<unsigned>::max();
 
-    for (auto x : letter)
+    while (process_file(size, &exclude, &excluded))
     {
-        auto len = do_work(x);
-        if (len < smallestsize)
-        {
-            smallestsize = len;
-            smallestletter = x;
-            std::cout << x << ' ' << len << std::endl;
-        }
+        if (size < lowest_size)
+            lowest_size = size;
     }
 
-    return smallestsize;
+    return lowest_size;
 }
-
 
 int main()
 {
