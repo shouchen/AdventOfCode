@@ -1,44 +1,35 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <set>
 #include <vector>
-#include <queue>
 #include <map>
 #include <cassert>
 
-std::vector<std::pair<int, int>> initial;
 std::set<char> periphery;
 char grid1[500][500];
 
-int manhattan(std::pair<int, int> a, std::pair<int, int> b)
+unsigned manhattan(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
 {
-    auto m = a.first - b.first;
-    auto n = a.second - b.second;
-
-    if (m < 0) m = -m;
-    if (n < 0) n = -n;
-    return m + n;
+    auto x = (x1 > x2) ? (x1 - x2) : (x2 - x1);
+    auto y = (y1 > y2) ? (y1 - y2) : (y2 - y1);
+    return x + y;
 }
 
 unsigned do_part1()
 {
-    int min_x = std::numeric_limits<int>::max();
-    int min_y = std::numeric_limits<int>::max();
-    int max_x = std::numeric_limits<int>::min();
-    int max_y = std::numeric_limits<int>::min();
+    auto min_x = std::numeric_limits<unsigned>::max();
+    auto min_y = std::numeric_limits<unsigned>::max();
+    auto max_x = std::numeric_limits<unsigned>::min();
+    auto max_y = std::numeric_limits<unsigned>::min();
+
+    std::vector<std::pair<unsigned, unsigned>> initial;
 
     std::ifstream file("input.txt");
-    char comma;
-    int x, y;
 
-    min_x = 1000000;
-    min_x = 1000000;
-    max_y = -1000000;
-    max_y = -1000000;
+    auto line = 'A', comma = ',';
+    auto x = 0U, y = 0U;
 
-    char line = 'A';
     while (file >> x >> comma >> y)
     {
         auto loc = std::make_pair(y, x);
@@ -62,20 +53,18 @@ unsigned do_part1()
         }
     }
 
-    //newdump();
-
-    for (int row = min_y; row <= max_y; row++)
-        for (int col = min_x; col <= max_x; col++)
+    for (auto row = min_y; row <= max_y; row++)
+        for (auto col = min_x; col <= max_x; col++)
         {
             if (grid1[row][col] >= 'A')
                 continue;
 
-            int closest = 1000000;
-            char closest_letter = '.';
+            auto closest = std::numeric_limits<unsigned>::max();
+            auto closest_letter = '.';
 
             for (auto &item : initial)
             {
-                auto dist = manhattan(item, std::make_pair(row, col));
+                auto dist = manhattan(item.second, item.first, col, row);
                 if (dist < closest)
                 {
                     closest = dist;
@@ -91,16 +80,16 @@ unsigned do_part1()
         }
 
     // count area sizes
-    std::map<char, int> counts;
-    for (int row = min_y; row <= max_y; row++)
-        for (int col = min_x; col <= max_x; col++)
+    std::map<char, unsigned> counts;
+    for (auto row = min_y; row <= max_y; row++)
+        for (auto col = min_x; col <= max_x; col++)
         {
             auto c = grid1[row][col];
             if (c != '.')
                 counts[c]++;
         }
 
-    unsigned max = 0;
+    auto max = 0U;
     for (auto &item : counts)
     {
         // Exclude ones on the outside, as they extend to infinity (exclude 4924 and take second most)
@@ -119,18 +108,16 @@ unsigned do_part1()
     return 3293/*max*/;
 }
 
-//char grid2[500][500];
-
 unsigned do_part2()
 {
-    std::vector<std::pair<int, int>> initial2;
-
-    std::ifstream file("input.txt");
-
     auto min_x = std::numeric_limits<unsigned>::max();
     auto max_x = std::numeric_limits<unsigned>::min();
     auto min_y = std::numeric_limits<unsigned>::max();
     auto max_y = std::numeric_limits<unsigned>::min();
+
+    std::vector<std::pair<int, int>> initial;
+
+    std::ifstream file("input.txt");
 
     char comma = ',';
     auto x = 0U, y = 0U;
@@ -142,7 +129,7 @@ unsigned do_part2()
         if (y < min_y) min_y = y;
         if (y > max_y) max_y = y;
 
-        initial2.push_back(std::make_pair(y, x));
+        initial.push_back(std::make_pair(y, x));
     }
 
     // count squares where distance sum is less than 10000
@@ -151,8 +138,8 @@ unsigned do_part2()
         for (auto col = min_x; col <= max_x; col++)
         {
             auto total_dist = 0;
-            for (auto &item : initial2)
-                total_dist += manhattan(item, std::make_pair(row, col));
+            for (auto &item : initial)
+                total_dist += manhattan(item.second, item.first, col, row);
             if (total_dist < 10000)
                 count++;
         }
@@ -168,7 +155,7 @@ int main()
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
 
-    assert(part1 == 3293); // 3293 is right (exclude one edge)
-    assert(part2 == 45176); // 45176 is right
+    assert(part1 == 3293);
+    assert(part2 == 45176);
     return 0;
 }
