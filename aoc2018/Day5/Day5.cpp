@@ -56,10 +56,19 @@ unsigned do_part2()
     char exclude = ' ';
     auto lowest_size = std::numeric_limits<unsigned>::max();
 
-    while (process_file(size, &excluded))
+    auto num_excluded = excluded.size();
+    for (;;)
     {
+        process_file(size, &excluded);
         if (size < lowest_size)
             lowest_size = size;
+
+        if (excluded.size() == num_excluded)
+        {
+            break;
+        }
+
+        auto num_excluded = excluded.size();
     }
 
     return lowest_size;
