@@ -111,7 +111,6 @@ unsigned do_part2()
 
     auto seconds = 0U;
     LetterTime worker_status[5];
-    std::set<char> taken;
 
     for (;;)
     {
@@ -119,18 +118,18 @@ unsigned do_part2()
         {
             if (worker_status[w].time > 0)
             {
-                worker_status[w].time--;
-                if (worker_status[w].time == 0)
-                {
-                    path.push_back(worker_status[w].letter);
-                    worker_status[w].letter = '.';
-                }
-                else
+                if (--worker_status[w].time != 0)
                     continue;
+
+                path.push_back(worker_status[w].letter);
+                worker_status[w].letter = '.';
             }
 
             for (char mynext = 'A'; mynext <= 'Z'; mynext++)
             {
+                if (steps.find(mynext) == steps.end())
+                    continue;
+
                 bool prereqs = true;
                 for (auto pre : prerequisites[mynext])
                 {
@@ -144,10 +143,7 @@ unsigned do_part2()
                 if (!prereqs)
                     continue;
 
-                if (taken.find(mynext) != taken.end())
-                    continue;
-
-                taken.insert(mynext);
+                steps.erase(mynext);
 
                 worker_status[w].letter = mynext;
                 worker_status[w].time = 61 + mynext - 'A';
