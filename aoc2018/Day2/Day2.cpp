@@ -18,6 +18,27 @@ void read_input_into_vector(const std::string &filename)
         input.push_back(a);
 }
 
+int get_index_of_single_diff(const std::string &s1, const std::string &s2)
+{
+    auto single_diff_index = -1;
+
+    if (s1.length() == s2.length())
+    {
+        for (auto i = 0; i < s1.length(); i++)
+        {
+            if (s1[i] != s2[i])
+            {
+                if (single_diff_index > -1)
+                    return -1;
+
+                single_diff_index = i;
+            }
+        }
+    }
+
+    return single_diff_index;
+}
+
 unsigned do_part1()
 {
     auto num_exactly2 = 0U, num_exactly3 = 0U;
@@ -44,24 +65,7 @@ std::string do_part2()
     {
         for (auto j = i + 1; j < input.size(); j++)
         {
-            if (input[i].length() != input[j].length())
-                continue;
-
-            auto single_diff_index = -1;
-
-            for (auto k = 0; k < input[i].length(); k++)
-            {
-                if (input[i][k] != input[j][k])
-                {
-                    if (single_diff_index > -1)
-                    {
-                        single_diff_index = -1;
-                        break;
-                    }
-
-                    single_diff_index = k;
-                }
-            }
+            auto single_diff_index = get_index_of_single_diff(input[i], input[j]);
 
             if (single_diff_index > -1)
             {
