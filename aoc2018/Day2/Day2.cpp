@@ -46,7 +46,6 @@ unsigned do_part1()
     for (auto id : input)
     {
         std::map<char, unsigned> count;
-
         for (auto c : id)
             count[c]++;
 
