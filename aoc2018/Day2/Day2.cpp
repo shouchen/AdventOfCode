@@ -44,34 +44,34 @@ std::string do_part2()
     {
         for (auto j = i + 1; j < input.size(); j++)
         {
-            if (input[i].length() == input[j].length())
+            if (input[i].length() != input[j].length())
+                continue;
+
+            auto single_diff_index = -1;
+
+            for (auto k = 0; k < input[i].length(); k++)
             {
-                auto single_diff_index = -1;
-
-                for (auto k = 0; k < input[i].length(); k++)
+                if (input[i][k] != input[j][k])
                 {
-                    if (input[i][k] != input[j][k])
+                    if (single_diff_index > -1)
                     {
-                        if (single_diff_index > -1)
-                        {
-                            single_diff_index = -1;
-                            break;
-                        }
-
-                        single_diff_index = k;
+                        single_diff_index = -1;
+                        break;
                     }
-                }
 
-                if (single_diff_index > -1)
-                {
-                    auto retval = input[i];
-                    return retval.erase(single_diff_index, 1);
+                    single_diff_index = k;
                 }
+            }
+
+            if (single_diff_index > -1)
+            {
+                auto retval = input[i];
+                return retval.erase(single_diff_index, 1);
             }
         }
     }
 
-    return "";
+    return std::string();
 }
 
 int main()
