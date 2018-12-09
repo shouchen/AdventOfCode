@@ -7,49 +7,42 @@
 unsigned do_work(unsigned players, unsigned last_marble)
 {
     std::list<unsigned> circle;
-    unsigned marble = 0;
     std::map<unsigned, unsigned> score;
 
-    circle.push_back(marble++);
+    circle.push_back(0);
     auto current = circle.begin();
+    auto elf = 1U;
 
-    for (;;)
+    for (unsigned marble = 1; marble <= last_marble; marble++)
     {
-        for (auto elf = 1U; elf <= players; elf++)
+        if (marble % 23 == 0)
         {
-            if (marble % 23 == 0)
+            for (int i = 0; i < 7; i++)
             {
-                for (int i = 0; i < 7; i++)
-                {
-                    if (current == circle.begin())
-                        current = circle.end();
-                    current--;
-                }
-
-                score[elf] += marble + *current;
-                marble++;
-
-                current = circle.erase(current);
-                if (current == circle.end())
-                    current = circle.begin();
-            }
-            else
-            {
-                if (++current == circle.end())
-                    current = circle.begin();
-
-                current = circle.insert(++current, marble++);
+                if (current == circle.begin())
+                    current = circle.end();
+                current--;
             }
 
-            if (marble > last_marble)
-                break;
+            score[elf] += marble + *current;
+
+            current = circle.erase(current);
+            if (current == circle.end())
+                current = circle.begin();
+        }
+        else
+        {
+            if (++current == circle.end())
+                current = circle.begin();
+
+            current = circle.insert(++current, marble);
         }
 
-        if (marble > last_marble)
-            break;
+        if (++elf > players)
+            elf = 1U;
     }
 
-    unsigned highest_score = 0;
+    auto highest_score = 0U;
     for (auto item : score)
         if (item.second > highest_score)
             highest_score = item.second;
