@@ -14,12 +14,12 @@ unsigned get_manhattan_dist(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
     return x + y;
 }
 
-void read_input(std::vector<std::pair<int, int>> &initial, unsigned &min_x, unsigned &min_y, unsigned &max_x, unsigned &max_y)
+void read_input(std::vector<std::pair<int, int>> &initial, unsigned &left, unsigned &top, unsigned &right, unsigned &bottom)
 {
-    min_x = std::numeric_limits<unsigned>::max();
-    max_x = std::numeric_limits<unsigned>::min();
-    min_y = std::numeric_limits<unsigned>::max();
-    max_y = std::numeric_limits<unsigned>::min();
+    left = std::numeric_limits<unsigned>::max();
+    right = std::numeric_limits<unsigned>::min();
+    top = std::numeric_limits<unsigned>::max();
+    bottom = std::numeric_limits<unsigned>::min();
     initial.clear();
 
     std::ifstream file("input.txt");
@@ -32,10 +32,10 @@ void read_input(std::vector<std::pair<int, int>> &initial, unsigned &min_x, unsi
         auto loc = std::make_pair(y, x);
         initial.push_back(loc);
 
-        min_x = std::min(x, min_x);
-        max_x = std::max(x, max_x);
-        min_y = std::min(y, min_y);
-        max_y = std::max(y, max_y);
+        left = std::min(x, left);
+        right = std::max(x, right);
+        top = std::min(y, top);
+        bottom = std::max(y, bottom);
     }
 }
 
@@ -64,31 +64,31 @@ int get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vect
 unsigned do_part1()
 {
     int grid[500][500] = { 0 };
-    auto min_x = 0U, min_y = 0U, max_x = 0U, max_y = 0U;
+    auto left = 0U, top = 0U, right = 0U, bottom = 0U;
     std::vector<std::pair<int, int>> initial;
 
-    read_input(initial, min_x, min_y, max_x, max_y);
+    read_input(initial, left, top, right, bottom);
 
     auto area = 1U;
     for (auto item : initial)
         grid[item.first][item.second] = area++;
 
-    for (auto y = min_y; y <= max_y; y++)
-        for (auto x = min_x; x <= max_x; x++)
+    for (auto y = top; y <= bottom; y++)
+        for (auto x = left; x <= right; x++)
             if (grid[y][x] < 1)
                 grid[y][x] = get_closest_area(x, y, grid, initial);
 
     // count area sizes and find those that intersect with outer bounds (infinite expansion)
     std::map<char, unsigned> counts;
     std::set<char> infinite;
-    for (auto y = min_y; y <= max_y; y++)
-        for (auto x = min_x; x <= max_x; x++)
+    for (auto y = top; y <= bottom; y++)
+        for (auto x = left; x <= right; x++)
         {
             auto c = grid[y][x];
             if (c != '.')
             {
                 counts[c]++;
-                if (y == min_y || y == max_y || x == min_x || x == max_x)
+                if (y == top || y == bottom || x == left || x == right)
                     infinite.insert(c);
             }
         }
@@ -103,17 +103,17 @@ unsigned do_part1()
 
 unsigned do_part2()
 {
-    auto min_x = 0U, min_y = 0U, max_x = 0U, max_y = 0U;
+    auto left = 0U, top = 0U, right = 0U, bottom = 0U;
     std::vector<std::pair<int, int>> initial;
-    read_input(initial, min_x, min_y, max_x, max_y);
+    read_input(initial, left, top, right, bottom);
 
     auto count = 0U;
-    for (auto row = min_y; row <= max_y; row++)
-        for (auto col = min_x; col <= max_x; col++)
+    for (auto y = top; y <= bottom; y++)
+        for (auto x = left; x <= right; x++)
         {
             auto total_dist = 0;
             for (auto &item : initial)
-                total_dist += get_manhattan_dist(item.second, item.first, col, row);
+                total_dist += get_manhattan_dist(item.second, item.first, x, y);
             if (total_dist < 10000)
                 count++;
         }
