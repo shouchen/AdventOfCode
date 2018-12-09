@@ -27,12 +27,11 @@ unsigned do_work(unsigned players, unsigned last_marble)
                 }
 
                 score[elf] += marble + *current;
-                auto temp = current;
-                if (++current == circle.end())
-                    current = circle.begin();
-
-                circle.erase(temp);
                 marble++;
+
+                current = circle.erase(current);
+                if (current == circle.end())
+                    current = circle.begin();
             }
             else
             {
