@@ -11,7 +11,6 @@ unsigned do_work(unsigned players, unsigned last_marble)
     std::map<unsigned, unsigned> score;
 
     circle.push_back(marble++);
-
     auto current = circle.begin();
 
     for (;;)
@@ -20,33 +19,12 @@ unsigned do_work(unsigned players, unsigned last_marble)
         {
             if (marble % 23 == 0)
             {
-                if (current == circle.begin())
-                    current = circle.end();
-                current--;
-
-                if (current == circle.begin())
-                    current = circle.end();
-                current--;
-
-                if (current == circle.begin())
-                    current = circle.end();
-                current--;
-
-                if (current == circle.begin())
-                    current = circle.end();
-                current--;
-
-                if (current == circle.begin())
-                    current = circle.end();
-                current--;
-
-                if (current == circle.begin())
-                    current = circle.end();
-                current--;
-
-                if (current == circle.begin())
-                    current = circle.end();
-                current--;
+                for (int i = 0; i < 7; i++)
+                {
+                    if (current == circle.begin())
+                        current = circle.end();
+                    current--;
+                }
 
                 score[elf] += marble + *current;
                 auto temp = current;
@@ -58,19 +36,10 @@ unsigned do_work(unsigned players, unsigned last_marble)
             }
             else
             {
-                if (circle.size() == 1)
-                {
-                    circle.push_back(marble++);
-                    current++;
-                }
-                else
-                {
-                    if (++current == circle.end())
-                        current = circle.begin();
-                    ++current;
+                if (++current == circle.end())
+                    current = circle.begin();
 
-                    current = circle.insert(current, marble++);
-                }
+                current = circle.insert(++current, marble++);
             }
 
             if (marble > last_marble)
