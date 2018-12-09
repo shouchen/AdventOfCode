@@ -7,13 +7,6 @@
 #include <algorithm>
 #include <cassert>
 
-unsigned get_manhattan_dist(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
-{
-    auto x = (x1 > x2) ? (x1 - x2) : (x2 - x1);
-    auto y = (y1 > y2) ? (y1 - y2) : (y2 - y1);
-    return x + y;
-}
-
 void read_input(std::vector<std::pair<int, int>> &initial, unsigned &left, unsigned &top, unsigned &right, unsigned &bottom)
 {
     left = std::numeric_limits<unsigned>::max();
@@ -37,6 +30,13 @@ void read_input(std::vector<std::pair<int, int>> &initial, unsigned &left, unsig
         top = std::min(y, top);
         bottom = std::max(y, bottom);
     }
+}
+
+unsigned get_manhattan_dist(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
+{
+    auto x = (x1 > x2) ? (x1 - x2) : (x2 - x1);
+    auto y = (y1 > y2) ? (y1 - y2) : (y2 - y1);
+    return x + y;
 }
 
 int get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vector<std::pair<int, int>> &initial)
@@ -63,7 +63,7 @@ int get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vect
 
 unsigned do_part1()
 {
-    int grid[500][500] = { 0 };
+    int initial_grid[500][500] = { 0 };
     auto left = 0U, top = 0U, right = 0U, bottom = 0U;
     std::vector<std::pair<int, int>> initial;
 
@@ -72,23 +72,18 @@ unsigned do_part1()
     // put initial coords into grid
     auto area = 1U;
     for (auto item : initial)
-        grid[item.first][item.second] = area++;
+        initial_grid[item.first][item.second] = area++;
 
-    // fill out rest of grid with closest area # (-1 means no closest)
-    for (auto y = top; y <= bottom; y++)
-        for (auto x = left; x <= right; x++)
-        {
-            if (!grid[y][x])
-                grid[y][x] = get_closest_area(x, y, grid, initial);
-        }
-
-    // count area sizes and find those that intersect with outer bounds (infinite expansion)
+    // count area sizes and also mark those that intersect with outer bounds (infinite expansion)
     std::map<char, unsigned> counts;
     std::set<char> infinite;
     for (auto y = top; y <= bottom; y++)
         for (auto x = left; x <= right; x++)
         {
-            auto a = grid[y][x];
+            auto a = initial_grid[y][x];
+            if (!a)
+                a = get_closest_area(x, y, initial_grid, initial);
+
             if (a != -1)
             {
                 counts[a]++;
