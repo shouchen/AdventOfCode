@@ -4,6 +4,7 @@
 #include <set>
 #include <vector>
 #include <map>
+#include <algorithm>
 #include <cassert>
 
 char grid1[500][500];
@@ -15,33 +16,39 @@ unsigned manhattan(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
     return x + y;
 }
 
-unsigned do_part1()
+void common_part(unsigned &min_x, unsigned &min_y, unsigned &max_x, unsigned &max_y, std::vector<std::pair<int, int>> &initial)
 {
-    auto min_x = std::numeric_limits<unsigned>::max();
-    auto min_y = std::numeric_limits<unsigned>::max();
-    auto max_x = std::numeric_limits<unsigned>::min();
-    auto max_y = std::numeric_limits<unsigned>::min();
-
-    std::vector<std::pair<unsigned, unsigned>> initial;
+    min_x = std::numeric_limits<unsigned>::max();
+    max_x = std::numeric_limits<unsigned>::min();
+    min_y = std::numeric_limits<unsigned>::max();
+    max_y = std::numeric_limits<unsigned>::min();
+    initial.clear();
 
     std::ifstream file("input.txt");
 
-    auto line = 'A', comma = ',';
+    char line = 'A', comma = ',';
     auto x = 0U, y = 0U;
 
     while (file >> x >> comma >> y)
     {
         auto loc = std::make_pair(y, x);
+        initial.push_back(loc);
+
         grid1[y][x] = line;
         line++;
 
-        if (x < min_x) min_x = x;
-        if (x > max_x) max_x = x;
-        if (y < min_y) min_y = y;
-        if (y > max_y) max_y = y;
-
-        initial.push_back(loc);
+        min_x = std::min(x, min_x);
+        max_x = std::max(x, max_x);
+        min_y = std::min(y, min_y);
+        max_y = std::max(y, max_y);
     }
+}
+
+unsigned do_part1()
+{
+    auto min_x = 0U, min_y = 0U, max_x = 0U, max_y = 0U;
+    std::vector<std::pair<int, int>> initial;
+    common_part(min_x, min_y, max_x, max_y, initial);
 
     for (auto row = min_y; row <= max_y; row++)
         for (auto col = min_x; col <= max_x; col++)
@@ -86,42 +93,18 @@ unsigned do_part1()
 
     auto max = 0U;
     for (auto &item : counts)
-    {
         if (item.second > max && infinite.find(item.first) == infinite.end())
-        {
-            std::cout << item.first << " " << item.second << std::endl;
             max = item.second;
-        }
-    }
 
     return max;
 }
 
 unsigned do_part2()
 {
-    auto min_x = std::numeric_limits<unsigned>::max();
-    auto max_x = std::numeric_limits<unsigned>::min();
-    auto min_y = std::numeric_limits<unsigned>::max();
-    auto max_y = std::numeric_limits<unsigned>::min();
-
+    auto min_x = 0U, min_y = 0U, max_x = 0U, max_y = 0U;
     std::vector<std::pair<int, int>> initial;
+    common_part(min_x, min_y, max_x, max_y, initial);
 
-    std::ifstream file("input.txt");
-
-    char comma = ',';
-    auto x = 0U, y = 0U;
-
-    while (file >> x >> comma >> y)
-    {
-        if (x < min_x) min_x = x;
-        if (x > max_x) max_x = x;
-        if (y < min_y) min_y = y;
-        if (y > max_y) max_y = y;
-
-        initial.push_back(std::make_pair(y, x));
-    }
-
-    // count squares where distance sum is less than 10000
     auto count = 0U;
     for (auto row = min_y; row <= max_y; row++)
         for (auto col = min_x; col <= max_x; col++)
