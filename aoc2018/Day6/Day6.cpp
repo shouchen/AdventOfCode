@@ -69,13 +69,15 @@ unsigned do_part1()
 
     read_input(initial, left, top, right, bottom);
 
+    // put initial coords into grid
     auto area = 1U;
     for (auto item : initial)
         grid[item.first][item.second] = area++;
 
+    // fill out rest of grid with closest area # (-1 means no closest)
     for (auto y = top; y <= bottom; y++)
         for (auto x = left; x <= right; x++)
-            if (grid[y][x] < 1)
+            if (!grid[y][x])
                 grid[y][x] = get_closest_area(x, y, grid, initial);
 
     // count area sizes and find those that intersect with outer bounds (infinite expansion)
@@ -111,10 +113,10 @@ unsigned do_part2()
     for (auto y = top; y <= bottom; y++)
         for (auto x = left; x <= right; x++)
         {
-            auto total_dist = 0;
+            auto dist_from_all_areas = 0;
             for (auto &item : initial)
-                total_dist += get_manhattan_dist(item.second, item.first, x, y);
-            if (total_dist < 10000)
+                dist_from_all_areas += get_manhattan_dist(item.second, item.first, x, y);
+            if (dist_from_all_areas < 10000)
                 count++;
         }
 
