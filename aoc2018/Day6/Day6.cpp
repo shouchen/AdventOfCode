@@ -6,7 +6,6 @@
 #include <map>
 #include <cassert>
 
-std::set<char> periphery;
 char grid1[500][500];
 
 unsigned manhattan(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
@@ -44,15 +43,6 @@ unsigned do_part1()
         initial.push_back(loc);
     }
 
-    for (auto item : initial)
-    {
-        if (item.first == min_y || item.first == max_y ||
-            item.second == min_x || item.second == max_x)
-        {
-            periphery.insert(grid1[item.first][item.second]);
-        }
-    }
-
     for (auto row = min_y; row <= max_y; row++)
         for (auto col = min_x; col <= max_x; col++)
         {
@@ -79,33 +69,32 @@ unsigned do_part1()
             grid1[row][col] = closest_letter;
         }
 
-    // count area sizes
+    // count area sizes and find those that intersect with outer bounds (infinite expansion)
     std::map<char, unsigned> counts;
+    std::set<char> infinite;
     for (auto row = min_y; row <= max_y; row++)
         for (auto col = min_x; col <= max_x; col++)
         {
             auto c = grid1[row][col];
             if (c != '.')
+            {
                 counts[c]++;
+                if (row == min_y || row == max_y || col == min_x || col == max_x)
+                    infinite.insert(c);
+            }
         }
 
     auto max = 0U;
     for (auto &item : counts)
     {
-        // Exclude ones on the outside, as they extend to infinity (exclude 4924 and take second most)
-        // Why exclude that one?
-        //auto c = item.first;
-        //if (periphery.find(c) != periphery.end())
-        //    continue;
-
-        if (item.second > max)
+        if (item.second > max && infinite.find(item.first) == infinite.end())
         {
             std::cout << item.first << " " << item.second << std::endl;
             max = item.second;
         }
     }
 
-    return 3293/*max*/;
+    return max;
 }
 
 unsigned do_part2()

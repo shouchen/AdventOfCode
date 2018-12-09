@@ -64,9 +64,7 @@ unsigned do_part2()
             lowest_size = size;
 
         if (excluded.size() == num_excluded)
-        {
             break;
-        }
 
         auto num_excluded = excluded.size();
     }
