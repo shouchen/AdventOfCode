@@ -77,8 +77,10 @@ unsigned do_part1()
     // fill out rest of grid with closest area # (-1 means no closest)
     for (auto y = top; y <= bottom; y++)
         for (auto x = left; x <= right; x++)
+        {
             if (!grid[y][x])
                 grid[y][x] = get_closest_area(x, y, grid, initial);
+        }
 
     // count area sizes and find those that intersect with outer bounds (infinite expansion)
     std::map<char, unsigned> counts;
@@ -86,12 +88,12 @@ unsigned do_part1()
     for (auto y = top; y <= bottom; y++)
         for (auto x = left; x <= right; x++)
         {
-            auto c = grid[y][x];
-            if (c != '.')
+            auto a = grid[y][x];
+            if (a != -1)
             {
-                counts[c]++;
+                counts[a]++;
                 if (y == top || y == bottom || x == left || x == right)
-                    infinite.insert(c);
+                    infinite.insert(a);
             }
         }
 
