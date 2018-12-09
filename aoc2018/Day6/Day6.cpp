@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cassert>
 
-char grid1[500][500];
+int grid[500][500];
 
 unsigned manhattan(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
 {
@@ -26,16 +26,15 @@ void common_part(unsigned &min_x, unsigned &min_y, unsigned &max_x, unsigned &ma
 
     std::ifstream file("input.txt");
 
-    char line = 'A', comma = ',';
-    auto x = 0U, y = 0U;
+    auto line = 1U, x = 0U, y = 0U;
+    char comma = ',';
 
     while (file >> x >> comma >> y)
     {
         auto loc = std::make_pair(y, x);
         initial.push_back(loc);
 
-        grid1[y][x] = line;
-        line++;
+        grid[y][x] = line++;
 
         min_x = std::min(x, min_x);
         max_x = std::max(x, max_x);
@@ -44,49 +43,50 @@ void common_part(unsigned &min_x, unsigned &min_y, unsigned &max_x, unsigned &ma
     }
 }
 
+int get_closest_line(unsigned x, unsigned y, const std::vector<std::pair<int, int>> &initial)
+{
+    auto closest = std::numeric_limits<unsigned>::max();
+    auto closest_line = -1;
+
+    for (auto &item : initial)
+    {
+        auto dist = manhattan(item.second, item.first, x, y);
+        if (dist < closest)
+        {
+            closest = dist;
+            closest_line = grid[item.first][item.second];
+        }
+        else if (dist == closest)
+        {
+            closest_line = -1;
+        }
+    }
+
+    return closest_line;
+}
+
 unsigned do_part1()
 {
     auto min_x = 0U, min_y = 0U, max_x = 0U, max_y = 0U;
     std::vector<std::pair<int, int>> initial;
     common_part(min_x, min_y, max_x, max_y, initial);
 
-    for (auto row = min_y; row <= max_y; row++)
-        for (auto col = min_x; col <= max_x; col++)
-        {
-            if (grid1[row][col] >= 'A')
-                continue;
-
-            auto closest = std::numeric_limits<unsigned>::max();
-            auto closest_letter = '.';
-
-            for (auto &item : initial)
-            {
-                auto dist = manhattan(item.second, item.first, col, row);
-                if (dist < closest)
-                {
-                    closest = dist;
-                    closest_letter = grid1[item.first][item.second];
-                }
-                else if (dist == closest)
-                {
-                    closest_letter = '.';
-                }
-            }
-
-            grid1[row][col] = closest_letter;
-        }
+    for (auto y = min_y; y <= max_y; y++)
+        for (auto x = min_x; x <= max_x; x++)
+            if (grid[y][x] < 1)
+                grid[y][x] = get_closest_line(x, y, initial);
 
     // count area sizes and find those that intersect with outer bounds (infinite expansion)
     std::map<char, unsigned> counts;
     std::set<char> infinite;
-    for (auto row = min_y; row <= max_y; row++)
-        for (auto col = min_x; col <= max_x; col++)
+    for (auto y = min_y; y <= max_y; y++)
+        for (auto x = min_x; x <= max_x; x++)
         {
-            auto c = grid1[row][col];
+            auto c = grid[y][x];
             if (c != '.')
             {
                 counts[c]++;
-                if (row == min_y || row == max_y || col == min_x || col == max_x)
+                if (y == min_y || y == max_y || x == min_x || x == max_x)
                     infinite.insert(c);
             }
         }
