@@ -63,6 +63,7 @@ int get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vect
 
 unsigned do_part1()
 {
+    // TODO: Make this a map of x,y -> area # and eliminate the initial vector?
     int initial_grid[500][500] = { 0 };
     auto left = 0U, top = 0U, right = 0U, bottom = 0U;
     std::vector<std::pair<int, int>> initial;
