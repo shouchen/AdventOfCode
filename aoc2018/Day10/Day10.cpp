@@ -22,16 +22,11 @@ void read_input(const std::string &filename)
     while (std::getline(file, line))
     {
         auto p = strchr(line.c_str(), '<') + 1;
+
         auto x = atoi(p);
-
-        p = strchr(p, ',') + 1;
-        auto y = atoi(p);
-
-        p = strchr(p, '<') + 1;
-        auto vx = atoi(p);
-
-        p = strchr(p, ',') + 1;
-        auto vy = atoi(p);
+        auto y = atoi(p = strchr(p, ',') + 1);
+        auto vx = atoi(p = strchr(p, '<') + 1);
+        auto vy = atoi(strchr(p, ',') + 1);
 
         locations.push_back(std::make_pair(x, y));
         velocities.push_back(std::make_pair(vx, vy));
@@ -71,7 +66,8 @@ unsigned long long update_locations_and_bounds_and_compute_area()
         bottom = std::max(bottom, y);
     }
 
-    return static_cast<unsigned long long>(right - left) * static_cast<unsigned long long>(bottom - top);
+    unsigned long long width = right - left, height = bottom - top;
+    return width * height;
 }
 
 int main()
