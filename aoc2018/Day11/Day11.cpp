@@ -6,7 +6,7 @@
 
 int grid[301][301];
 
-int get_power(unsigned x, unsigned y, int gsn)
+int compute_power(unsigned x, unsigned y, int gsn)
 {
     auto rack_id = x + 10;
     auto power = rack_id * y;
@@ -21,27 +21,26 @@ void populate_grid(int gsn)
 {
     for (auto y = 1; y <= 300; y++)
         for (auto x = 1; x <= 300; x++)
-            grid[y][x] = get_power(x, y, gsn);
+            grid[y][x] = compute_power(x, y, gsn);
 }
 
-int get_power_of_3x3(unsigned x, unsigned y)
-{
-    auto power = 0;
-    for (auto i = 0; i < 3; i++)
-        for (auto j = 0; j < 3; j++)
-            power += grid[y + i][x + j];
-
-    return power;
-}
+//int get_power_of_3x3(unsigned x, unsigned y)
+//{
+//    auto power = 0;
+//    for (auto i = 0; i < 3; i++)
+//        for (auto j = 0; j < 3; j++)
+//            power += grid[y + i][x + j];
+//
+//    return power;
+//}
 
 int get_power_of_nxn(unsigned x, unsigned y, unsigned size)
 {
     auto power = 0;
     for (auto i = 0U; i < size; i++)
         for (auto j = 0U; j < size; j++)
-        {
             power += grid[y + i][x + j];
-        }
+
     return power;
 }
 
@@ -53,7 +52,7 @@ std::string do_part1()
     for (auto y = 1; y < 298; y++)
         for (auto x = 1; x < 298; x++)
         {
-            auto power = get_power_of_3x3(x, y);
+            auto power = get_power_of_nxn(x, y, 3);
             if (power > highest_total_power)
             {
                 highest_total_power = power;
