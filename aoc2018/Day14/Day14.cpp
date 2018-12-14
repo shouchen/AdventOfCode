@@ -1,82 +1,78 @@
 #include "stdafx.h"
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
-#include <vector>
 #include <algorithm>
 #include <cassert>
 
-std::vector<unsigned> recipes;
-unsigned e1 = 0, e2 = 1;
-
-std::string do_part1(unsigned n)
+std::string do_part1(unsigned input)
 {
-    recipes.clear();
-    e1 = 0, e2 = 1;
+    std::string recipes;
+    unsigned e1 = 0, e2 = 1;
 
-    recipes.push_back(3);
-    recipes.push_back(7);
+    recipes.push_back('3');
+    recipes.push_back('7');
 
-    while (recipes.size() < n + 10)
+    while (recipes.length() < input + 10)
     {
-        unsigned long long total = recipes[e1] + recipes[e2];
+        auto total = (recipes[e1] - '0') + (recipes[e2] - '0');
 
-        auto d1 = total / 10;
-        auto d2 = total % 10;
+        if (total >= 10)
+        {
+            recipes.push_back('1');
+            total -= 10;
+        }
 
-        if (d1)
-            recipes.push_back(d1);
-        recipes.push_back(d2);
+        recipes.push_back(total + '0');
 
-        e1 = (e1 + recipes[e1] + 1) % recipes.size();
-        e2 = (e2 + recipes[e2] + 1) % recipes.size();
+        e1 = (e1 + (recipes[e1] - '0') + 1) % recipes.length();
+        e2 = (e2 + (recipes[e2] - '0') + 1) % recipes.length();
     }
 
-    std::ostringstream o;
-    for (auto i = n; i < n + 10; i++)
-        o << recipes[i];
-    return o.str();
+    return recipes.substr(input, 10);
 }
 
-unsigned do_part2(/*const std::vector<unsigned> &n*/)
+unsigned do_part2(const std::string &input)
 {
-    recipes.clear();
-    e1 = 0, e2 = 1;
+    std::string recipes;
+    recipes.reserve(21000000);
+    unsigned e1 = 0, e2 = 1;
 
-    recipes.push_back(3);
-    recipes.push_back(7);
+    recipes.push_back('3');
+    recipes.push_back('7');
 
     unsigned checked_index = 0;
 
     for (;;)
     {
-        unsigned long long total = recipes[e1] + recipes[e2];
+        auto total = (recipes[e1] - '0') + (recipes[e2] - '0');
 
-        auto d1 = total / 10;
-        auto d2 = total % 10;
-
-        if (d1)
-            recipes.push_back(d1);
-        recipes.push_back(d2);
-
-        e1 = (e1 + recipes[e1] + 1) % recipes.size();
-        e2 = (e2 + recipes[e2] + 1) % recipes.size();
-
-        for (int i = checked_index; i + 5 < recipes.size() - 1; i++)
+        if (total >= 10)
         {
-            if (recipes[i] == 2 && recipes[i + 1] == 9 && recipes[i + 2] == 0 &&
-                recipes[i + 3] == 4 && recipes[i + 4] == 3 && recipes[i + 5] == 1)
-            {
-                return i;
-            }
-            //if (recipes[i] == 5 && recipes[i + 1] == 9 && recipes[i + 2] == 4 &&
-            //    recipes[i + 3] == 1 && recipes[i + 4] == 4)
-            //{
-            //    return i;
-            //}
+            recipes.push_back('1');
+            total -= 10;
+        }
 
-            checked_index = std::max(checked_index, (unsigned)i);
+        recipes.push_back(total + '0');
+
+        e1 = (e1 + (recipes[e1] - '0') + 1) % recipes.length();
+        e2 = (e2 + (recipes[e2] - '0') + 1) % recipes.length();
+
+        for (auto i = checked_index; i + input.length() < recipes.length(); i++)
+        {
+            auto match = true;
+            for (auto j = 0; j < input.length(); j++)
+            {
+                if (recipes[i + j] != input[j])
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match)
+                return i;
+
+            checked_index = std::max(checked_index, i);
         }
     }
 }
@@ -84,7 +80,7 @@ unsigned do_part2(/*const std::vector<unsigned> &n*/)
 int main()
 {
     auto part1 = do_part1(290431);
-    auto part2 = do_part2();
+    auto part2 = do_part2("290431");
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
