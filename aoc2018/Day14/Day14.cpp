@@ -6,41 +6,8 @@
 
 std::string do_part1(unsigned input)
 {
-    std::string recipes;
+    std::string recipes = "37";
     unsigned e1 = 0, e2 = 1;
-
-    recipes.push_back('3');
-    recipes.push_back('7');
-
-    while (recipes.length() < input + 10)
-    {
-        auto total = (recipes[e1] - '0') + (recipes[e2] - '0');
-
-        if (total >= 10)
-        {
-            recipes.push_back('1');
-            total -= 10;
-        }
-
-        recipes.push_back(total + '0');
-
-        e1 = (e1 + (recipes[e1] - '0') + 1) % recipes.length();
-        e2 = (e2 + (recipes[e2] - '0') + 1) % recipes.length();
-    }
-
-    return recipes.substr(input, 10);
-}
-
-unsigned do_part2(const std::string &input)
-{
-    std::string recipes;
-    recipes.reserve(21000000);
-    unsigned e1 = 0, e2 = 1;
-
-    recipes.push_back('3');
-    recipes.push_back('7');
-
-    unsigned checked_index = 0;
 
     for (;;)
     {
@@ -54,8 +21,30 @@ unsigned do_part2(const std::string &input)
 
         recipes.push_back(total + '0');
 
+        if (recipes.length() >= input + 10)
+            return recipes.substr(input, 10);
+
         e1 = (e1 + (recipes[e1] - '0') + 1) % recipes.length();
         e2 = (e2 + (recipes[e2] - '0') + 1) % recipes.length();
+    }
+}
+
+unsigned do_part2(const std::string &input)
+{
+    std::string recipes = "37";
+    unsigned e1 = 0, e2 = 1, checked_index = 0;
+
+    for (;;)
+    {
+        auto total = (recipes[e1] - '0') + (recipes[e2] - '0');
+
+        if (total >= 10)
+        {
+            recipes.push_back('1');
+            total -= 10;
+        }
+
+        recipes.push_back(total + '0');
 
         for (auto i = checked_index; i + input.length() < recipes.length(); i++)
         {
@@ -74,6 +63,9 @@ unsigned do_part2(const std::string &input)
 
             checked_index = std::max(checked_index, i);
         }
+
+        e1 = (e1 + (recipes[e1] - '0') + 1) % recipes.length();
+        e2 = (e2 + (recipes[e2] - '0') + 1) % recipes.length();
     }
 }
 
