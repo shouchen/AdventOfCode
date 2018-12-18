@@ -19,7 +19,7 @@ private:
 
 unsigned Grid::generate()
 {
-    std::vector<std::pair<int, int>> mutate;
+    std::vector<char *> mutate;
     unsigned trees = 0U, lumberyards = 0U;
 
     for (auto row = 0; row < data.size(); row++)
@@ -32,31 +32,38 @@ unsigned Grid::generate()
             {
             case '.':
                 if (tree_count >= 3)
-                    mutate.push_back(std::make_pair(row, col));
+                    mutate.push_back(&data[row][col]);
                 break;
             case '|':
                 if (lumberyard_count >= 3)
-                    mutate.push_back(std::make_pair(row, col));
+                    mutate.push_back(&data[row][col]);
                 else
                     trees++;
                 break;
             case '#':
                 if (!lumberyard_count || !tree_count)
-                    mutate.push_back(std::make_pair(row, col));
+                    mutate.push_back(&data[row][col]);
                 else
                     lumberyards++;
                 break;
             }
         }
 
-    for (auto &change : mutate)
+    for (auto c : mutate)
     {
-        auto &c = data[change.first][change.second];
-        switch (c)
+        switch (*c)
         {
-        case '.': c = '|'; trees++;  break;
-        case '|': c = '#'; lumberyards++; break;
-        case '#': c = '.'; break;
+        case '.':
+            *c = '|';
+            trees++;
+            break;
+        case '|':
+            *c = '#';
+            lumberyards++;
+            break;
+        case '#':
+            *c = '.';
+            break;
         }
     }
 
@@ -97,30 +104,13 @@ std::istream &operator>>(std::istream &istream, Grid &grid)
     return istream;
 }
 
-//void do_part1(Grid grid, unsigned n)
-//{
-//}
-//
-//void do_part2(Grid grid, unsigned n)
-//{
-//    Grid grid;
-//    std::ifstream file("input.txt");
-//    file >> grid;
-//
-//    for (auto i = 1U; i <= n; i++)
-//    {
-//        auto score = grid.generate();
-//        std::cout << "After " << i << " times = " << score << std::endl;
-//    }
-//}
-
 int main()
 {
     Grid grid;
     std::ifstream file("input.txt");
     file >> grid;
 
-    for (int generation = 1; generation <= 16200; generation++)
+    for (auto generation = 1; generation <= 16200; generation++)
     {
         auto score = grid.generate();
 
@@ -133,12 +123,15 @@ int main()
             std::cout << "After " << generation << " generations = " << score << std::endl;
     }
 
-    // For Part 2, observe a sample after some time and see if increasing
-    // linearly, decreasing linearly, or cyclic. Data shows that it's a cycle
+    // For Part 2, observe a sample after some time and see if it's increasing
+    // linearly, decreasing linearly, or is cyclic. Data shows that it's a cycle
     // of period 28. 1,000,000,000 mod 28 is 20, so we can extrapolate to that
-    // future generation value by taking any other generation where mod 28 is
-    // equal to 20. For example, use "After 16008 generations = 174420" to get
-    // the answer to Part 2, which is 174420.
+    // future generation's score by taking any one of these later generations
+    // where generation mod 28 = 20. For example, we can use
+    //
+    // After 16008 generations = 174420
+    //
+    // to infer that the answer to Part 2 must be 174420.
 
     return 0;
 }
