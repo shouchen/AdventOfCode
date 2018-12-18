@@ -23,8 +23,9 @@ struct Unit
 std::vector<std::string> grid;
 std::vector<Unit *> units;
 int rnd = 0;
-bool combat_ended = false;
+bool combat_ended = false, elf_killed = false;
 int highest_completed_round = -1;
+unsigned elf_attack_power = 3, goblin_attack_power = 3;
 
 void dump()
 {
@@ -237,10 +238,12 @@ void do_attack(Unit *unit)
 
     if (other)
     {
-        other->hit_points -= 3;
+        other->hit_points -= (unit->type == 'E') ? elf_attack_power : goblin_attack_power;
         if (other->hit_points <= 0)
         {
             grid[other->row][other->col] = '.';
+            if (other->type == 'E')
+                elf_killed = true;
         }
     }
 }
@@ -365,13 +368,15 @@ bool do_round()
     return did_turn;
 }
 
-unsigned do_part1(const std::string &filename)
+unsigned do_part1(const std::string &filename, unsigned with_elf_attack_power = 3)
 {
     grid.clear();
     units.clear();
     rnd = 0;
     combat_ended = false;
     highest_completed_round = -1;
+    elf_attack_power = with_elf_attack_power;
+    elf_killed = false;
 
     read_input(filename);
 
@@ -382,8 +387,8 @@ unsigned do_part1(const std::string &filename)
     {
         do_round();
 
-        std::cout << "After " << rnd << " round(s)" << std::endl;
-        dump();
+        //std::cout << "After " << rnd << " round(s)" << std::endl;
+        //dump();
     }
 
     auto total_hit_points = get_total_hit_points();
@@ -393,51 +398,60 @@ unsigned do_part1(const std::string &filename)
     return part1;
 }
 
+unsigned do_part2(const std::string &filename)
+{
+    auto with_elf_attack_power = 3U;
+
+    for (;;)
+    {
+        with_elf_attack_power++;
+        auto result = do_part1(filename, with_elf_attack_power);
+        if (!elf_killed)
+        {
+            return result;
+        }
+    }
+}
+
 int main()
 {
-    auto a1 = do_part1("18740.txt");
-    auto a2 = do_part1("28944.txt");
+    ///////////////// PART TWO
+    auto b0 = do_part2("27730.txt");
+    auto b2 = do_part2("39514.txt");
+    auto b3 = do_part2("27755.txt");
+    auto b4 = do_part2("28944.txt");
+    auto b5 = do_part2("18740.txt");
+    auto part2 = do_part2("input.txt");
+
+    std::cout << "=== PART TWO ===" << std::endl;
+    std::cout << "Ex #1: Answer=4988, me=" << b0 << ((b0 == 4988) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #2: Answer=31284, me=" << b2 << ((b2 == 31284) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #3: Answer=3478, me=" << b3 << ((b3 == 3478) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #4: Answer=6474, me=" << b4 << ((b4 == 6474) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #5: Answer=1140, me=" << b5 << ((b5 == 1140) ? "" : " WRONG!") << std::endl;
+    std::cout << "Part 2: Answer=49863, me=" << part2 << ((part2 == 49863) ? "" : " WRONG!") << std::endl;
+
+
+    ///////////////// PART ONE
+    auto a0 = do_part1("27730.txt"); // full example
+    auto a1 = do_part1("36334.txt");
+    auto a2 = do_part1("39514.txt");
     auto a3 = do_part1("27755.txt");
-    auto a4 = do_part1("27730.txt");
-    auto a5 = do_part1("36334.txt");
-    auto a6 = do_part1("39514.txt");
+    auto a4 = do_part1("28944.txt");
+    auto a5 = do_part1("18740.txt");
     auto part1 = do_part1("input.txt");
 
-    std::cout << "Ex #1: Answer=18740, me=" << a1 << ((a1 == 18740) ? "" : " WRONG!") << std::endl;
-    std::cout << "Ex #2: Answer=28944, me=" << a2 << ((a2 == 28944) ? "" : " WRONG!") << std::endl;
+    std::cout << "=== PART ONE ===" << std::endl;
+    std::cout << "Ex #0: Answer=27730, me=" << a0 << ((a0 == 27730) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #1: Answer=36334, me=" << a1 << ((a1 == 36334) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #2: Answer=39514, me=" << a2 << ((a2 == 39514) ? "" : " WRONG!") << std::endl;
     std::cout << "Ex #3: Answer=27755, me=" << a3 << ((a3 == 27755) ? "" : " WRONG!") << std::endl;
-    std::cout << "Ex #4: Answer=27730, me=" << a4 << ((a4 == 27730) ? "" : " WRONG!") << std::endl;
-    std::cout << "Ex #5: Answer=36334, me=" << a5 << ((a5 == 36334) ? "" : " WRONG!") << std::endl;
-    std::cout << "Ex #6: Answer=39514, me=" << a6 << ((a6 == 39514) ? "" : " WRONG!") << std::endl;
-    std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Ex #4: Answer=28944, me=" << a4 << ((a4 == 28944) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #5: Answer=18740, me=" << a5 << ((a5 == 18740) ? "" : " WRONG!") << std::endl;
+    std::cout << "Part 1: Answer=208960, me=" << part1 << ((part1 == 208960) ? "" : " WRONG!") << std::endl;
 
-    //read_input("39514.txt");
-
-    //std::cout << "Initially: " << std::endl;
-    //dump();
-    //std::cout << std::endl;
-
-    //while (combat_ended_round == -1)
-    //{
-    //    do_round();
-
-    //    std::cout << "After " << rnd << " round(s)" << std::endl;
-    //        dump();
-    //        std::cout << std::endl;
-    //}
-
-    //int total = 0;
-    //for (auto &unit : units)
-    //{
-    //    if (unit->hit_points > 0)
-    //        total += unit->hit_points;
-    //}
-
-    //auto part1 = highest_completed_round * total; 
-
-    //std::cout << "Part 1: " << highest_completed_round << " * " << total << " = " << part1 << std::endl;
+    assert(part1 == 208960);
+    assert(part2 == 49863);
 
     return 0;
 }
-// 213221 too high, 103698 too low, 212984 wrong, 210522 wrong
-// 208960 right
