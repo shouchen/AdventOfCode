@@ -23,18 +23,18 @@ struct Unit
 std::vector<std::string> grid;
 std::vector<Unit *> units;
 int rnd = 0;
-int combat_ended_round = -1;
+bool combat_ended = false;
 int highest_completed_round = -1;
 
 void dump()
 {
-    for (int row = 0; row < grid.size(); row++)
+    for (auto row = 0; row < grid.size(); row++)
     {
-        for (int col = 0; col < grid[row].size(); col++)
+        for (auto col = 0; col < grid[row].size(); col++)
             std::cout << grid[row][col];
 
-        bool first = true;
-        for (int col = 0; col < grid[row].size(); col++)
+        auto first = true;
+        for (auto col = 0; col < grid[row].size(); col++)
             for (auto unit : units)
                 if (unit->hit_points > 0 && unit->row == row && unit->col == col)
                 {
@@ -44,6 +44,8 @@ void dump()
  
         std::cout << std::endl;
     }
+
+    std::cout << std::endl;
 }
 
 void read_input(const std::string &filename)
@@ -54,15 +56,23 @@ void read_input(const std::string &filename)
     while (file >> line)
         grid.push_back(line);
 
-    for (int row = 0; row < grid.size(); row++)
-        for (int col = 0; col < grid[row].size(); col++)
+    for (auto row = 0; row < grid.size(); row++)
+        for (auto col = 0; col < grid[row].size(); col++)
         {
             if (grid[row][col] == 'E' || grid[row][col] == 'G')
                 units.push_back(new Unit(row, col, grid[row][col], 200));
         }
 }
 
-std::vector<std::pair<int, int>> best_path;
+unsigned get_total_hit_points()
+{
+    auto total = 0U;
+    for (auto &unit : units)
+        if (unit->hit_points > 0)
+            total += unit->hit_points;
+
+    return total;
+}
 
 struct BFS
 {
@@ -174,7 +184,6 @@ std::pair<int, int> get_next_step_bfs(int start_row, int start_col)
     // Now, take the first step in reading order
     auto retval = std::make_pair(-1, -1);
 
-
     auto up = std::make_pair(start_row - 1, start_col);
     if ((dist_from_in_range.find(up) != dist_from_in_range.end()) && dist_from_in_range[up] == part_one_distance - 1)
         retval = up;
@@ -197,32 +206,7 @@ std::pair<int, int> get_next_step_bfs(int start_row, int start_col)
         }
     }
 
-    best_path.clear();
-    best_path.push_back(retval);
     return retval;
-
-    //while (--distance)
-    //{
-    //    auto up = dist_from_start.find(std::make_pair(row - 1, col));
-    //    auto left = dist_from_start.find(std::make_pair(row, col - 1));
-    //    auto right = dist_from_start.find(std::make_pair(row, col + 1));
-    //    auto down = dist_from_start.find(std::make_pair(row + 1, col));
-
-    //    if (up != dist_from_start.end() && up->second == distance)
-    //        row = up->first.first, col = up->first.second;
-    //    else if (left != dist_from_start.end() && left->second == distance)
-    //        row = left->first.first, col = left->first.second;
-    //    else if (right != dist_from_start.end() && right->second == distance)
-    //        row = right->first.first, col = right->first.second;
-    //    else if (down != dist_from_start.end() && down->second == distance)
-    //        row = down->first.first, col = down->first.second;
-    //    else
-    //        assert(false);
-    //}
-
-    //auto retval = std::make_pair(row, col);
-    //best_path.push_back(retval);
-    //return retval;
 }
 
 Unit *get_unit(int row, int col)
@@ -309,12 +293,11 @@ bool do_turn(Unit *unit)
 
     if (!has_targets)
     {
-        combat_ended_round = rnd;
+        combat_ended = true;
     }
 
     // Get shortest distance to a target, using the 2 BFS steps described there
-    best_path.clear();
-    get_next_step_bfs(unit->row, unit->col);
+    auto best_path = get_next_step_bfs(unit->row, unit->col);
 
     // Remove all the ?'s that were added
     for (int row = 0; row < grid.size(); row++)
@@ -323,12 +306,12 @@ bool do_turn(Unit *unit)
                 grid[row][col] = '.';
 
     // Take the best step (if any)
-    if (best_path.empty())
+    if (best_path.first == -1)
         return false;
 
     grid[unit->row][unit->col] = '.';
-    unit->row = best_path[0].first;
-    unit->col = best_path[0].second;
+    unit->row = best_path.first;
+    unit->col = best_path.second;
     grid[unit->row][unit->col] = unit->type;
 
     // And do attack now if able
@@ -367,7 +350,7 @@ bool do_round()
 
     // Sort remaining units
     std::sort(units.begin(), units.end(), [&](const Unit *lhs, const Unit *rhs) -> bool {
-        return std::make_pair(lhs->row, rhs->col) < std::make_pair(rhs->row, rhs->col);
+        return std::make_pair(lhs->row, lhs->col) < std::make_pair(rhs->row, rhs->col);
     });
 
     bool did_turn = false;
@@ -376,7 +359,7 @@ bool do_round()
         did_turn |= do_turn(unit);
     }
 
-    if (combat_ended_round == -1)
+    if (!combat_ended)
         highest_completed_round = rnd;
 
     return did_turn;
@@ -384,56 +367,49 @@ bool do_round()
 
 unsigned do_part1(const std::string &filename)
 {
-    best_path.clear();
     grid.clear();
     units.clear();
     rnd = 0;
-    combat_ended_round = -1;
+    combat_ended = false;
     highest_completed_round = -1;
 
     read_input(filename);
 
     std::cout << filename << " Initially: " << std::endl;
     dump();
-    std::cout << std::endl;
 
-    while (combat_ended_round == -1)
+    while (!combat_ended)
     {
         do_round();
 
         std::cout << "After " << rnd << " round(s)" << std::endl;
         dump();
-        std::cout << std::endl;
     }
 
-    int total = 0;
-    for (auto &unit : units)
-    {
-        if (unit->hit_points > 0)
-            total += unit->hit_points;
-    }
+    auto total_hit_points = get_total_hit_points();
+    auto part1 = highest_completed_round * total_hit_points; // 213221 too high, 103698 too low, 212984 wrong
 
-    auto part1 = highest_completed_round * total; // 213221 too high, 103698 too low, 212984 wrong
-
-    std::cout << "Part 1: " << highest_completed_round << " * " << total << " = " << part1 << std::endl;
+    std::cout << "Part 1: " << highest_completed_round << " * " << total_hit_points << " = " << part1 << std::endl;
     return part1;
 }
 
 int main()
 {
-    //auto a1 = do_part1("18740.txt");
-    //auto a2 = do_part1("28944.txt");
-    //auto a3 = do_part1("27755.txt");
-    //auto a4 = do_part1("27730.txt");
-    //auto a5 = do_part1("36334.txt");
+    auto a1 = do_part1("18740.txt");
+    auto a2 = do_part1("28944.txt");
+    auto a3 = do_part1("27755.txt");
+    auto a4 = do_part1("27730.txt");
+    auto a5 = do_part1("36334.txt");
     auto a6 = do_part1("39514.txt");
+    auto part1 = do_part1("input.txt");
 
-    //std::cout << "Ex #1: Answer=18740, me=" << a1 << ((a1 == 18740) ? "" : " WRONG!") << std::endl;
-    //std::cout << "Ex #2: Answer=28944, me=" << a2 << ((a2 == 28944) ? "" : " WRONG!") << std::endl;
-    //std::cout << "Ex #3: Answer=27755, me=" << a3 << ((a3 == 27755) ? "" : " WRONG!") << std::endl;
-    //std::cout << "Ex #4: Answer=27730, me=" << a4 << ((a4 == 27730) ? "" : " WRONG!") << std::endl;
-    //std::cout << "Ex #5: Answer=36334, me=" << a5 << ((a5 == 36334) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #1: Answer=18740, me=" << a1 << ((a1 == 18740) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #2: Answer=28944, me=" << a2 << ((a2 == 28944) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #3: Answer=27755, me=" << a3 << ((a3 == 27755) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #4: Answer=27730, me=" << a4 << ((a4 == 27730) ? "" : " WRONG!") << std::endl;
+    std::cout << "Ex #5: Answer=36334, me=" << a5 << ((a5 == 36334) ? "" : " WRONG!") << std::endl;
     std::cout << "Ex #6: Answer=39514, me=" << a6 << ((a6 == 39514) ? "" : " WRONG!") << std::endl;
+    std::cout << "Part 1: " << part1 << std::endl;
 
     //read_input("39514.txt");
 
@@ -457,9 +433,11 @@ int main()
     //        total += unit->hit_points;
     //}
 
-    //auto part1 = highest_completed_round * total; // 213221 too high, 103698 too low, 212984 wrong, 210522 wrong
+    //auto part1 = highest_completed_round * total; 
 
     //std::cout << "Part 1: " << highest_completed_round << " * " << total << " = " << part1 << std::endl;
 
     return 0;
 }
+// 213221 too high, 103698 too low, 212984 wrong, 210522 wrong
+// 208960 right
