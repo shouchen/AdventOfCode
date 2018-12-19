@@ -6,10 +6,14 @@
 #include <cassert>
 
 char grid[1820][700];
-int min_depth = std::numeric_limits<int>::max();
-int max_depth = std::numeric_limits<int>::min();
-int min_x = std::numeric_limits<int>::max();
-int max_x = std::numeric_limits<int>::min();
+
+const auto fountain_row = 0U;
+const auto fountain_x = 500U;
+
+auto min_depth = std::numeric_limits<int>::max();
+auto max_depth = std::numeric_limits<int>::min();
+auto min_x = std::numeric_limits<int>::max();
+auto max_x = std::numeric_limits<int>::min();
 
 void dump()
 {
@@ -34,7 +38,7 @@ void read_input(const std::string &filename)
     auto var1 = 'x', equals = '=', var2 = 'y', comma = ',', dot = '.';
     auto dim1 = 0, dim2a = 0, dim2b = 0;
 
-    grid[0][500] = '+';
+    grid[fountain_row][fountain_x] = '+';
 
     while (file >> var1 >> equals >> dim1 >> comma >> var2 >> equals >> dim2a >> dot >> dot >> dim2b)
     {
@@ -59,18 +63,20 @@ void read_input(const std::string &filename)
     }
 }
 
+auto part1 = 0U, part2 = 0U;
+
 void seep(int row, int col)
 {
-    if (row > max_depth || col < min_x - 1 || col > max_x + 1)
-        return;
-
-    if (grid[row][col])
+    if (row > max_depth || grid[row][col])
         return;
 
     grid[row][col] = '|';
+    if (row >= min_depth)
+        part1++;
 
     seep(row + 1, col);
 
+    auto tile_underneath = grid[row + 1][col];
     if (grid[row + 1][col] != '#' && grid[row + 1][col] != '~')
         return;
 
@@ -83,34 +89,20 @@ void seep(int row, int col)
 
         if (grid[row][test_col] == '#')
             while (grid[row][col] == '|')
+            {
                 grid[row][col--] = '~';
+                part2++;
+            }
     }
     else
         seep(row, col + 1);
-}
-
-void do_parts1_and_2(unsigned &part1, unsigned &part2)
-{
-    seep(1, 500);
-
-    part1 = 0, part2 = 0;
-    for (auto row = min_depth; row <= max_depth; row++)
-    {
-        for (auto col = min_x - 1; col <= max_x + 1; col++)
-        {
-            auto c = grid[row][col];
-            if (c == '|' || c == '~') part1++;
-            if (c == '~') part2++;
-        }
-    }
 }
 
 int main()
 {
     read_input("input.txt");
 
-    auto part1 = 0U, part2 = 0U;
-    do_parts1_and_2(part1, part2);
+    seep(fountain_row + 1, fountain_x);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
