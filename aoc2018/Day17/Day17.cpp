@@ -65,10 +65,10 @@ void read_input(const std::string &filename)
 
 auto part1 = 0U, part2 = 0U;
 
-void seep(int row, int col)
+bool seep(int row, int col)
 {
     if (row > max_depth || grid[row][col])
-        return;
+        return false;
 
     grid[row][col] = '|';
     if (row >= min_depth)
@@ -76,9 +76,8 @@ void seep(int row, int col)
 
     seep(row + 1, col);
 
-    auto tile_underneath = grid[row + 1][col];
     if (grid[row + 1][col] != '#' && grid[row + 1][col] != '~')
-        return;
+        return false;
 
     seep(row, col - 1);
 
@@ -93,9 +92,13 @@ void seep(int row, int col)
                 grid[row][col--] = '~';
                 part2++;
             }
+
+        return true; // TODO: means should convert row to '~'
     }
     else
         seep(row, col + 1);
+
+    return false;
 }
 
 int main()
