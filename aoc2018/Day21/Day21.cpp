@@ -22,7 +22,7 @@
 //   } while (r3 != r0);
 //
 // The key is that r0 is only ever read from as a condition to exit the program;
-// its value is never modified. The outer loop cycles through set of 3-byte
+// its value is never modified. The outer loop cycles through a set of 3-byte
 // values in r3 until r3 matches r0. To find the least number of instructions to
 // make the program exit (part 1), choose the value for r0 that makes the outer
 // loop run only a single time. For part2, choose the value for r0 that makes
