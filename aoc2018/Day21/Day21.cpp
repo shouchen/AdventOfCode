@@ -64,7 +64,7 @@ void do_both_parts(int &part1, int &part2)
     }
 }
 
-auto main()
+int main()
 {
     auto part1 = 0, part2 = 0;
     do_both_parts(part1, part2);
