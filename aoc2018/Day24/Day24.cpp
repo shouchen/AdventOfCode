@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cassert>
 
+//#define DEBUG_OUTPUT
+
 enum Type { Immune, Infection };
 enum AttackType { Radiation = 0x01, Bludgeoning = 0x02, Fire = 0x04, Slashing = 0x08, Cold = 0x10 };
 
@@ -36,23 +38,26 @@ struct Group
         if (weakness & other.attack_type) damage *= 2;
         return damage;
     }
-    void receive_attack(Group &other)
+    bool receive_attack(Group &other) // returns true is attack actually changed anything
     {
         auto damage = other.attack_damage * other.num_units;
-        if (immunities & other.attack_type) return;
+        if (immunities & other.attack_type) return false;
         if (weakness & other.attack_type) damage *= 2;
 
         auto num_units_destroyed = damage / hit_points;
         if (num_units_destroyed > num_units) num_units_destroyed = num_units;
         num_units -= num_units_destroyed;
+        return num_units_destroyed > 0;
 
+#ifdef DEBUG_OUTPUT
         std::cout << ((other.type == Infection) ? "Infection" : "Immune System") << " group " << other.group_num << " attacks defending group " << group_num << ", killing " << num_units_destroyed << " unit(s)" << std::endl;
+#endif
     }
 };
 
 std::vector<Group *> groups;
 
-void do_fight()
+bool do_fight() // returns false if nothing changed
 {
     // 1. Target Selection
 
@@ -63,24 +68,10 @@ void do_fight()
         return (lhs->initiative > rhs->initiative);
     });
 
-    //std::cout << "Selection order: " << std::endl;
-    //for (auto item : groups)
-    //{
-    //    std::cout << ((item->type == Infection) ? "Infection" : "Immune System") << " group " << item->group_num
-    //        << " effective power = " << item->get_effective_power() << ", initiative = " << item->initiative << std::endl;
-    //}
-    //std::cout << std::endl;
-
     // For each group, choose a target group (or none).
     std::map<Group *, Group *> attacked_by;
     for (auto &g : groups)
     {
-        //std::cout << "DEBUG " << ((g->type == Infection) ? "Infection" : "Immune System") << " group " << g->group_num << std::endl;
-
-        // Target group to which it would deal most damage (after accounting for weaknesses and immunities, but not looking at whether defending
-        // group has enough unit to handle the damage. Tiebreaker is group with largest effective power. Next tiebreaker is highest initiative.
-        // Possible to have no target if no damage can be done (just skip). Target can only be chosen by one attacking group.
-        // At end: Each group has zero or one groups to attack, and is being attacked by zero or one.
         std::map<Group *, int> potential_damage;
         potential_damage.clear();
         for (auto other : groups)
@@ -89,12 +80,13 @@ void do_fight()
             if (attacked_by.find(other) != attacked_by.end()) continue; // same group can't be attacked by multiple groups
             if (other->immunities & g->attack_type) continue; // this group has immunity, don't attack it
 
+#ifdef DEBUG_OUTPUT
             std::cout << ((g->type == Infection) ? "Infection" : "Immune System") << " group " << g->group_num
                 << " would deal defending group " << other->group_num << " " << other->damage_would_be_dealt(*g) << " damage" << std::endl;
+#endif
             potential_damage[other] = other->damage_would_be_dealt(*g);
         }
 
-        // Sort attackees (NOTE: Already sorted into this order?)
         if (!potential_damage.empty())
         {
             int highest_damage = -1;
@@ -113,12 +105,12 @@ void do_fight()
                 }
             }
 
-            //std::cout << ((g->type == Infection) ? "Infection" : "Immune System") << " group " << g->group_num
-            //    << " chooses to attack defending group " << best_target->group_num << std::endl;
             attacked_by[best_target] = g;
         }
     }
+#ifdef DEBUG_OUTPUT
     std::cout << std::endl;
+#endif
 
     // 2. Attacking
     // Build list of descending order of initiative to launch attacks
@@ -132,6 +124,7 @@ void do_fight()
     });
 
     // Actually do the attacks
+    bool attacks_had_effect = false;
     for (auto attacker : attack_order)
     {
         if (attacker->hit_points > 0)
@@ -144,21 +137,28 @@ void do_fight()
             }
 
             if (attackee)
-                attackee->receive_attack(*attacker);
+                attacks_had_effect |= attackee->receive_attack(*attacker);
         }
     }
+#ifdef DEBUG_OUTPUT
     std::cout << std::endl;
+#endif
 
     // Prune dead groups
     groups.erase(
         std::remove_if(groups.begin(), groups.end(), [&](const Group *item) { return item->num_units <= 0; }),
         groups.end());
+
+    return attacks_had_effect;
 }
 
-unsigned do_part1()
+unsigned do_part1or2(bool &combat_ended)
 {
+    combat_ended = false;
+
     for (;;)
     {
+#ifdef DEBUG_OUTPUT
         auto count = 0;
         std::cout << "Immune System:" << std::endl;
         for (auto &g : groups)
@@ -175,8 +175,10 @@ unsigned do_part1()
                 std::cout << "Group " << ++count << " contains " << g->num_units << " unit(s)" << std::endl;
         }
         std::cout << std::endl;
-
-        do_fight();
+#endif
+        // Stalemate
+        if (!do_fight())
+            return 0;
 
         bool has_immune = false, has_infection = false;
         for (auto &g : groups)
@@ -186,7 +188,10 @@ unsigned do_part1()
         }
 
         if (!has_immune || !has_infection)
+        {
+            combat_ended = true;
             break;
+        }
     }
 
     unsigned total = 0;
@@ -213,8 +218,14 @@ that does 116 bludgeoning damage at initiative 1
 cold) with an attack that does 12 slashing damage at initiative 4
 */
 
-int main()
+void populate_data(int boost = 0)
 {
+    while (!groups.empty())
+    {
+        delete groups.back();
+        groups.pop_back();
+    }
+
     // Example input
     //groups.push_back(new Group(Immune, 1, 17, 5390, 4507, Fire, 2, Radiation | Bludgeoning, 0));
     //groups.push_back(new Group(Immune, 2, 989, 1274, 25, Slashing, 3, Bludgeoning | Slashing, Fire));
@@ -223,25 +234,25 @@ int main()
 
     // Real input
     // 2743 units each with 4149 hit points with an attack that does 13 radiation damage at initiative 14
-    groups.push_back(new Group(Immune, 1, 2743, 4149, 13, Radiation, 14, 0, 0));
+    groups.push_back(new Group(Immune, 1, 2743, 4149, 13 + boost, Radiation, 14, 0, 0));
     // 8829 units each with 7036 hit points with an attack that does 7 fire damage at initiative 15
-    groups.push_back(new Group(Immune, 2, 8829, 7036, 7, Fire, 15, 0, 0));
+    groups.push_back(new Group(Immune, 2, 8829, 7036, 7 + boost, Fire, 15, 0, 0));
     // 1928 units each with 10700 hit points (weak to cold; immune to fire, radiation, slashing) with an attack that does 50 slashing damage at initiative 3
-    groups.push_back(new Group(Immune, 3, 1928, 10700, 50, Slashing, 3, Cold, Fire | Radiation | Slashing));
+    groups.push_back(new Group(Immune, 3, 1928, 10700, 50 + boost, Slashing, 3, Cold, Fire | Radiation | Slashing));
     // 6051 units each with 11416 hit points with an attack that does 15 bludgeoning damage at initiative 20
-    groups.push_back(new Group(Immune, 4, 6051, 11416, 15, Bludgeoning, 20, 0, 0));
+    groups.push_back(new Group(Immune, 4, 6051, 11416, 15 + boost, Bludgeoning, 20, 0, 0));
     // 895 units each with 10235 hit points (immune to slashing; weak to bludgeoning) with an attack that does 92 bludgeoning damage at initiative 10
-    groups.push_back(new Group(Immune, 5, 895, 10235, 92, Bludgeoning, 10, Bludgeoning, Slashing));
+    groups.push_back(new Group(Immune, 5, 895, 10235, 92 + boost, Bludgeoning, 10, Bludgeoning, Slashing));
     // 333 units each with 1350 hit points with an attack that does 36 radiation damage at initiative 12
-    groups.push_back(new Group(Immune, 6, 333, 1350, 36, Radiation, 12, 0, 0));
+    groups.push_back(new Group(Immune, 6, 333, 1350, 36 + boost, Radiation, 12, 0, 0));
     // 2138 units each with 8834 hit points (weak to bludgeoning) with an attack that does 35 cold damage at initiative 11
-    groups.push_back(new Group(Immune, 7, 2138, 8834, 35, Cold, 11, Bludgeoning, 0));
+    groups.push_back(new Group(Immune, 7, 2138, 8834, 35 + boost, Cold, 11, Bludgeoning, 0));
     // 4325 units each with 1648 hit points (weak to cold, fire) with an attack that does 3 bludgeoning damage at initiative 8
-    groups.push_back(new Group(Immune, 8, 4325, 1648, 3, Bludgeoning, 8, Cold | Fire, 0));
+    groups.push_back(new Group(Immune, 8, 4325, 1648, 3 + boost, Bludgeoning, 8, Cold | Fire, 0));
     // 37 units each with 4133 hit points (immune to radiation, slashing) with an attack that does 1055 radiation damage at initiative 1
-    groups.push_back(new Group(Immune, 9, 37, 4133, 1055, Radiation, 1, 0, Radiation | Slashing));
+    groups.push_back(new Group(Immune, 9, 37, 4133, 1055 + boost, Radiation, 1, 0, Radiation | Slashing));
     // 106 units each with 3258 hit points (immune to slashing, radiation) with an attack that does 299 cold damage at initiative 13
-    groups.push_back(new Group(Immune, 10, 106, 3258, 299, Cold, 13, 0, Slashing | Radiation));
+    groups.push_back(new Group(Immune, 10, 106, 3258, 299 + boost, Cold, 13, 0, Slashing | Radiation));
 
     // 262 units each with 8499 hit points (weak to cold) with an attack that does 45 cold damage at initiative 6
     groups.push_back(new Group(Infection, 1, 262, 8499, 45, Cold, 6, Cold, 0));
@@ -263,14 +274,29 @@ int main()
     groups.push_back(new Group(Infection, 9, 477, 35404, 146, Cold, 7, 0, 0));
     // 332 units each with 11780 hit points (weak to fire) with an attack that does 70 slashing damage at initiative 4*/
     groups.push_back(new Group(Infection, 10, 332, 11780, 70, Slashing, 4, Fire, 0));
+}
 
-    auto part1 = do_part1();
-    auto part2 = '?';
+int main()
+{
+    populate_data();
 
-    std::cout << "Part 1: " << part1 << std::endl; 
+    bool combat_ended = false;
+    auto part1 = do_part1or2(combat_ended);
+
+    auto boost = 1, part2 = 0;
+    for (;;)
+    {
+        populate_data(boost);
+        part2 = do_part1or2(combat_ended);
+        if (combat_ended && groups[0]->type == Immune)
+            break;
+        boost++;
+    }
+
+    std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
 
     assert(part1 == 24318);
-    //assert(part2 == ?);
+    assert(part2 == 1083);
     return 0;
 }
