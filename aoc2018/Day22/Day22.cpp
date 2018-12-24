@@ -6,8 +6,8 @@
 #include <string>
 #include <cassert>
 
-//unsigned depth = 5913, target_x = 8, target_y = 701;
-unsigned depth = 510, target_x = 10, target_y = 10;
+unsigned depth = 5913, target_x = 8, target_y = 701;
+//unsigned depth = 510, target_x = 10, target_y = 10;
 
 unsigned get_geologic_index(unsigned x, unsigned y);
 
@@ -85,8 +85,6 @@ bool allow_with_tools(unsigned x, unsigned y, char tools)
     return false;
 }
 
-auto min_cost = std::numeric_limits<unsigned>::max();
-
 struct State
 {
     unsigned x, y;
@@ -114,61 +112,46 @@ bool operator<(const Index &lhs, const Index &rhs)
 unsigned do_part2()
 {
     std::map<Index, unsigned> best_cost;
-    best_cost[Index{ 0, 0, 'T' }] = 0;
+    auto min_cost = std::numeric_limits<unsigned>::max();
 
     auto cmp = [](State &lhs, State &rhs)
     {
-        auto left_xdist = (target_x > lhs.x) ? (target_x - lhs.x) : (lhs.x - target_x);
-        auto left_ydist = (target_y > lhs.y) ? (target_y - lhs.y) : (lhs.y - target_y);
-        auto left_dist = left_xdist + left_ydist;
-
-        auto right_xdist = (target_x > rhs.x) ? (target_x - rhs.x) : (rhs.x - target_x);
-        auto right_ydist = (target_y > rhs.y) ? (target_y - rhs.y) : (rhs.y - target_y);
-        auto right_dist = right_xdist + right_ydist;
-
-        return (lhs.cost_so_far + left_dist > rhs.cost_so_far + right_dist);
-
-        //if (lhs.score < rhs.score) return true;
-        //if (rhs.score < lhs.score) return false;
-        //if (lhs.cost_so_far < rhs.cost_so_far) return true;
-        //if (rhs.cost_so_far < lhs.cost_so_far) return false;
-        //if (lhs.x < rhs.x) return true;
-        //if (rhs.x > lhs.x) return false;
-        //if (lhs.y < rhs.y) return true;
-        //if (rhs.y > lhs.y) return false;
-        //if (lhs.tools < rhs.tools) return true;
-        //if (rhs.tools > lhs.tools) return false;
+        if (lhs.cost_so_far > rhs.cost_so_far) return true;
+        if (lhs.cost_so_far < rhs.cost_so_far) return false;
+        if (lhs.x > rhs.x) return true;
+        if (lhs.x < rhs.x) return false;
+        if (lhs.y > rhs.y) return true;
+        if (lhs.y < rhs.y) return false;
+        if (lhs.tools > rhs.tools) return true;
+        if (lhs.tools < rhs.tools) return false;
         return false;
     };
     std::priority_queue<State, std::vector<State>, decltype(cmp)> q(cmp);
 
     q.push(State{ 0, 0, 'T', 0 });
+    best_cost[Index{ 0, 0, 'T' }] = 0;
 
     while (!q.empty())
     {
         State state = q.top();
         q.pop();
 
-        // If there was already a cheaper way to get here, stop looking at this.
-        auto temp = Index{ state.x, state.y, state.tools };
-        if (best_cost.find(temp) != best_cost.end() && best_cost[temp] < state.cost_so_far)
-            continue;
-        best_cost[temp] = state.cost_so_far;
-
-        // If already longer than a solution, stop looking at this
-        if (state.cost_so_far >= min_cost)
-            continue;
-
         // If disallowed, stop this
         if (!allow_with_tools(state.x, state.y, state.tools))
             continue;
+
+        // If there was already a cheaper way to get here, stop looking at this.
+        auto temp = Index{ state.x, state.y, state.tools };
+        if (best_cost.find(temp) != best_cost.end() && state.cost_so_far > best_cost[temp])
+            continue;
+        best_cost[temp] = state.cost_so_far;
 
         //std::cout << "(" << state.x << "," << state.y << "), tools=" << state.tools << ", cost=" << state.cost_so_far << std::endl;
 
         if (state.x == target_x && state.y == target_y && state.tools == 'T')
         {
             min_cost = state.cost_so_far;
-            continue;
+            break;
         }
 
         q.push(State{ state.x + 1, state.y, state.tools, state.cost_so_far + 1 });
