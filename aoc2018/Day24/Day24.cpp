@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <regex>
+#include <string>
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -16,12 +19,12 @@ struct Group
     int num_units;
     int hit_points;
     int attack_damage;
-    int attack_type;
+    AttackType attack_type;
     int initiative;
     int weakness;
     int immunities;
 
-    Group(Type type, int group_num, int num_units, int hit_points, int attack_damage, int attack_type, int initiative, int weakness, int immunities) :
+    Group(Type type, int group_num, int num_units, int hit_points, int attack_damage, AttackType attack_type, int initiative, int weakness, int immunities) :
         type(type), group_num(group_num), num_units(num_units), hit_points(hit_points), attack_damage(attack_damage), attack_type(attack_type), initiative(initiative), weakness(weakness), immunities(immunities)
     {
     }
@@ -140,7 +143,7 @@ void populate_data(int boost = 0)
         groups.pop_back();
     }
 
-    // Problem input
+    // Problem input -- small enough to hand-parse
     groups.push_back(new Group(ImmuneSystem, 1, 2743, 4149, 13 + boost, Radiation, 14, 0, 0));
     groups.push_back(new Group(ImmuneSystem, 2, 8829, 7036, 7 + boost, Fire, 15, 0, 0));
     groups.push_back(new Group(ImmuneSystem, 3, 1928, 10700, 50 + boost, Slashing, 3, Cold, Fire | Radiation | Slashing));
