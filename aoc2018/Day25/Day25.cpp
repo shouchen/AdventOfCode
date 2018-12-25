@@ -12,8 +12,10 @@ struct Coords
 };
 
 std::vector<Coords> stars;
+std::map<int, std::vector<int>> neighbors;
+std::set<int> stars_merged;
 
-auto get_mahnattan(const Coords &p1, const Coords &p2)
+auto get_manhattan(const Coords &p1, const Coords &p2)
 {
     auto x = p1.x - p2.x; if (x < 0) x = -x;
     auto y = p1.y - p2.y; if (y < 0) y = -y;
@@ -23,9 +25,6 @@ auto get_mahnattan(const Coords &p1, const Coords &p2)
     return x + y + z + t;
 }
 
-// recur
-std::map<int, std::vector<int>> neighbors;
-std::set<int> stars_merged;
 void walk_neighbors(int index)
 {
     if (stars_merged.find(index) == stars_merged.end())
@@ -49,7 +48,7 @@ int main()
     {
         for (auto j = 0; j < i; j++)
         {
-            if (get_mahnattan(stars[i], stars[j]) <= 3)
+            if (get_manhattan(stars[i], stars[j]) <= 3)
             {
                 neighbors[i].push_back(j);
                 neighbors[j].push_back(i);
@@ -57,18 +56,18 @@ int main()
         }
     }
 
-    auto part1 = 0;
+    auto num_constellations = 0;
     for (auto i = 0; i < stars.size(); i++)
     {
-        if (stars_merged.find(i) != stars_merged.end())
-            continue;
-
-        part1++;
-        walk_neighbors(i);
+        if (stars_merged.find(i) == stars_merged.end())
+        {
+            num_constellations++;
+            walk_neighbors(i);
+        }
     }
 
-    std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 1: " << num_constellations << std::endl;
 
-    assert(part1 == 375);
+    assert(num_constellations == 375);
     return 0;
 }
