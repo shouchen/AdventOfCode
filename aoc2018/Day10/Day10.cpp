@@ -51,7 +51,7 @@ void output_grid()
     std::cout << std::endl;
 }
 
-unsigned long long update_locations_and_bounds_and_compute_area()
+auto update_locations_and_bounds_and_compute_area()
 {
     left = top = std::numeric_limits<int>::max(), right = bottom = std::numeric_limits<int>::min();
 

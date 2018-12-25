@@ -2,11 +2,10 @@
 #include <iostream>
 #include <vector>
 #include <list>
-#include <map>
 #include <algorithm>
 #include <cassert>
 
-unsigned do_part(unsigned num_players, unsigned last_marble)
+auto do_part(unsigned num_players, unsigned last_marble)
 {
     std::list<unsigned> circle;
     std::vector<unsigned> score(num_players + 1);
@@ -50,8 +49,10 @@ unsigned do_part(unsigned num_players, unsigned last_marble)
 
 int main()
 {
-    auto part1 = do_part(459, 71320);
-    auto part2 = do_part(459, 71320 * 100);
+    const auto num_players = 459, last_marble_value = 71320;
+
+    auto part1 = do_part(num_players, last_marble_value);
+    auto part2 = do_part(num_players, last_marble_value * 100);
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
