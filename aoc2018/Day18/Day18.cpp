@@ -8,24 +8,24 @@
 class Grid
 {
 public:
-    unsigned generate();
+    auto generate();
 
 private:
     void get_adjacent_counts(int row, int col, unsigned &trees, unsigned &lumberyards);
         
     std::vector<std::string> data;
-    friend std::istream &operator>>(std::istream &istream, Grid &grid);
+    friend auto &operator>>(std::istream &istream, Grid &grid);
 };
 
-unsigned Grid::generate()
+auto Grid::generate()
 {
     std::vector<char *> mutate;
-    unsigned trees = 0U, lumberyards = 0U;
+    auto trees = 0U, lumberyards = 0U;
 
     for (auto row = 0; row < data.size(); row++)
         for (auto col = 0; col < data[row].size(); col++)
         {
-            unsigned tree_count = 0, lumberyard_count = 0;
+            auto tree_count = 0U, lumberyard_count = 0U;
             get_adjacent_counts(row, col, tree_count, lumberyard_count);
 
             switch (data[row][col])
@@ -94,7 +94,7 @@ void Grid::get_adjacent_counts(int row, int col, unsigned &trees, unsigned &lumb
     }
 }
 
-std::istream &operator>>(std::istream &istream, Grid &grid)
+auto &operator>>(std::istream &istream, Grid &grid)
 {
     grid.data.clear();
     std::string line;
