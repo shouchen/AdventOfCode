@@ -18,7 +18,7 @@ void read_input(std::vector<std::pair<int, int>> &initial, unsigned &left, unsig
     std::ifstream file("input.txt");
 
     auto x = 0U, y = 0U;
-    char comma = ',';
+    auto comma = ',';
 
     while (file >> x >> comma >> y)
     {
@@ -32,14 +32,12 @@ void read_input(std::vector<std::pair<int, int>> &initial, unsigned &left, unsig
     }
 }
 
-unsigned get_manhattan_dist(unsigned x1, unsigned y1, unsigned x2, unsigned y2)
+auto get_manhattan_dist(int x1, int y1, int x2, int y2)
 {
-    auto x = (x1 > x2) ? (x1 - x2) : (x2 - x1);
-    auto y = (y1 > y2) ? (y1 - y2) : (y2 - y1);
-    return x + y;
+    return abs(x1 - x2) + abs(y1 - y2);
 }
 
-int get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vector<std::pair<int, int>> &initial)
+auto get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vector<std::pair<int, int>> &initial)
 {
     auto closest = std::numeric_limits<unsigned>::max();
     auto closest_area = -1;
@@ -61,7 +59,7 @@ int get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vect
     return closest_area;
 }
 
-unsigned do_part1()
+auto do_part1()
 {
     // TODO: Make this a map of x,y -> area # and eliminate the initial vector?
     int initial_grid[500][500] = { 0 };
@@ -101,7 +99,7 @@ unsigned do_part1()
     return max;
 }
 
-unsigned do_part2()
+auto do_part2()
 {
     auto left = 0U, top = 0U, right = 0U, bottom = 0U;
     std::vector<std::pair<int, int>> initial;

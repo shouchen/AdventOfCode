@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <array>
 #include <vector>
 #include <map>
 #include <set>
@@ -15,96 +16,84 @@ struct Instruction
     std::string a, b, c;
 };
 
+enum InstructionName
+{
+    ADDR, ADDI, MULR, MULI, BANR, BANI, BORR, BORI,
+    SETR, SETI, GTIR, GTRI, GRRR, EQIR, EQRI, EQRR,
+    NumInstructions
+};
+
+std::map<int, InstructionName> opcode_map;
 std::vector<Instruction> program;
+std::array<int, 4> reg;
 
-void read_input(const std::string &filename)
+void do_instruction(InstructionName instruction, int a, int b, int c)
 {
-    std::ifstream file(filename);
-    std::string opcode, a, b, c;
-
-    while (file >> opcode >> a >> b >> c)
-        program.push_back(Instruction{ opcode, a, b, c });
+    switch (instruction)
+    {
+    case ADDR:  reg[c] = reg[a] + reg[b];            break;
+    case ADDI:  reg[c] = reg[a] + b;                 break;
+    case MULR:  reg[c] = reg[a] * reg[b];            break;
+    case MULI:  reg[c] = reg[a] * b;                 break;
+    case BANR:  reg[c] = reg[a] & reg[b];            break;
+    case BANI:  reg[c] = reg[a] & b;                 break;
+    case BORR:  reg[c] = reg[a] | reg[b];            break;
+    case BORI:  reg[c] = reg[a] | b;                 break;
+    case SETR:  reg[c] = reg[a];                     break;
+    case SETI:  reg[c] = a;                          break;
+    case GTIR:  reg[c] = (a > reg[b]) ? 1 : 0;       break;
+    case GTRI:  reg[c] = (reg[a] > b) ? 1 : 0;       break;
+    case GRRR:  reg[c] = (reg[a] > reg[b]) ? 1 : 0;  break;
+    case EQIR:  reg[c] = (a == reg[b]) ? 1 : 0;      break;
+    case EQRI:  reg[c] = (reg[a] == b) ? 1 : 0;      break;
+    case EQRR:  reg[c] = (reg[a] == reg[b]) ? 1 : 0; break;
+    default: assert(false);
+    }
 }
 
-int reg[4];
-
-void do_instruction(const std::string opcode, int a, int b, int c)
+void execute_program(const std::string &filename)
 {
-    if (opcode == "addr")
-        reg[c] = reg[a] + reg[b];
-    else if (opcode == "addi")
-        reg[c] = reg[a] + b;
-    else if (opcode == "mulr")
-        reg[c] = reg[a] * reg[b];
-    else if (opcode == "muli")
-        reg[c] = reg[a] * b;
-    else if (opcode == "banr")
-        reg[c] = reg[a] & reg[b];
-    else if (opcode == "bani")
-        reg[c] = reg[a] & b;
-    else if (opcode == "borr")
-        reg[c] = reg[a] | reg[b];
-    else if (opcode == "bori")
-        reg[c] = reg[a] | b;
-    else if (opcode == "setr")
-        reg[c] = reg[a];
-    else if (opcode == "seti")
-        reg[c] = a;
-    else if (opcode == "gtir")
-        reg[c] = (a > reg[b]) ? 1 : 0;
-    else if (opcode == "gtri")
-        reg[c] = (reg[a] > b) ? 1 : 0;
-    else if (opcode == "grrr")
-        reg[c] = (reg[a] > reg[b]) ? 1 : 0;
-    else if (opcode == "eqir")
-        reg[c] = (a == reg[b]) ? 1 : 0;
-    else if (opcode == "eqri")
-        reg[c] = (reg[a] == b) ? 1 : 0;
-    else if (opcode == "eqrr")
-        reg[c] = (reg[a] == reg[b]) ? 1 : 0;
-    else
-        assert(false);
+    std::ifstream file3(filename);
+    reg[0] = reg[1] = reg[2] = reg[3] = 0;
+    auto opcode = 0, a = 0, b = 0, c = 0;
+
+    while (file3 >> opcode >> a >> b >> c)
+        do_instruction(opcode_map[opcode], a, b, c);
 }
 
-bool TestExample(int before[4], const std::string &opcode, int a, int b, int c, int after[4])
+auto test_example(std::array<int, 4> &before, InstructionName instruction, int a, int b, int c, std::array<int, 4> &after)
 {
-    for (int i = 0; i < 4; i++)
+    for (auto i = 0; i < 4; i++)
         reg[i] = before[i];
 
-    do_instruction(opcode, a, b, c);
+    do_instruction(instruction, a, b, c);
 
-    for (int i = 0; i < 4; i++)
+    for (auto i = 0; i < 4; i++)
         if (reg[i] != after[i])
             return false;
 
     return true;
 }
 
-int main()
+unsigned do_part1()
 {
-    std::string opcodes[] =
-    {
-        "addr", "addi", "mulr", "muli", "banr", "bani", "borr" ,"bori",
-        "setr", "seti", "gtir", "gtri", "grrr", "eqir", "eqri", "eqrr"
-    };
-
     std::ifstream file("input.txt");
     std::string before_colon, after_colon;
-    char open_brace, close_brace, comma;
-    int opcode, a, b, c;
-    int before[4], after[4];
+    auto open_brace = '{', close_brace = '}', comma = ',';
+    auto opcode = 0, a = 0, b = 0, c = 0;
+    std::array<int, 4> before, after;
 
-    unsigned count_of_three_or_more = 0;
+    auto count_of_three_or_more = 0U;
 
-    while (file >> before_colon >> open_brace >> before[0] >> comma >> before[1] >> comma >> before[2] >> comma >> before[3] >> close_brace
-        >> opcode >> a >> b >> c
-        >> after_colon >> open_brace >> after[0] >> comma >> after[1] >> comma >> after[2] >> comma >> after[3] >> close_brace)
+    while (file >> before_colon >> open_brace >> before[0] >> comma >> before[1] >> comma >> before[2] >> comma >> before[3]
+        >> close_brace >> opcode >> a >> b >> c >> after_colon >> open_brace >> after[0] >> comma >> after[1] >> comma
+        >> after[2] >> comma >> after[3] >> close_brace)
     {
-        int unsigned num_successful = 0;
-        int successful_index = -1;
-        for (int i = 0; i < 16; i++)
+        auto num_successful = 0U;
+        auto successful_index = -1;
+        for (auto i = 0; i < NumInstructions; i++)
         {
-            if (TestExample(before, opcodes[i], a, b, c, after))
+            if (test_example(before, (InstructionName)i, a, b, c, after))
             {
                 num_successful++;
                 successful_index = i;
@@ -115,59 +104,67 @@ int main()
             count_of_three_or_more++;
     }
 
-    std::cout << count_of_three_or_more << std::endl;
+    return count_of_three_or_more;
+}
 
-    // PART2
-    std::map<int, std::string> opcode_map;
-    std::set<std::string> have_opcode;
+int do_part2()
+{
+    std::set<InstructionName> have_opcode;
+
     while (opcode_map.size() < 16)
     {
         std::ifstream file2("input.txt");
+        std::string before_colon, after_colon;
+        auto open_brace = '{', close_brace = '}', comma = ',';
+        auto opcode = 0, a = 0, b = 0, c = 0;
+        std::array<int, 4> before, after;
 
-        while (file2 >> before_colon >> open_brace >> before[0] >> comma >> before[1] >> comma >> before[2] >> comma >> before[3] >> close_brace
-            >> opcode >> a >> b >> c
-            >> after_colon >> open_brace >> after[0] >> comma >> after[1] >> comma >> after[2] >> comma >> after[3] >> close_brace)
+        while (file2 >> before_colon >> open_brace >> before[0] >> comma >> before[1] >> comma >> before[2] >> comma >> before[3]
+            >> close_brace >> opcode >> a >> b >> c >> after_colon >> open_brace >> after[0] >> comma >> after[1] >> comma
+            >> after[2] >> comma >> after[3] >> close_brace)
         {
             // Already know what this opcode is
             if (opcode_map.find(opcode) != opcode_map.end())
                 continue;
 
-            int unsigned num_successful = 0;
-            int successful_index = -1;
-            for (int i = 0; i < 16; i++)
+            auto num_successful = 0U;
+            auto successful_instruction_name = NumInstructions;
+            auto instruction_name = NumInstructions;
+            for (auto i = 0; i < NumInstructions; i++)
             {
+                auto instruction_name = static_cast<InstructionName>(i);
                 // Don't try to match this opcode since we already have it.
-                if (have_opcode.find(opcodes[i]) != have_opcode.end())
+                if (have_opcode.find(instruction_name) != have_opcode.end())
                     continue;
 
-                if (TestExample(before, opcodes[i], a, b, c, after))
+                if (test_example(before, instruction_name, a, b, c, after))
                 {
                     num_successful++;
-                    successful_index = i;
+                    successful_instruction_name = instruction_name;
                 }
             }
 
             if (num_successful == 1)
             {
-                opcode_map[opcode] = opcodes[successful_index];
-                have_opcode.insert(opcodes[successful_index]);
+                opcode_map[opcode] = successful_instruction_name;
+                have_opcode.insert(static_cast<InstructionName>(successful_instruction_name));
             }
         }
     }
 
-    // EXECUTE PROGRAM
-    std::ifstream file3("input2.txt");
+    execute_program("input2.txt");
+    return reg[0];
+}
 
-    reg[0] = reg[1] = reg[2] = reg[3] = 0;
+int main()
+{
+    auto part1 = do_part1();
+    auto part2 = do_part2();
 
-    while (file3 >> opcode >> a >> b >> c)
-    {
-        do_instruction(opcode_map[opcode], a, b, c);
-    }
+    std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 2: " << part2 << std::endl;
 
-
-
+    assert(part1 == 560);
+    assert(part2 == 622);
     return 0;
 }
-// 560 right!
-// 622 right for part2!

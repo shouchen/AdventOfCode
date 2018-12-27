@@ -23,7 +23,7 @@ struct Cart
     Turn next_turn;
     bool deleted;
 
-    bool move(std::vector<std::string> &grid, std::vector<Cart> &carts)
+    auto move(std::vector<std::string> &grid, std::vector<Cart> &carts)
     {
         if (dir == Down) y++;
         else if (dir == Right) x++;
@@ -113,7 +113,7 @@ void read_input(const std::string &filename, std::vector<std::string> &grid, std
     }
 }
 
-std::pair<int, int> do_part1()
+auto do_part1()
 {
     std::vector<std::string> grid;
     std::vector<Cart> carts;
@@ -136,7 +136,7 @@ std::pair<int, int> do_part1()
     }
 }
 
-std::pair<int, int> do_part2()
+auto do_part2()
 {
     std::vector<std::string> grid;
     std::vector<Cart> carts;

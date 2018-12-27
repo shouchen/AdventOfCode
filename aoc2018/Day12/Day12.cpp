@@ -15,65 +15,6 @@
 
 #define SIZE 20000
 
-//const unsigned grid_size = 300;
-//
-//int grid[grid_size + 1][grid_size + 1];
-//
-//int compute_power(unsigned x, unsigned y, int gsn)
-//{
-//    auto rack_id = x + 10;
-//    auto power = rack_id * y;
-//    power += gsn;
-//    power *= rack_id;
-//    power = power / 100 % 10;
-//    power -= 5;
-//    return power;
-//}
-//
-//void populate_grid(int gsn)
-//{
-//    for (auto y = 1; y <= grid_size; y++)
-//        for (auto x = 1; x <= grid_size; x++)
-//            grid[y][x] = compute_power(x, y, gsn);
-//}
-//
-//int get_power_of_square(unsigned x, unsigned y, unsigned n)
-//{
-//    auto power = 0;
-//    for (auto i = 0U; i < n; i++)
-//        for (auto j = 0U; j < n; j++)
-//            power += grid[y + i][x + j];
-//
-//    return power;
-//}
-//
-//std::string find_square_with_highest_power(unsigned min_n, unsigned max_n)
-//{
-//    auto highest_total_power = std::numeric_limits<int>::min();
-//    auto best_x = 0U, best_y = 0U, best_n = 0U;
-//
-//    for (auto n = min_n; n <= max_n; n++)
-//        for (auto y = 1U; y < grid_size + 1 - n; y++)
-//            for (auto x = 1U; x < grid_size + 1 - n; x++)
-//            {
-//                auto power = get_power_of_square(x, y, n);
-//                if (power > highest_total_power)
-//                {
-//                    highest_total_power = power;
-//                    best_x = x;
-//                    best_y = y;
-//                    best_n = n;
-//                }
-//            }
-//
-//    std::ostringstream o;
-//    o << best_x << "," << best_y;
-//    if (min_n != max_n)
-//        o << "," << best_n;
-//    return o.str();
-//}
-
-//int lowest = 0, highest = 0;
 std::map<int, char> state;
 std::vector<std::pair<std::string, char>> rule;
 
@@ -112,71 +53,6 @@ void dump()
         else
             std::cout << '.';
 }
-
-//std::vector<int> plants;
-//std::set<std::string> rules2;
-//
-//std::vector<int> fast_transform(const std::vector<int> &plants)
-//{
-//    std::vector<int> retval;
-//    for (int i = plants[0] - 2; i < plants[plants.size() - 1] + 2; i++)
-//    {
-//        auto left2 = plants..find(i - 2) != plants.end();
-//
-//
-//        std::string five = 
-//
-//    std::string retval(input.length() + 8);
-//
-//    for (int i = 0; i < input.length() - 4; i++)
-//    {
-//        char c = '.';
-//        for (auto r : rule)
-//        {
-//            if (input[i] == r.first[0] &&
-//                input[i+1] == r.first[1] &&
-//                input[i+2] == r.first[2] &&
-//                input[i+3] == r.first[3] &&
-//                input[i+4] == r.first[4])
-//            {
-//                c = '#';
-//                break;
-//            }
-//
-//            retval.push_back(c);
-//        }
-//    }
-//
-//    auto a = retval.find('#');
-//    auto b = retval.find_last_of('#');
-//    return retval.substr(a, b - a + 1);
-//}
-//
-//unsigned part2()
-//{
-//    std::ifstream file("input.txt");
-//    std::string line, initial, state_colon, initial_state;
-//    std::string left_side, arrow;
-//    char right_side;
-//
-//    file >> initial >> state_colon >> initial_state;
-//    for (int i = 0; i < initial_state.length(); i++)
-//        if (initial_state[i] == '#')
-//            plants.push_back(i);
-//
-//    while (file >> left_side >> arrow >> right_side)
-//        if (right_side == '#')
-//            rules2.insert(left_side);
-//
-//    state = fast_transform(initial_state);
-//
-//
-//    // keep only list of #-producing rules, assume false otherwise
-//    // state is a set of plants
-//
-//    return 0;
-//}
-
 
 long long get_count()
 {

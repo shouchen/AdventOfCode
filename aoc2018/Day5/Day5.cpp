@@ -5,15 +5,12 @@
 #include <set>
 #include <cassert>
 
-bool process_file(unsigned &size, std::set<char> *excluded = NULL)
+auto process_file(unsigned &size, std::set<char> *excluded = NULL)
 {
     std::ifstream file("input.txt");
     std::string s;
-    char c, exclude = ' ';
+    auto c = ' ', exclude = ' ';
     
-    if (excluded)
-        exclude = ' ';
-
     while (file >> c)
     {
         if (excluded && exclude == ' ' && excluded->find(tolower(c)) == excluded->end())
@@ -42,18 +39,18 @@ bool process_file(unsigned &size, std::set<char> *excluded = NULL)
     return excluded && exclude != ' ';
 }
 
-unsigned do_part1()
+auto do_part1()
 {
-    unsigned size = 0;
+    auto size = 0U;
     process_file(size);
     return size;
 }
 
-unsigned do_part2()
+auto do_part2()
 {
     std::set<char> excluded;
-    unsigned size = 0;
-    char exclude = ' ';
+    auto size = 0U;
+    auto exclude = ' ';
     auto lowest_size = std::numeric_limits<unsigned>::max();
 
     auto num_excluded = excluded.size();
