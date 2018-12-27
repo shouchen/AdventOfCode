@@ -2,32 +2,24 @@
 #include <iostream>
 #include <fstream>
 #include <array>
-#include <vector>
 #include <map>
 #include <set>
 #include <string>
-#include <numeric>
-#include <algorithm>
 #include <cassert>
 
-struct Instruction
-{
-    std::string opcode;
-    std::string a, b, c;
-};
+using namespace std::string_literals;
 
-enum InstructionName
+enum Mnemonic
 {
     ADDR, ADDI, MULR, MULI, BANR, BANI, BORR, BORI,
     SETR, SETI, GTIR, GTRI, GRRR, EQIR, EQRI, EQRR,
-    NumInstructions
+    NumMnemonics
 };
 
-std::map<int, InstructionName> opcode_map;
-std::vector<Instruction> program;
 std::array<int, 4> reg;
+std::map<int, Mnemonic> opcode_map;
 
-void do_instruction(InstructionName instruction, int a, int b, int c)
+void do_instruction(Mnemonic instruction, int a, int b, int c)
 {
     switch (instruction)
     {
@@ -61,24 +53,10 @@ void execute_program(const std::string &filename)
         do_instruction(opcode_map[opcode], a, b, c);
 }
 
-auto test_example(std::array<int, 4> &before, InstructionName instruction, int a, int b, int c, std::array<int, 4> &after)
-{
-    for (auto i = 0; i < 4; i++)
-        reg[i] = before[i];
-
-    do_instruction(instruction, a, b, c);
-
-    for (auto i = 0; i < 4; i++)
-        if (reg[i] != after[i])
-            return false;
-
-    return true;
-}
-
 unsigned do_part1()
 {
     std::ifstream file("input.txt");
-    std::string before_colon, after_colon;
+    auto before_colon = "Before:"s, after_colon = "After:"s;
     auto open_brace = '{', close_brace = '}', comma = ',';
     auto opcode = 0, a = 0, b = 0, c = 0;
     std::array<int, 4> before, after;
@@ -90,14 +68,12 @@ unsigned do_part1()
         >> after[2] >> comma >> after[3] >> close_brace)
     {
         auto num_successful = 0U;
-        auto successful_index = -1;
-        for (auto i = 0; i < NumInstructions; i++)
+        for (auto i = 0; i < NumMnemonics; i++)
         {
-            if (test_example(before, (InstructionName)i, a, b, c, after))
-            {
+            reg = before;
+            do_instruction((Mnemonic)i, a, b, c);
+            if (reg == after)
                 num_successful++;
-                successful_index = i;
-            }
         }
 
         if (num_successful >= 3)
@@ -109,12 +85,12 @@ unsigned do_part1()
 
 int do_part2()
 {
-    std::set<InstructionName> have_opcode;
+    std::set<Mnemonic> have_opcode;
 
     while (opcode_map.size() < 16)
     {
         std::ifstream file2("input.txt");
-        std::string before_colon, after_colon;
+        auto before_colon = "Before:"s, after_colon = "After:"s;
         auto open_brace = '{', close_brace = '}', comma = ',';
         auto opcode = 0, a = 0, b = 0, c = 0;
         std::array<int, 4> before, after;
@@ -128,26 +104,29 @@ int do_part2()
                 continue;
 
             auto num_successful = 0U;
-            auto successful_instruction_name = NumInstructions;
-            auto instruction_name = NumInstructions;
-            for (auto i = 0; i < NumInstructions; i++)
+            auto successful_mnemonic = NumMnemonics;
+            auto instruction_name = NumMnemonics;
+            for (auto i = 0; i < NumMnemonics; i++)
             {
-                auto instruction_name = static_cast<InstructionName>(i);
+                auto instruction_name = static_cast<Mnemonic>(i);
+
                 // Don't try to match this opcode since we already have it.
                 if (have_opcode.find(instruction_name) != have_opcode.end())
                     continue;
 
-                if (test_example(before, instruction_name, a, b, c, after))
+                reg = before;
+                do_instruction((Mnemonic)i, a, b, c);
+                if (reg == after)
                 {
                     num_successful++;
-                    successful_instruction_name = instruction_name;
+                    successful_mnemonic = instruction_name;
                 }
             }
 
             if (num_successful == 1)
             {
-                opcode_map[opcode] = successful_instruction_name;
-                have_opcode.insert(static_cast<InstructionName>(successful_instruction_name));
+                opcode_map[opcode] = successful_mnemonic;
+                have_opcode.insert(static_cast<Mnemonic>(successful_mnemonic));
             }
         }
     }
