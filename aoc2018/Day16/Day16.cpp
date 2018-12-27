@@ -16,12 +16,21 @@ enum Mnemonic
     NumMnemonics
 };
 
-std::array<int, 4> reg;
-std::map<int, Mnemonic> opcode_map;
-
-void do_instruction(Mnemonic instruction, int a, int b, int c)
+struct Instruction
 {
-    switch (instruction)
+    Mnemonic mnemonic;
+    int a, b, c;
+};
+
+using Registers = std::array<int, 4>;
+
+Registers reg;
+std::map<int, Mnemonic> opcode_to_mnemonic;
+std::set<Mnemonic> know_opcode;
+
+void do_instruction(Mnemonic mnemonic, int a, int b, int c)
+{
+    switch (mnemonic)
     {
     case ADDR:  reg[c] = reg[a] + reg[b];            break;
     case ADDI:  reg[c] = reg[a] + b;                 break;
@@ -45,90 +54,63 @@ void do_instruction(Mnemonic instruction, int a, int b, int c)
 
 void execute_program(const std::string &filename)
 {
-    std::ifstream file3(filename);
-    reg[0] = reg[1] = reg[2] = reg[3] = 0;
+    std::fill(reg.begin(), reg.end(), 0);
+
+    std::ifstream file(filename);
     auto opcode = 0, a = 0, b = 0, c = 0;
 
-    while (file3 >> opcode >> a >> b >> c)
-        do_instruction(opcode_map[opcode], a, b, c);
+    while (file >> opcode >> a >> b >> c)
+        do_instruction(opcode_to_mnemonic[opcode], a, b, c);
 }
 
-unsigned do_part1()
+auto do_part(bool for_part2)
 {
-    std::ifstream file("input.txt");
-    auto before_colon = "Before:"s, after_colon = "After:"s;
-    auto open_brace = '{', close_brace = '}', comma = ',';
-    auto opcode = 0, a = 0, b = 0, c = 0;
-    std::array<int, 4> before, after;
-
-    auto count_of_three_or_more = 0U;
-
-    while (file >> before_colon >> open_brace >> before[0] >> comma >> before[1] >> comma >> before[2] >> comma >> before[3]
-        >> close_brace >> opcode >> a >> b >> c >> after_colon >> open_brace >> after[0] >> comma >> after[1] >> comma
-        >> after[2] >> comma >> after[3] >> close_brace)
+    while (know_opcode.size() < NumMnemonics)
     {
-        auto num_successful = 0U;
-        for (auto i = 0; i < NumMnemonics; i++)
-        {
-            reg = before;
-            do_instruction((Mnemonic)i, a, b, c);
-            if (reg == after)
-                num_successful++;
-        }
-
-        if (num_successful >= 3)
-            count_of_three_or_more++;
-    }
-
-    return count_of_three_or_more;
-}
-
-int do_part2()
-{
-    std::set<Mnemonic> have_opcode;
-
-    while (opcode_map.size() < 16)
-    {
-        std::ifstream file2("input.txt");
+        std::ifstream file("input.txt");
         auto before_colon = "Before:"s, after_colon = "After:"s;
         auto open_brace = '{', close_brace = '}', comma = ',';
         auto opcode = 0, a = 0, b = 0, c = 0;
-        std::array<int, 4> before, after;
+        Registers before, after;
+        auto num_with_three_or_more_candidates = 0;
 
-        while (file2 >> before_colon >> open_brace >> before[0] >> comma >> before[1] >> comma >> before[2] >> comma >> before[3]
+        while (file >> before_colon >> open_brace >> before[0] >> comma >> before[1] >> comma >> before[2] >> comma >> before[3]
             >> close_brace >> opcode >> a >> b >> c >> after_colon >> open_brace >> after[0] >> comma >> after[1] >> comma
             >> after[2] >> comma >> after[3] >> close_brace)
         {
-            // Already know what this opcode is
-            if (opcode_map.find(opcode) != opcode_map.end())
+            if (opcode_to_mnemonic.find(opcode) != opcode_to_mnemonic.end())
                 continue;
 
-            auto num_successful = 0U;
-            auto successful_mnemonic = NumMnemonics;
-            auto instruction_name = NumMnemonics;
+            auto num_mnemonic_candidates = 0U;
+            auto inferred_mnemonic = NumMnemonics;
+
             for (auto i = 0; i < NumMnemonics; i++)
             {
-                auto instruction_name = static_cast<Mnemonic>(i);
+                auto mnemonic = static_cast<Mnemonic>(i);
 
-                // Don't try to match this opcode since we already have it.
-                if (have_opcode.find(instruction_name) != have_opcode.end())
+                // Don't try to match this mnemonic since we already have it.
+                if (know_opcode.find(mnemonic) != know_opcode.end())
                     continue;
 
                 reg = before;
-                do_instruction((Mnemonic)i, a, b, c);
+                do_instruction(mnemonic, a, b, c);
                 if (reg == after)
-                {
-                    num_successful++;
-                    successful_mnemonic = instruction_name;
-                }
+                    inferred_mnemonic = (++num_mnemonic_candidates == 1) ? mnemonic : NumMnemonics;
             }
 
-            if (num_successful == 1)
+            if (num_mnemonic_candidates >= 3)
             {
-                opcode_map[opcode] = successful_mnemonic;
-                have_opcode.insert(static_cast<Mnemonic>(successful_mnemonic));
+                num_with_three_or_more_candidates++;
+            }
+            else if (for_part2 && inferred_mnemonic != NumMnemonics)
+            {
+                opcode_to_mnemonic[opcode] = inferred_mnemonic;
+                know_opcode.insert(static_cast<Mnemonic>(inferred_mnemonic));
             }
         }
+
+        if (!for_part2)
+            return num_with_three_or_more_candidates;
     }
 
     execute_program("input2.txt");
@@ -137,8 +119,8 @@ int do_part2()
 
 int main()
 {
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    auto part1 = do_part(false);
+    auto part2 = do_part(true);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
