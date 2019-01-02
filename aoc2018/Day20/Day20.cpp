@@ -1,229 +1,131 @@
 #include "stdafx.h"
 #include <iostream>
-#include <iomanip>
 #include <fstream>
 #include <vector>
 #include <set>
-#include <string>
-#include <queue>
-#include <stack>
-#include <map>
-#include <numeric>
 #include <algorithm>
 #include <cassert>
 
-auto left = 0, right = 0, top = 0, bottom = 0;
-
-struct Dirs
+struct Room
 {
-    bool north = false, south = false, east = false, west = false;
-    Dirs() : north(false), south(false), east(false), west(false) {}
-    Dirs(bool north, bool south, bool east, bool west) : north(north), south(south), east(east), west(west) {}
+    Room *north = nullptr, *south = nullptr, *east = nullptr, *west = nullptr;
+
+    Room *move_north()
+    {
+        if (!north) (north = new Room())->south = this;
+        return north;
+    }
+
+    Room *move_south()
+    {
+        if (!south) (south = new Room())->north = this;
+        return south;
+    }
+
+    Room *move_east()
+    {
+        if (!east) (east = new Room())->west = this;
+        return east;
+    }
+
+    Room *move_west()
+    {
+        if (!west) (west = new Room())->east = this;
+        return west;
+    }
 };
 
-std::map<std::pair<int, int>, Dirs> grid;
-
-void dump()
+auto read_input(const std::string &filename)
 {
-    for (int i = 0; i < right - left; i++)
-        std::cout << "##";
-    std::cout << "###" << std::endl;
+    Room *origin = new Room();
+    std::vector<std::vector<Room *>> g = { { origin } };
 
-    for (int y = top; y <= bottom; y++)
+    std::ifstream file("input.txt");
+    auto c = ' ';
+
+    while (file >> c)
     {
-        std::cout << "#";
-        for (int x = left; x <= right; x++)
+        switch (c)
         {
-            std::cout << ((x == 0 && y == 0) ? "X" : ".") << (grid[std::make_pair(x, y)].east ? '|' : '#');
-        }
-        std::cout << std::endl << "#";
-        for (int x = left; x <= right; x++)
-        {
-            std::cout << (grid[std::make_pair(x, y)].south ? '-' : '#') << '#';
-        }
-        std::cout << std::endl;
-    }
-
-    std::cout << std::endl;
-}
-
-void move_north(int &curr_x, int &curr_y)
-{
-    grid[std::make_pair(curr_x, curr_y)].north = true;
-    grid[std::make_pair(curr_x, --curr_y)].south = true;
-}
-
-void do_recur(const char *regex, int curr_x, int curr_y)
-{
-    left = std::min(left, curr_x);
-    right = std::max(right, curr_x);
-    top = std::min(top, curr_y);
-    bottom = std::max(bottom, curr_y);
-
-char c;
-while (c = *regex++)
-{
-    switch (c)
-    {
-    case 'N':
-        grid[std::make_pair(curr_x, curr_y)].north = true;
-        grid[std::make_pair(curr_x, --curr_y)].south = true;
-        break;
-    case 'S':
-        grid[std::make_pair(curr_x, curr_y)].south = true;
-        grid[std::make_pair(curr_x, ++curr_y)].north = true;
-        break;
-    case 'E':
-        grid[std::make_pair(curr_x, curr_y)].east = true;
-        grid[std::make_pair(++curr_x, curr_y)].west = true;
-        break;
-    case 'W':
-        grid[std::make_pair(curr_x, curr_y)].west = true;
-        grid[std::make_pair(--curr_x, curr_y)].east = true;
-        break;
-    case '(':
-        do_recur(regex, curr_x, curr_y);
-        break;
-    case ')':
-        continue;
-    case '|': // Skip next alternative and proceed after matching ')'
-    {
-        int level = 1;
-        for (;;)
-        {
-            c = *regex++;
-            if (c == '(') level++;
-            if (c == ')') level--;
-            if (c == ')' && level == 0)
-                break;
-        }
-        c = *regex++;
-    }
-    case '$': // should return from the very last one this way
-        return;
-    default:
-        assert(false);
-    }
-
-    left = std::min(left, curr_x);
-    right = std::max(right, curr_x);
-    top = std::min(top, curr_y);
-    bottom = std::max(bottom, curr_y);
-}
-}
-
-struct WorkItem
-{
-    int x, y;
-    unsigned distance;
-};
-
-auto part1 = 0U;
-
-void do_part1()
-{
-    std::queue<WorkItem> q;
-    std::map<std::pair<int, int>, unsigned> dist;
-
-    q.push(WorkItem{ 0, 0, 0 });
-
-    while (!q.empty())
-    {
-        auto wi = q.front();
-        q.pop();
-
-        if (dist.find(std::make_pair(wi.x, wi.y)) != dist.end())
-            continue;
-
-        dist[std::make_pair(wi.x, wi.y)] = wi.distance;
-        part1 = std::max(part1, wi.distance);
-
-        auto dirs = grid[std::make_pair(wi.x, wi.y)];
-
-        if (dirs.north)
-            q.push(WorkItem{ wi.x, wi.y - 1, wi.distance + 1 });
-        if (dirs.south)
-            q.push(WorkItem{ wi.x, wi.y + 1, wi.distance + 1 });
-        if (dirs.east)
-            q.push(WorkItem{ wi.x + 1, wi.y, wi.distance + 1 });
-        if (dirs.west)
-            q.push(WorkItem{ wi.x - 1, wi.y, wi.distance + 1 });
-    }
-
-    for (auto y = top; y <= bottom; y++)
-    {
-        for (auto x = left; x <= right; x++)
-            std::cout << std::setw(2) << dist[std::make_pair(x, y)] << " ";
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
-
-void process_sequence(const char *sequence, std::pair<int, int> start);
-
-void process_open_parenth(const char *sequence, std::pair<int, int> start)
-{
-    // parenthesized sequence
-    for (;;)
-    {
-        // between pipes
-        for (;;)
-        {
-            if (*sequence >= 'A' && *sequence <= 'Z')
-            {
-                std::cout << *sequence;
-                sequence++;
-                continue;
-            }
-            else
-                break;
-        }
-
-        if (*sequence == '(')
-            process_open_parenth(++sequence, start);
-        else if (*sequence == '|')
-            process_sequence(++sequence, start);
-    }
-}
-
-void process_sequence(const char *sequence, std::pair<int, int> start)
-{
-    for (;;)
-    {
-        if (*sequence >= 'A' && *sequence <= 'Z')
-        {
-            std::cout << *sequence;
-            sequence++;
-            continue;
-        }
-        else
+        case 'N':
+            for (auto &&room : g.back())
+                room = room->move_north();
             break;
+        case 'S':
+            for (auto &&room : g.back())
+                room = room->move_south();
+            break;
+        case 'E':
+            for (auto &&room : g.back())
+                room = room->move_east();
+            break;
+        case 'W':
+            for (auto &&room : g.back())
+                room = room->move_west();
+            break;
+        case '(':
+            g.push_back(std::move(g.back()));
+            g.push_back(g.back());
+            break;
+        case '|':
+            (g.rbegin() + 2)->insert((g.rbegin() + 2)->end(), g.back().begin(), g.back().end());
+            g.back() = *(g.rbegin() + 1);
+            break;
+        case ')':
+            (g.rbegin() + 2)->insert((g.rbegin() + 2)->end(), g.back().begin(), g.back().end());
+            g.pop_back();
+            g.pop_back();
+
+            std::sort(g.back().begin(), g.back().end());
+            g.back().erase(std::unique(g.back().begin(), g.back().end()), g.back().end());
+            break;
+        }
     }
 
-    if (*sequence == '(')
-        process_open_parenth(sequence, start);
+    return origin;
+}
+
+void do_parts(Room *graph, unsigned &part1, unsigned &part2)
+{
+    std::set<Room *> frontier{ graph }, closed{ graph }, next;
+    std::vector<int> counts;
+
+    while (!frontier.empty())
+    {
+        counts.push_back(static_cast<int>(closed.size()));
+        for (auto &&r : frontier)
+        {
+            if (r->north && closed.insert(r->north).second)
+                next.insert(r->north);
+            if (r->south && closed.insert(r->south).second)
+                next.insert(r->south);
+            if (r->east && closed.insert(r->east).second)
+                next.insert(r->east);
+            if (r->west && closed.insert(r->west).second)
+                next.insert(r->west);
+        }
+
+        frontier.swap(next);
+        next.clear();
+    }
+
+    constexpr size_t part2_depth = 1000;
+    part1 = static_cast<unsigned>(counts.size() - 1);
+    part2 = (counts.size() < part2_depth) ? 0 : (counts.back() - counts[part2_depth - 1]);
 }
 
 int main()
 {
-    std::ifstream file("input.txt");
-    char caret;
-    std::string regex;
-    file >> caret >> regex;
+    auto graph = read_input("input.txt");
 
-    grid[std::make_pair(0, 0)] = Dirs{ false, false, false, false };
-
-    //do_recur(regex.c_str(), 0, 0);
-    regex = "ABC(D|E(FG|H|)IJ)KLM$";
-    process_sequence(regex.c_str(), std::make_pair(0, 0));
-
-    dump();
-
-    do_part1();
+    auto part1 = 0U, part2 = 0U;
+    do_parts(graph, part1, part2);
 
     std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 2: " << part2 << std::endl;
+
+    assert(part1 == 4501);
+    assert(part2 == 8623);
 
     return 0;
 }
-// 4501 part 1
-// 8623 part 2
