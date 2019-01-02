@@ -2,101 +2,22 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <array>
 #include <vector>
 #include <map>
 #include <string>
 #include <cassert>
 
-std::string do_part1()
+using namespace std::string_literals;
+
+std::map<char, std::vector<char>> prerequisites;
+std::set<char> steps;
+
+void read_input(const std::string &filename)
 {
-    std::map<char, std::vector<char>> graph;
-    std::map<char, std::vector<char>> graph_back;
-    std::set<char> all;
-
-    std::ifstream file("input.txt");
-
-    auto line = 'A', comma = ',';
-    auto x = 0U, y = 0U;
-    std::string step, must, be, finished, before, can, begin;
-    char first_step, second_step;
-
-    while (file >> step >> first_step >> must >> be >> finished >> before >> step >> second_step >> can >> begin)
-    {
-        graph[first_step].push_back(second_step);
-        graph_back[second_step].push_back(first_step);
-        all.insert(first_step);
-        all.insert(second_step);
-    }
-
-    std::set<char> next;
-    std::string path;
-
-    for (auto item : all)
-    {
-        if (graph_back.find(item) == graph_back.end())
-            next.insert(item);
-    }
-
-    for (;;)
-    {
-        // check pre-reqs for each next, and pick lowest qualifying
-        char lowest = 'z';
-        for (auto item : next)
-        {
-            bool prereqs = true;
-            for (auto pre : graph_back[item])
-            {
-                if (path.find(pre) == -1)
-                {
-                    prereqs = false;
-                    break;
-                }
-            }
-
-            if (!prereqs) 
-                continue;
-
-            if (item < lowest)
-                lowest = item;
-        }
-        assert(lowest != 'z');
-
-        // Follow the lowest available one
-        path.push_back(lowest);
-        next.erase(lowest);
-
-        // Add all the next as options from the current one visited
-        auto curr = path[path.length() - 1];
-        for (auto &item : graph[curr])
-        {
-            next.insert(item);
-        }
-
-        // Stop when no more
-        if (next.empty())
-            break;
-    }
-
-    return path;
-}
-
-struct LetterTime
-{
-    char letter = '.';
-    unsigned time = 0;
-};
-
-unsigned do_part2()
-{
-    std::ifstream file("input.txt");
-
-    auto line = 'A', comma = ',';
-    auto x = 0U, y = 0U;
-    std::string step, must, be, finished, before, can, begin;
-    char first_step, second_step;
-
-    std::map<char, std::vector<char>> prerequisites;
-    std::set<char> steps;
+    std::ifstream file(filename);
+    auto step = "step"s, must = "must"s, be = "be"s, finished = "finished"s, before = "before"s, can = "can"s, begin = "begin"s;
+    auto comma = ',', first_step = ' ', second_step = ' ';
 
     while (file >> step >> first_step >> must >> be >> finished >> before >> step >> second_step >> can >> begin)
     {
@@ -104,62 +25,81 @@ unsigned do_part2()
         steps.insert(first_step);
         steps.insert(second_step);
     }
+}
 
-    // Now, process the data that was read
+auto contains_all_chars(const std::string &s, const std::vector<char> &chars)
+{
+    for (auto c : chars)
+        if (s.find(c) == -1)
+            return false;
 
-    std::string path;
+    return true;
+}
 
-    auto seconds = 0U;
-    LetterTime worker_status[5];
+auto do_part1()
+{
+    auto path = ""s;
 
-    for (;;)
-    {
-        for (int w = 0; w < 5; w++)
-        {
-            if (worker_status[w].time > 0)
+    while (path.length() < steps.size())
+        for (auto next : steps)
+            if (path.find(next) == -1 && contains_all_chars(path, prerequisites[next]))
             {
-                if (--worker_status[w].time != 0)
-                    continue;
-
-                path.push_back(worker_status[w].letter);
-                worker_status[w].letter = '.';
+                path.push_back(next);
+                break;
             }
 
-            for (char mynext = 'A'; mynext <= 'Z'; mynext++)
+    return path;
+}
+
+auto do_part2()
+{
+    struct LetterTime
+    {
+        char letter = '.';
+        unsigned time = 0;
+    };
+
+    auto seconds = 0;
+    auto path = ""s;
+    std::set<char> used;
+    std::array<LetterTime, 5> workers;
+
+    while (path.length() < steps.size())
+    {
+        for (auto &worker : workers)
+        {
+            if (worker.time > 0)
             {
-                if (steps.find(mynext) == steps.end())
+                if (--worker.time != 0)
                     continue;
 
-                bool prereqs = true;
-                for (auto pre : prerequisites[mynext])
+                path.push_back(worker.letter);
+                worker.letter = '.';
+            }
+
+            for (auto next : steps)
+            {
+                if (used.find(next) == used.end() &&
+                    contains_all_chars(path, prerequisites[next]))
                 {
-                    if (path.find(pre) == -1)
-                    {
-                        prereqs = false;
-                        break;
-                    }
+                    worker.letter = next;
+                    worker.time = 61 + next - 'A';
+                    used.insert(next);
+                    break;
                 }
-
-                if (!prereqs)
-                    continue;
-
-                steps.erase(mynext);
-
-                worker_status[w].letter = mynext;
-                worker_status[w].time = 61 + mynext - 'A';
-                break;
             }
         }
 
-        if (path.length() == 26)
-            return seconds;
-
         seconds++;
     }
+
+    return seconds - 1;
 }
 
 int main()
 {
+    read_input("input.txt");
+
     auto part1 = do_part1();
     auto part2 = do_part2();
 

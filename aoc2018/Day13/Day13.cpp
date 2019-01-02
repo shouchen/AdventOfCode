@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cassert>
 
+using namespace std::string_literals;
+
 enum Direction
 {
     Down, Right, Up, Left
@@ -80,8 +82,8 @@ struct Cart
 
 void read_input(const std::string &filename, std::vector<std::string> &grid, std::vector<Cart> &carts)
 {
-    std::ifstream file("input.txt");
-    std::string line;
+    std::ifstream file(filename);
+    auto line = ""s;
 
     while (getline(file, line))
         grid.push_back(line);
@@ -93,19 +95,19 @@ void read_input(const std::string &filename, std::vector<std::string> &grid, std
             switch (grid[i][j])
             {
             case 'v':
-                carts.push_back(Cart{ j ,i, Down, TurnLeft, false });
+                carts.push_back(Cart{ j, i, Down, TurnLeft, false });
                 grid[i][j] = '|';
                 break;
             case '>':
-                carts.push_back(Cart{ j ,i, Right, TurnLeft, false });
+                carts.push_back(Cart{ j, i, Right, TurnLeft, false });
                 grid[i][j] = '-';
                 break;
             case '^':
-                carts.push_back(Cart{ j ,i, Up, TurnLeft, false });
+                carts.push_back(Cart{ j, i, Up, TurnLeft, false });
                 grid[i][j] = '|';
                 break;
             case '<':
-                carts.push_back(Cart{ j ,i, Left, TurnLeft, false });
+                carts.push_back(Cart{ j, i, Left, TurnLeft, false });
                 grid[i][j] = '-';
                 break;
             }
@@ -113,40 +115,18 @@ void read_input(const std::string &filename, std::vector<std::string> &grid, std
     }
 }
 
-auto do_part1()
+auto do_part(const std::string &filename, bool for_part2)
 {
     std::vector<std::string> grid;
     std::vector<Cart> carts;
 
-    read_input("input.txt", grid, carts);
-
-    for (;;)
-    {
-        for (auto &cart : carts)
-            if (!cart.move(grid, carts))
-                return std::make_pair(cart.x, cart.y);
-
-        carts.erase(
-            std::remove_if(carts.begin(), carts.end(), [&](const Cart &item) { return item.deleted; }),
-            carts.end());
-
-        std::sort(carts.begin(), carts.end(), [&](const Cart &lhs, const Cart& rhs) -> bool {
-            return std::make_pair(lhs.y, lhs.x) < std::make_pair(rhs.y, rhs.x);
-        });
-    }
-}
-
-auto do_part2()
-{
-    std::vector<std::string> grid;
-    std::vector<Cart> carts;
-
-    read_input("input.txt", grid, carts);
+    read_input(filename, grid, carts);
 
     while (carts.size() > 1)
     {
         for (auto &cart : carts)
-            cart.move(grid, carts);
+            if (!cart.move(grid, carts) && !for_part2)
+                return std::make_pair(cart.x, cart.y);
 
         carts.erase(
             std::remove_if(carts.begin(), carts.end(), [&](const Cart &item) { return item.deleted; }),
@@ -162,8 +142,8 @@ auto do_part2()
 
 int main()
 {
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    auto part1 = do_part("input.txt", false);
+    auto part2 = do_part("input.txt", true);
 
     std::cout << "Part 1: " << part1.first << "," << part1.second << std::endl;
     std::cout << "Part 2: " << part2.first << "," << part2.second << std::endl;

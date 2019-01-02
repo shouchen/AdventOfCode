@@ -1,68 +1,56 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <array>
 #include <vector>
 #include <string>
 #include <cassert>
 
+using namespace std::string_literals;
+using Registers = std::array<int, 6>;
+
 struct Instruction
 {
-    std::string opcode;
+    std::string mnemonic;
     int a, b, c;
 };
 
 std::vector<Instruction> program;
-int reg[6];
+Registers reg;
 
-void do_instruction(const std::string opcode, int a, int b, int c)
+void do_instruction(const Instruction &instruction)
 {
-    if (opcode == "addr")
-        reg[c] = reg[a] + reg[b];
-    else if (opcode == "addi")
-        reg[c] = reg[a] + b;
-    else if (opcode == "mulr")
-        reg[c] = reg[a] * reg[b];
-    else if (opcode == "muli")
-        reg[c] = reg[a] * b;
-    else if (opcode == "banr")
-        reg[c] = reg[a] & reg[b];
-    else if (opcode == "bani")
-        reg[c] = reg[a] & b;
-    else if (opcode == "borr")
-        reg[c] = reg[a] | reg[b];
-    else if (opcode == "bori")
-        reg[c] = reg[a] | b;
-    else if (opcode == "setr")
-        reg[c] = reg[a];
-    else if (opcode == "seti")
-        reg[c] = a;
-    else if (opcode == "gtir")
-        reg[c] = (a > reg[b]) ? 1 : 0;
-    else if (opcode == "gtri")
-        reg[c] = (reg[a] > b) ? 1 : 0;
-    else if (opcode == "gtrr")
-        reg[c] = (reg[a] > reg[b]) ? 1 : 0;
-    else if (opcode == "eqir")
-        reg[c] = (a == reg[b]) ? 1 : 0;
-    else if (opcode == "eqri")
-        reg[c] = (reg[a] == b) ? 1 : 0;
-    else if (opcode == "eqrr")
-        reg[c] = (reg[a] == reg[b]) ? 1 : 0;
-    else
-        assert(false);
+    auto mnemonic = instruction.mnemonic;
+    auto a = instruction.a, b = instruction.b, c = instruction.c;
+
+    if      (mnemonic == "addr") reg[c] = reg[a] + reg[b];
+    else if (mnemonic == "addi") reg[c] = reg[a] + b;
+    else if (mnemonic == "mulr") reg[c] = reg[a] * reg[b];
+    else if (mnemonic == "muli") reg[c] = reg[a] * b;
+    else if (mnemonic == "banr") reg[c] = reg[a] & reg[b];
+    else if (mnemonic == "bani") reg[c] = reg[a] & b;
+    else if (mnemonic == "borr") reg[c] = reg[a] | reg[b];
+    else if (mnemonic == "bori") reg[c] = reg[a] | b;
+    else if (mnemonic == "setr") reg[c] = reg[a];
+    else if (mnemonic == "seti") reg[c] = a;
+    else if (mnemonic == "gtir") reg[c] = (a > reg[b]) ? 1 : 0;
+    else if (mnemonic == "gtri") reg[c] = (reg[a] > b) ? 1 : 0;
+    else if (mnemonic == "gtrr") reg[c] = (reg[a] > reg[b]) ? 1 : 0;
+    else if (mnemonic == "eqir") reg[c] = (a == reg[b]) ? 1 : 0;
+    else if (mnemonic == "eqri") reg[c] = (reg[a] == b) ? 1 : 0;
+    else if (mnemonic == "eqrr") reg[c] = (reg[a] == reg[b]) ? 1 : 0;
+    else assert(false);
 }
 
-int run_program(int initial_r0, int ip_reg)
+auto run_program(int initial_r0, int ip_reg)
 {
-    int ip = 0;
+    auto &ip = reg[ip_reg];
 
+    std::fill(reg.begin(), reg.end(), 0);
     reg[0] = initial_r0;
-    reg[1] = reg[2] = reg[3] = reg[4] = reg[5] = 0;
 
     for (;;)
     {
-        reg[ip_reg] = ip;
-
         // Intercept and replace slow part (manually disassembled and manually optimized).
         // This replaces a super-inefficient implementation of summing up all the factors
         // in a very large number.
@@ -74,16 +62,14 @@ int run_program(int initial_r0, int ip_reg)
                     reg[0] += reg[3];
 
             // Jump past the rest of the old, slow code.
-            reg[1] = 16;
+            ip = 16;
         }
         else
         {
-            do_instruction(program[ip].opcode, program[ip].a, program[ip].b, program[ip].c);
+            do_instruction(program[ip]);
         }
 
-        ip = reg[ip_reg];
-        ip++;
-        if (ip >= program.size())
+        if (++ip >= program.size())
             break;
     }
 
@@ -94,14 +80,13 @@ int main()
 {
     std::ifstream file("input.txt");
 
-    std::string pound_ip = "#ip";
-    int ip_reg, ip = 0;
+    auto pound_ip = "#ip"s, mnemonic = ""s;
+    auto ip_reg = 0, a = 0, b = 0, c = 0;
+
     file >> pound_ip >> ip_reg;
 
-    std::string instruction;
-    int a, b, c;
-    while (file >> instruction >> a >> b >> c)
-        program.push_back(Instruction{ instruction, a, b, c });
+    while (file >> mnemonic >> a >> b >> c)
+        program.push_back(Instruction{ mnemonic, a, b, c });
 
     auto part1 = run_program(0, ip_reg);
     auto part2 = run_program(1, ip_reg);

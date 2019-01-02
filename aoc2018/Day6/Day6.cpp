@@ -7,48 +7,48 @@
 #include <algorithm>
 #include <cassert>
 
-void read_input(std::vector<std::pair<int, int>> &initial, unsigned &left, unsigned &top, unsigned &right, unsigned &bottom)
+using Coordinates = std::pair<int, int>;
+
+auto read_input(const std::string &filename, Coordinates &top_left, Coordinates &bottom_right)
 {
-    left = std::numeric_limits<unsigned>::max();
-    right = std::numeric_limits<unsigned>::min();
-    top = std::numeric_limits<unsigned>::max();
-    bottom = std::numeric_limits<unsigned>::min();
-    initial.clear();
-
-    std::ifstream file("input.txt");
-
-    auto x = 0U, y = 0U;
+    std::ifstream file(filename);
+    auto x = 0, y = 0;
     auto comma = ',';
+    std::map<Coordinates, int> retval;
+    auto area = 0U;
+
+    top_left = std::make_pair(std::numeric_limits<unsigned>::max(), std::numeric_limits<unsigned>::max());
+    bottom_right = std::make_pair(std::numeric_limits<unsigned>::min(), std::numeric_limits<unsigned>::min());
 
     while (file >> x >> comma >> y)
     {
-        auto loc = std::make_pair(y, x);
-        initial.push_back(loc);
+        retval[std::make_pair(x, y)] = ++area;
 
-        left = std::min(x, left);
-        right = std::max(x, right);
-        top = std::min(y, top);
-        bottom = std::max(y, bottom);
+        top_left = { std::min(x, top_left.first), std::min(y, top_left.second) };
+        bottom_right = { std::max(x, bottom_right.first), std::max(y, bottom_right.second) };
     }
+
+    return retval;
 }
 
-auto get_manhattan_dist(int x1, int y1, int x2, int y2)
+auto get_manhattan_dist(const Coordinates &c1, const Coordinates &c2)
 {
-    return abs(x1 - x2) + abs(y1 - y2);
+    return static_cast<unsigned>(abs(c1.first - c2.first) + abs(c1.second - c2.second));
 }
 
-auto get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vector<std::pair<int, int>> &initial)
+auto get_closest_area(const Coordinates &loc, std::map<Coordinates, int> &grid)
 {
     auto closest = std::numeric_limits<unsigned>::max();
     auto closest_area = -1;
 
-    for (auto &item : initial)
+    for (auto &item : grid)
     {
-        auto dist = get_manhattan_dist(item.second, item.first, x, y);
+        auto dist = get_manhattan_dist(item.first, loc);
+
         if (dist < closest)
         {
             closest = dist;
-            closest_area = grid[item.first][item.second];
+            closest_area = item.second;
         }
         else if (dist == closest)
         {
@@ -59,59 +59,48 @@ auto get_closest_area(unsigned x, unsigned y, int grid[500][500], const std::vec
     return closest_area;
 }
 
-auto do_part1()
+auto do_part1(const std::string &filename)
 {
-    // TODO: Make this a map of x,y -> area # and eliminate the initial vector?
-    int initial_grid[500][500] = { 0 };
-    auto left = 0U, top = 0U, right = 0U, bottom = 0U;
-    std::vector<std::pair<int, int>> initial;
+    Coordinates top_left, bottom_right;
+    auto input = read_input(filename, top_left, bottom_right);
 
-    read_input(initial, left, top, right, bottom);
+    std::map<unsigned, unsigned> area_counts;
+    std::set<unsigned> infinite_areas;
 
-    // put initial coords into grid
-    auto area = 1U;
-    for (auto item : initial)
-        initial_grid[item.first][item.second] = area++;
-
-    // count area sizes and also mark those that intersect with outer bounds (infinite expansion)
-    std::map<char, unsigned> counts;
-    std::set<char> infinite;
-    for (auto y = top; y <= bottom; y++)
-        for (auto x = left; x <= right; x++)
+    for (auto y = top_left.second; y <= bottom_right.second; y++)
+        for (auto x = top_left.first; x <= bottom_right.first; x++)
         {
-            auto a = initial_grid[y][x];
-            if (!a)
-                a = get_closest_area(x, y, initial_grid, initial);
+            auto a = get_closest_area(std::make_pair(x, y), input);
 
             if (a != -1)
             {
-                counts[a]++;
-                if (y == top || y == bottom || x == left || x == right)
-                    infinite.insert(a);
+                area_counts[a]++;
+                if (y == top_left.second || y == bottom_right.second || x == top_left.first || x == bottom_right.first)
+                    infinite_areas.insert(a);
             }
         }
 
-    auto max = 0U;
-    for (auto &item : counts)
-        if (item.second > max && infinite.find(item.first) == infinite.end())
-            max = item.second;
+    auto max_finite = 0U;
+    for (auto &item : area_counts)
+        if (item.second > max_finite && infinite_areas.find(item.first) == infinite_areas.end())
+            max_finite = item.second;
 
-    return max;
+    return max_finite;
 }
 
-auto do_part2()
+auto do_part2(const std::string &filename)
 {
-    auto left = 0U, top = 0U, right = 0U, bottom = 0U;
-    std::vector<std::pair<int, int>> initial;
-    read_input(initial, left, top, right, bottom);
+    Coordinates top_left, bottom_right;
+    auto input = read_input(filename, top_left, bottom_right);
 
     auto count = 0U;
-    for (auto y = top; y <= bottom; y++)
-        for (auto x = left; x <= right; x++)
+    for (auto y = top_left.second; y <= bottom_right.second; y++)
+        for (auto x = top_left.first; x <= bottom_right.first; x++)
         {
             auto dist_from_all_areas = 0;
-            for (auto &item : initial)
-                dist_from_all_areas += get_manhattan_dist(item.second, item.first, x, y);
+            for (auto &item : input)
+                dist_from_all_areas += get_manhattan_dist(item.first, std::make_pair(x, y));
+
             if (dist_from_all_areas < 10000)
                 count++;
         }
@@ -121,8 +110,8 @@ auto do_part2()
 
 int main()
 {
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    auto part1 = do_part1("input.txt");
+    auto part2 = do_part2("input.txt");
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;

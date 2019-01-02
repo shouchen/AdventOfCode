@@ -1,157 +1,138 @@
 #include "stdafx.h"
-#include <iostream>
 #include <fstream>
 #include <vector>
-#include <set>
-#include <map>
-#include <list>
-#include <queue>
-#include <string>
-#include <numeric>
 #include <algorithm>
 #include <cassert>
+#include "Nanobot.h"
 
-struct Nanobot
+auto get_locations_reachable_by_most_bots(std::vector<Nanobot> &nanobots, std::vector<Coordinates> &locs, long long buffer = 0)
 {
-    int x, y, z;
-    int radius;
-};
+    std::vector<Coordinates> next_locs;
+    auto max_bots = 0LL;
 
-std::vector<Nanobot> nanobots;
-int strongest = 0;
+    for (auto &loc : locs)
+    {
+        auto num_bots = std::count_if(
+            nanobots.begin(), nanobots.end(),
+            [&](const Nanobot &n) { return n.reaches(loc, buffer); });
 
-int min_x = std::numeric_limits<int>::max();
-int max_x = std::numeric_limits<int>::min();
-int min_y = std::numeric_limits<int>::max();
-int max_y = std::numeric_limits<int>::min();
-int min_z = std::numeric_limits<int>::max();
-int max_z = std::numeric_limits<int>::min();
+        if (num_bots > max_bots)
+        {
+            max_bots = num_bots;
+            next_locs.clear();
+            next_locs.push_back(loc);
+        }
+        else if (num_bots == max_bots && num_bots != 0)
+            next_locs.push_back(loc);
+    }
 
-//pos=<0,0,0>, r=4
-
-bool in_range_of_strongest(Nanobot &n)
-{
-    auto x = n.x - nanobots[strongest].x; if (x < 0) x = -x;
-    auto y = n.y - nanobots[strongest].y; if (y < 0) y = -y;
-    auto z = n.z - nanobots[strongest].z; if (z < 0) z = -z;
-
-    return (x + y + z <= nanobots[strongest].radius);
+    return next_locs;
 }
 
-bool in_range_of_each_other(Nanobot &n1, Nanobot &n2)
+void sort_and_remove_dups(std::vector<Coordinates> &locs)
 {
-    auto x = n1.x - n2.x; if (x < 0) x = -x;
-    auto y = n1.y - n2.y; if (y < 0) y = -y;
-    auto z = n1.z - n2.z; if (z < 0) z = -z;
-
-    return (x + y + z <= n1.radius + n2.radius);
+    std::sort(locs.begin(), locs.end());
+    auto last = std::unique(locs.begin(), locs.end());
+    locs.erase(last, locs.end());
 }
 
-unsigned get_num_nanobots_in_range(int x, int y, int z)
+void initialize_part2(std::vector<Nanobot> &nanobots, long long &scale, std::vector<Coordinates> &locs)
 {
-    unsigned count = 0;
+    Coordinates min, max;
 
     for (auto &n : nanobots)
     {
-        auto xdist = n.x - x; if (x < 0) x = -x;
-        auto ydist = n.y - y; if (y < 0) y = -y;
-        auto zdist = n.z - z; if (z < 0) z = -z;
-
-        if (xdist + ydist + zdist <= n.radius)
-            count++;
+        min.x = std::min(min.x, n.loc.x - n.r);
+        max.x = std::max(max.x, n.loc.x + n.r + 1);
+        min.y = std::min(min.y, n.loc.y - n.r);
+        max.y = std::max(max.y, n.loc.y + n.r + 1);
+        min.z = std::min(min.z, n.loc.z - n.r);
+        max.z = std::max(max.z, n.loc.z + n.r + 1);
     }
+
+    scale = 1LL << static_cast<int>(std::log2(max.x - min.x + max.y - min.y + max.z - min.z) + 1);
+
+    min = { (min.x / scale) * scale, (min.y / scale) * scale,  (min.z / scale) * scale };
+    max = { (max.x / scale + 1) * scale, (max.y / scale + 1) * scale,  (max.z / scale + 1) * scale };
+    auto num_slices = Coordinates{ (max.x - min.x) / scale, (max.y - min.y) / scale, (max.z - min.z) / scale };
+
+    for (auto i = 0; i < num_slices.x; i++)
+        for (auto j = 0; j < num_slices.y; j++)
+            for (auto k = 0; k < num_slices.z; k++)
+                locs.push_back({ min.x + i * scale, min.y + j * scale, min.z + k * scale });
+
+    locs = get_locations_reachable_by_most_bots(nanobots, locs, scale);
+    scale >>= 1;
+}
+
+auto read_input(const std::string &filename)
+{
+    std::ifstream file(filename);
+    Nanobot n;
+
+    std::vector<Nanobot> nanobots;
+    while (file >> n)
+        nanobots.push_back(n);
+
+    return nanobots;
+}
+
+auto do_part1(std::vector<Nanobot> &nanobots)
+{
+    Nanobot *strongest = nullptr;
+    for (auto &nanobot : nanobots)
+        if (!strongest || nanobot.r > strongest->r)
+            strongest = &nanobot;
+
+    auto count = 0U;
+    for (auto &nanobot : nanobots)
+        if (strongest->reaches(nanobot.loc))
+            count++;
 
     return count;
 }
 
-std::map<std::pair<std::pair<int, int>, int>, int> num_in_range;  //((x, y), z) -> dist
-unsigned max_in_range = 0;
-
-void eval(int x, int y, int z)
+auto do_part2(std::vector<Nanobot> &nanobots)
 {
-    //std::cout << "Eval " << x << " " << y << " " << z << std::endl;
+    auto scale = 0LL;
+    std::vector<Coordinates> locs;
 
-    auto index = std::make_pair(std::make_pair(x, y), z);
-    unsigned num = 0;
-    if (num_in_range.find(index) == num_in_range.end())
+    initialize_part2(nanobots, scale, locs);
+
+    while (scale >>= 1)
     {
-        num = num_in_range[index] = get_num_nanobots_in_range(x, y, z);
-    }
-    else
-    {
-        num = num_in_range[index];
+        std::vector<Coordinates> next_locs;
+
+        for (auto &loc : locs)
+            for (auto i = -scale; i <= scale; i += scale)
+                for (auto j = -scale; j <= scale; j += scale)
+                    for (auto k = -scale; k <= scale; k += scale)
+                        next_locs.push_back({ loc.x + i, loc.y + j, loc.z + k });
+
+        sort_and_remove_dups(next_locs);
+        locs = get_locations_reachable_by_most_bots(nanobots, next_locs, scale);
+        next_locs.clear();
     }
 
-    if (num > max_in_range)
-    {
-        max_in_range = num;
-        std::cout << "New Max" << std::endl;
-    }
+    auto min_distance = std::numeric_limits<long long>::max();
+    for (auto &loc : get_locations_reachable_by_most_bots(nanobots, locs))
+        min_distance = std::min(min_distance, loc.dist_from_origin());
+
+    return min_distance;
 }
 
 int main()
 {
-    std::ifstream file("input.txt");
-    int x, y, z, radius;
-    char c, comma;
+    auto nanobots = read_input("input.txt");
 
-    while (file >> c >> c >> c >> c >> c >> x >> comma >> y >> comma >> z >> c >> comma >> c >> c >> radius)
-    {
-        nanobots.push_back(Nanobot{ x, y, z, radius });
-        if (nanobots.back().radius > nanobots[strongest].radius)
-            strongest = nanobots.size() - 1;
-        min_x = std::min(min_x, x);
-        max_x = std::max(max_x, x);
-        min_y = std::min(min_y, y);
-        max_y = std::max(max_y, y);
-        min_z = std::min(min_z, z);
-        max_z = std::max(max_z, z);
-    }
+    auto part1 = do_part1(nanobots);
+    auto part2 = do_part2(nanobots);
 
-    unsigned count = 0;
-    for (int i = 0; i < nanobots.size(); i++)
-    {
-        //if (i == strongest)
-        //    continue;
-        if (in_range_of_strongest(nanobots[i]))
-        {
-            std::cout << "Part 1: " << i << std::endl;
-            count++;
-        }
-    }
+    std::cout << "Part 1: " << part1 << std::endl;
+    std::cout << "Part 2: " << part2 << std::endl;
 
-    // PART 2
-    std::vector<unsigned> intersections;
-    unsigned max_intersections = 0;
-    for (int i = 0; i < nanobots.size(); i++)
-    {
-        unsigned count = 0;
-        for (int j = 0; j < nanobots.size(); j++)
-        {
-            if (i == j) continue;
-
-            if (in_range_of_each_other(nanobots[i], nanobots[j]))
-            {
-                count++;
-            }
-        }
-
-        std::cout << "Bot " << i << " intersects " << count << " others" << std::endl;
-        intersections.push_back(count);
-        max_intersections = std::max(max_intersections, count);
-    }
-
-    std::cout << "Max intersections = " << max_intersections << std::endl;
-    for (int i = 0; i < nanobots.size(); i++)
-    {
-        if (intersections[i] == max_intersections)
-            std::cout << i << " ";
-    }
-    std::cout << std::endl;
-
-    // Bot 740 has 991 intersections (the max)
+    assert(part1 == 780);
+    assert(part2 == 110841112);
 
     return 0;
 }
-// 780
-// 110841112
