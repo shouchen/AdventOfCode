@@ -158,21 +158,19 @@ auto do_part2()
             break;
         }
         
-        std::vector<std::pair<int, int>> next_loc { { x - 1, y }, { x + 1, y }, { x, y - 1 }, { x, y + 1 } };
-        
+        std::vector<Index> next_loc { { x - 1, y, tools }, { x + 1, y, tools }, { x, y - 1, tools }, { x, y + 1, tools } };
         for (const auto &next : next_loc)
         {
-            if (next.first < 0 || next.second < 0 ||
-                !allow_with_tools(next.first, next.second, tools))
+            if (next.x < 0 || next.y < 0 ||
+                !allow_with_tools(next.x, next.y, next.tools))
             {
                 continue;
             }
 
-            Index next_index{ next.first, next.second, tools };
-            if (!distmap.count(next_index) || distmap[next_index] > distmap[index] + 1)
+            if (!distmap.count(next) || distmap[next] > distmap[index] + 1)
             {
-                distmap[next_index] = distmap[index] + 1;
-                q.push({ distmap[index] + 1, next_index.x, next_index.y, next_index.tools });
+                distmap[next] = distmap[index] + 1;
+                q.push({ distmap[index] + 1, next.x, next.y, next.tools });
             }
         }
 
