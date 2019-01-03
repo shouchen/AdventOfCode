@@ -144,10 +144,10 @@ auto do_part2()
         q.pop();
 
         auto dist = state.dist;
+        auto index = state.xytools;
+
         auto x = state.xytools.x, y = state.xytools.y;
         auto tools = state.xytools.tools;
-
-        auto index = Index{ x, y, tools };
 
         if (state.dist > distmap[index])
             continue;
@@ -158,8 +158,8 @@ auto do_part2()
             break;
         }
         
-        std::vector<Index> next_loc { { x - 1, y, tools }, { x + 1, y, tools }, { x, y - 1, tools }, { x, y + 1, tools } };
-        for (const auto &next : next_loc)
+        std::vector<Index> next_indices { { x - 1, y, tools }, { x + 1, y, tools }, { x, y - 1, tools }, { x, y + 1, tools } };
+        for (const auto &next : next_indices)
         {
             if (next.x < 0 || next.y < 0 ||
                 !allow_with_tools(next.x, next.y, next.tools))
@@ -167,10 +167,11 @@ auto do_part2()
                 continue;
             }
 
-            if (!distmap.count(next) || distmap[next] > distmap[index] + 1)
+            auto cost = 1;
+            if (!distmap.count(next) || distmap[next] > distmap[index] + cost)
             {
-                distmap[next] = distmap[index] + 1;
-                q.push({ distmap[index] + 1, next.x, next.y, next.tools });
+                distmap[next] = distmap[index] + cost;
+                q.push({ distmap[index] + 1, { next.x, next.y, next.tools } });
             }
         }
 
@@ -179,11 +180,12 @@ auto do_part2()
         else if (get_type(x, y) == '=') next_tool = (tools == 'C') ? 'N' : 'C';
         else if (get_type(x, y) == '|') next_tool = (tools == 'T') ? 'N' : 'T';
 
-        Index next_index{ x, y, next_tool };
-        if (!distmap.count(next_index) || distmap[next_index] > distmap[index] + 7)
+        Index next{ x, y, next_tool };
+        auto cost = 7;
+        if (!distmap.count(next) || distmap[next] > distmap[index] + cost)
         {
-            distmap[next_index] = distmap[index] + 7;
-            q.push({ distmap[index] + 7, next_index.x, next_index.y, next_index.tools });
+            distmap[next] = distmap[index] + cost;
+            q.push({ distmap[index] + 7, { next.x, next.y, next.tools } });
         }
     }
 
