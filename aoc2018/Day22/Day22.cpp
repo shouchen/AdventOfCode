@@ -43,9 +43,9 @@ int get_geologic_index(int x, int y)
     if (geologic_index_cache.find(loc) == geologic_index_cache.end())
     {
         if (x == 0 && y == 0)
-            geologic_index_cache[loc] = 0; // rule 1
+            geologic_index_cache[loc] = 0;
         else if (x == target_x && y == target_y)
-            geologic_index_cache[loc] = 0; // rule2
+            geologic_index_cache[loc] = 0;
         else if (y == 0)
             geologic_index_cache[loc] = x * 16807;
         else if (x == 0)
@@ -80,50 +80,48 @@ auto allow_with_tools(int x, int y, char tools)
     case '.': return tools == 'T' || tools == 'C';
     case '=': return tools == 'C' || tools == 'N';
     case '|': return tools == 'T' || tools == 'N';
+    default: return false;
     }
-
-    return false;
 }
 
 struct State
 {
-    int cost_so_far;
-    int x, y;
+    int dist, x, y;
     char tools;
-};
 
-bool operator>(const State &lhs, const State &rhs)
-{
-    if (lhs.cost_so_far > rhs.cost_so_far) return true;
-    if (lhs.cost_so_far < rhs.cost_so_far) return false;
-    if (lhs.x > rhs.x) return true;
-    if (lhs.x < rhs.x) return false;
-    if (lhs.y > rhs.y) return true;
-    if (lhs.y < rhs.y) return false;
-    return lhs.tools > rhs.tools;
-}
+    bool operator>(const State &other) const
+    {
+        if (dist > other.dist) return true;
+        if (dist < other.dist) return false;
+        if (x > other.x) return true;
+        if (x < other.x) return false;
+        if (y > other.y) return true;
+        if (y < other.y) return false;
+        return tools > other.tools;
+    }
+};
 
 struct Index
 {
     int x, y;
     char tools;
+
+    bool operator<(const Index &other) const
+    {
+        if (x < other.x) return true;
+        if (x > other.x) return false;
+        if (y < other.y) return true;
+        if (y > other.y) return false;
+        if (tools < other.tools) return true;
+        if (tools > other.tools) return false;
+        return false;
+    }
+
+    bool operator==(const Index &other) const
+    {
+        return x == other.x && y == other.y && tools == other.tools;
+    }
 };
-
-bool operator<(const Index &lhs, const Index &rhs)
-{
-    if (lhs.x < rhs.x) return true;
-    if (lhs.x > rhs.x) return false;
-    if (lhs.y < rhs.y) return true;
-    if (lhs.y > rhs.y) return false;
-    if (lhs.tools < rhs.tools) return true;
-    if (lhs.tools > rhs.tools) return false;
-    return false;
-}
-
-bool operator==(const Index &lhs, const Index &rhs)
-{
-    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.tools == rhs.tools;
-}
 
 auto do_part2()
 {
@@ -142,7 +140,7 @@ auto do_part2()
 
         auto index = Index{ state.x, state.y, state.tools };
 
-        if (state.cost_so_far > dist[index])
+        if (state.dist > dist[index])
             continue;
 
         if (index == Index{ target_x, target_y, 'T' })
@@ -198,4 +196,3 @@ int main()
 
     return 0;
 }
-
