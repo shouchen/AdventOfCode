@@ -84,23 +84,6 @@ auto allow_with_tools(int x, int y, char tools)
     }
 }
 
-struct State
-{
-    int dist, x, y;
-    char tools;
-
-    bool operator>(const State &other) const
-    {
-        if (dist > other.dist) return true;
-        if (dist < other.dist) return false;
-        if (x > other.x) return true;
-        if (x < other.x) return false;
-        if (y > other.y) return true;
-        if (y < other.y) return false;
-        return tools > other.tools;
-    }
-};
-
 struct Index
 {
     int x, y;
@@ -117,19 +100,41 @@ struct Index
         return false;
     }
 
+    bool operator>(const Index &other) const
+    {
+        if (x > other.x) return true;
+        if (x < other.x) return false;
+        if (y > other.y) return true;
+        if (y < other.y) return false;
+        return tools > other.tools;
+    }
+
     bool operator==(const Index &other) const
     {
         return x == other.x && y == other.y && tools == other.tools;
     }
 };
 
+struct State
+{
+    int dist;
+    Index xytools;
+
+    bool operator>(const State &other) const
+    {
+        if (dist > other.dist) return true;
+        if (dist < other.dist) return false;
+        return xytools > other.xytools;
+    }
+};
+
 auto do_part2()
 {
-    std::map<Index, int> dist;
+    std::map<Index, int> distmap;
     std::priority_queue<State, std::vector<State>, std::greater<State>> q;
 
-    q.push(State{ 0, 0, 0, 'T' });
-    dist[Index{ 0, 0, 'T' }] = 0;
+    q.push(State{ 0, { 0, 0, 'T' } });
+    distmap[Index{ 0, 0, 'T' }] = 0;
 
     auto retval = 0;
 
@@ -138,45 +143,49 @@ auto do_part2()
         State state = q.top();
         q.pop();
 
-        auto index = Index{ state.x, state.y, state.tools };
+        auto dist = state.dist;
+        auto x = state.xytools.x, y = state.xytools.y;
+        auto tools = state.xytools.tools;
 
-        if (state.dist > dist[index])
+        auto index = Index{ x, y, tools };
+
+        if (state.dist > distmap[index])
             continue;
 
         if (index == Index{ target_x, target_y, 'T' })
         {
-            retval = dist[index];
+            retval = distmap[index];
             break;
         }
         
-        std::vector<std::pair<int, int>> next_loc { { state.x - 1, state.y }, { state.x + 1, state.y }, { state.x, state.y - 1 }, { state.x, state.y + 1 } };
+        std::vector<std::pair<int, int>> next_loc { { x - 1, y }, { x + 1, y }, { x, y - 1 }, { x, y + 1 } };
         
         for (const auto &next : next_loc)
         {
-            if (next.first < 0 || next.second < 0)
-                continue;
-
-            if (!allow_with_tools(next.first, next.second, state.tools))
-                continue;
-
-            Index next_index{ next.first, next.second, state.tools };
-            if (!dist.count(next_index) || dist[next_index] > dist[index] + 1)
+            if (next.first < 0 || next.second < 0 ||
+                !allow_with_tools(next.first, next.second, tools))
             {
-                dist[next_index] = dist[index] + 1;
-                q.push({ dist[index] + 1, next_index.x, next_index.y, next_index.tools });
+                continue;
+            }
+
+            Index next_index{ next.first, next.second, tools };
+            if (!distmap.count(next_index) || distmap[next_index] > distmap[index] + 1)
+            {
+                distmap[next_index] = distmap[index] + 1;
+                q.push({ distmap[index] + 1, next_index.x, next_index.y, next_index.tools });
             }
         }
 
         auto next_tool = ' ';
-        if (get_type(state.x, state.y) == '.') next_tool = (state.tools == 'T') ? 'C' : 'T';
-        else if (get_type(state.x, state.y) == '=') next_tool = (state.tools == 'C') ? 'N' : 'C';
-        else if (get_type(state.x, state.y) == '|') next_tool = (state.tools == 'T') ? 'N' : 'T';
+        if (get_type(x, y) == '.') next_tool = (tools == 'T') ? 'C' : 'T';
+        else if (get_type(x, y) == '=') next_tool = (tools == 'C') ? 'N' : 'C';
+        else if (get_type(x, y) == '|') next_tool = (tools == 'T') ? 'N' : 'T';
 
-        Index next_index{ state.x, state.y, next_tool };
-        if (!dist.count(next_index) || dist[next_index] > dist[index] + 7)
+        Index next_index{ x, y, next_tool };
+        if (!distmap.count(next_index) || distmap[next_index] > distmap[index] + 7)
         {
-            dist[next_index] = dist[index] + 7;
-            q.push({ dist[index] + 7, next_index.x, next_index.y, next_index.tools });
+            distmap[next_index] = distmap[index] + 7;
+            q.push({ distmap[index] + 7, next_index.x, next_index.y, next_index.tools });
         }
     }
 
