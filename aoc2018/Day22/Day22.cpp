@@ -12,7 +12,7 @@ int depth = 5913, target_x = 8, target_y = 701;
 int get_geologic_index(int x, int y);
 
 std::map<std::pair<int, int>, int> erosion_level_cache;
-int get_erosion_level(int x, int y)
+auto get_erosion_level(int x, int y)
 {
     auto loc = std::make_pair(x, y);
     if (erosion_level_cache.find(loc) == erosion_level_cache.end())
@@ -22,7 +22,7 @@ int get_erosion_level(int x, int y)
 }
 
 std::map<std::pair<int, int>, char> type_cache;
-char get_type(int x, int y)
+auto get_type(int x, int y)
 {
     auto loc = std::make_pair(x, y);
     if (type_cache.find(loc) == type_cache.end())
@@ -57,7 +57,7 @@ int get_geologic_index(int x, int y)
     return geologic_index_cache[loc];
 }
 
-unsigned do_part1()
+auto do_part1()
 {
     unsigned total = 0;
     for (auto row = 0; row <= target_y; row++)
@@ -73,21 +73,24 @@ unsigned do_part1()
     return total;
 }
 
-auto allow_with_tools(int x, int y, char tools)
-{
-    switch (get_type(x, y))
-    {
-    case '.': return tools == 'T' || tools == 'C';
-    case '=': return tools == 'C' || tools == 'N';
-    case '|': return tools == 'T' || tools == 'N';
-    default: return false;
-    }
-}
-
 struct Index
 {
     int x, y;
     char tools;
+
+    auto allowed() const
+    {
+        if (x < 0 || y < 0)
+            return false;
+
+        switch (get_type(x, y))
+        {
+        case '.': return tools == 'T' || tools == 'C';
+        case '=': return tools == 'C' || tools == 'N';
+        case '|': return tools == 'T' || tools == 'N';
+        default: return false;
+        }
+    }
 
     bool operator<(const Index &other) const
     {
@@ -95,9 +98,7 @@ struct Index
         if (x > other.x) return false;
         if (y < other.y) return true;
         if (y > other.y) return false;
-        if (tools < other.tools) return true;
-        if (tools > other.tools) return false;
-        return false;
+        return tools < other.tools;
     }
 
     bool operator>(const Index &other) const
@@ -118,74 +119,56 @@ struct Index
 struct State
 {
     int dist;
-    Index xytools;
+    Index index;
 
     bool operator>(const State &other) const
     {
         if (dist > other.dist) return true;
         if (dist < other.dist) return false;
-        return xytools > other.xytools;
+        return index > other.index;
     }
 };
 
 auto do_part2()
 {
-    std::map<Index, int> distmap;
+    std::map<Index, int> dist;
     std::priority_queue<State, std::vector<State>, std::greater<State>> q;
 
-    q.push(State{ 0, { 0, 0, 'T' } });
-    distmap[Index{ 0, 0, 'T' }] = 0;
-
+    const auto target = Index{ target_x, target_y, 'T' };
     auto retval = 0;
 
+    auto curr = Index{ 0, 0, 'T' };
+    q.push({ 0, curr });
+    dist[curr] = 0;
+    
     while (!q.empty())
     {
-        State state = q.top();
+        curr = q.top().index;
         q.pop();
 
-        auto dist = state.dist;
-        auto index = state.xytools;
-
-        auto x = state.xytools.x, y = state.xytools.y;
-        auto tools = state.xytools.tools;
-
-        if (state.dist > distmap[index])
-            continue;
-
-        if (index == Index{ target_x, target_y, 'T' })
+        if (curr == target)
         {
-            retval = distmap[index];
+            retval = dist[curr];
             break;
         }
         
-        std::vector<Index> next_indices { { x - 1, y, tools }, { x + 1, y, tools }, { x, y - 1, tools }, { x, y + 1, tools } };
+        std::vector<Index> next_indices {
+            { curr.x - 1, curr.y, curr.tools }, { curr.x + 1, curr.y, curr.tools },
+            { curr.x, curr.y - 1, curr.tools }, { curr.x, curr.y + 1, curr.tools },
+            { curr.x, curr.y, 'C' }, { curr.x, curr.y, 'N' }, { curr.x, curr.y, 'T' }
+        };
+
         for (const auto &next : next_indices)
         {
-            if (next.x < 0 || next.y < 0 ||
-                !allow_with_tools(next.x, next.y, next.tools))
-            {
+            if (next == curr || !next.allowed())
                 continue;
-            }
 
-            auto cost = 1;
-            if (!distmap.count(next) || distmap[next] > distmap[index] + cost)
+            auto cost = (curr.tools == next.tools) ? 1 : 7;
+            if (!dist.count(next) || dist[curr] + cost < dist[next])
             {
-                distmap[next] = distmap[index] + cost;
-                q.push({ distmap[index] + 1, { next.x, next.y, next.tools } });
+                dist[next] = dist[curr] + cost;
+                q.push({ dist[curr] + cost, { next.x, next.y, next.tools } });
             }
-        }
-
-        auto next_tool = ' ';
-        if (get_type(x, y) == '.') next_tool = (tools == 'T') ? 'C' : 'T';
-        else if (get_type(x, y) == '=') next_tool = (tools == 'C') ? 'N' : 'C';
-        else if (get_type(x, y) == '|') next_tool = (tools == 'T') ? 'N' : 'T';
-
-        Index next{ x, y, next_tool };
-        auto cost = 7;
-        if (!distmap.count(next) || distmap[next] > distmap[index] + cost)
-        {
-            distmap[next] = distmap[index] + cost;
-            q.push({ distmap[index] + 7, { next.x, next.y, next.tools } });
         }
     }
 
