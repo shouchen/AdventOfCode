@@ -40,17 +40,6 @@ struct Cave
 {
     Cave(int depth, const Index &target) : depth(depth), target(target) {}
 
-    std::map<std::pair<int, int>, int> erosion_level_cache;
-    auto get_erosion_level(int x, int y)
-    {
-        auto loc = std::make_pair(x, y);
-        if (erosion_level_cache.find(loc) == erosion_level_cache.end())
-            erosion_level_cache[loc] = (get_geologic_index(x, y) + depth) % 20183;
-
-        return erosion_level_cache[loc];
-    }
-
-    std::map<std::pair<int, int>, char> type_cache;
     auto get_type(int x, int y)
     {
         auto loc = std::make_pair(x, y);
@@ -65,7 +54,32 @@ struct Cave
         return type_cache[loc];
     }
 
-    std::map<std::pair<int, int>, int> geologic_index_cache;
+    auto is_allowed(const Index &index)
+    {
+        if (index.x < 0 || index.y < 0)
+            return false;
+
+        switch (get_type(index.x, index.y))
+        {
+        case '.': return index.tools == 'T' || index.tools == 'C';
+        case '=': return index.tools == 'C' || index.tools == 'N';
+        case '|': return index.tools == 'T' || index.tools == 'N';
+        default: return false;
+        }
+    }
+
+    Index target;
+
+private:
+    int get_erosion_level(int x, int y)
+    {
+        auto loc = std::make_pair(x, y);
+        if (erosion_level_cache.find(loc) == erosion_level_cache.end())
+            erosion_level_cache[loc] = (get_geologic_index(x, y) + depth) % 20183;
+
+        return erosion_level_cache[loc];
+    }
+
     int get_geologic_index(int x, int y)
     {
         auto loc = std::make_pair(x, y);
@@ -86,22 +100,10 @@ struct Cave
         return geologic_index_cache[loc];
     }
 
-    auto is_allowed(const Index &index)
-    {
-        if (index.x < 0 || index.y < 0)
-            return false;
-
-        switch (get_type(index.x, index.y))
-        {
-        case '.': return index.tools == 'T' || index.tools == 'C';
-        case '=': return index.tools == 'C' || index.tools == 'N';
-        case '|': return index.tools == 'T' || index.tools == 'N';
-        default: return false;
-        }
-    }
-
     int depth;
-    Index target;
+    std::map<std::pair<int, int>, int> erosion_level_cache;
+    std::map<std::pair<int, int>, char> type_cache;
+    std::map<std::pair<int, int>, int> geologic_index_cache;
 };
 
 auto do_part1(Cave &cave)
@@ -120,21 +122,21 @@ auto do_part1(Cave &cave)
     return total;
 }
 
-struct State
-{
-    int dist;
-    Index index;
-
-    bool operator>(const State &other) const
-    {
-        if (dist > other.dist) return true;
-        if (dist < other.dist) return false;
-        return index > other.index;
-    }
-};
-
 auto do_part2(Cave &cave)
 {
+    struct State
+    {
+        int dist;
+        Index index;
+
+        bool operator>(const State &other) const
+        {
+            if (dist > other.dist) return true;
+            if (dist < other.dist) return false;
+            return index > other.index;
+        }
+    };
+
     std::map<Index, int> dist;
     std::priority_queue<State, std::vector<State>, std::greater<State>> q;
     auto retval = 0;
