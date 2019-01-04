@@ -167,7 +167,7 @@ auto do_part2()
             if (!dist.count(next) || dist[curr] + cost < dist[next])
             {
                 dist[next] = dist[curr] + cost;
-                q.push({ dist[curr] + cost, { next.x, next.y, next.tools } });
+                q.push({ dist[next], { next.x, next.y, next.tools } });
             }
         }
     }
