@@ -7,90 +7,10 @@
 #include <functional>
 #include <cassert>
 
-int depth = 5913, target_x = 8, target_y = 701;
-
-int get_geologic_index(int x, int y);
-
-std::map<std::pair<int, int>, int> erosion_level_cache;
-auto get_erosion_level(int x, int y)
-{
-    auto loc = std::make_pair(x, y);
-    if (erosion_level_cache.find(loc) == erosion_level_cache.end())
-        erosion_level_cache[loc] = (get_geologic_index(x, y) + depth) % 20183;
-
-    return erosion_level_cache[loc];
-}
-
-std::map<std::pair<int, int>, char> type_cache;
-auto get_type(int x, int y)
-{
-    auto loc = std::make_pair(x, y);
-    if (type_cache.find(loc) == type_cache.end())
-    {
-        auto el_mod_3 = get_erosion_level(x, y) % 3;
-        if (el_mod_3 == 0) type_cache[loc] = '.';
-        else if (el_mod_3 == 1) type_cache[loc] = '=';
-        else type_cache[loc] = '|';
-    }
-
-    return type_cache[loc];
-}
-
-std::map<std::pair<int, int>, int> geologic_index_cache;
-int get_geologic_index(int x, int y)
-{
-    auto loc = std::make_pair(x, y);
-    if (geologic_index_cache.find(loc) == geologic_index_cache.end())
-    {
-        if (x == 0 && y == 0)
-            geologic_index_cache[loc] = 0;
-        else if (x == target_x && y == target_y)
-            geologic_index_cache[loc] = 0;
-        else if (y == 0)
-            geologic_index_cache[loc] = x * 16807;
-        else if (x == 0)
-            geologic_index_cache[loc] = y * 48271;
-        else
-            geologic_index_cache[loc] = get_erosion_level(x - 1, y) * get_erosion_level(x, y - 1);
-    }
-
-    return geologic_index_cache[loc];
-}
-
-auto do_part1()
-{
-    unsigned total = 0;
-    for (auto row = 0; row <= target_y; row++)
-    {
-        for (auto col = 0; col <= target_x; col++)
-        {
-            char type = get_type(col, row);
-            if (type == '.') total += 0;
-            else if (type == '=') total += 1;
-            else if (type == '|') total += 2;
-        }
-    }
-    return total;
-}
-
 struct Index
 {
     int x, y;
     char tools;
-
-    auto allowed() const
-    {
-        if (x < 0 || y < 0)
-            return false;
-
-        switch (get_type(x, y))
-        {
-        case '.': return tools == 'T' || tools == 'C';
-        case '=': return tools == 'C' || tools == 'N';
-        case '|': return tools == 'T' || tools == 'N';
-        default: return false;
-        }
-    }
 
     bool operator<(const Index &other) const
     {
@@ -116,6 +36,90 @@ struct Index
     }
 };
 
+struct Cave
+{
+    Cave(int depth, const Index &target) : depth(depth), target(target) {}
+
+    std::map<std::pair<int, int>, int> erosion_level_cache;
+    auto get_erosion_level(int x, int y)
+    {
+        auto loc = std::make_pair(x, y);
+        if (erosion_level_cache.find(loc) == erosion_level_cache.end())
+            erosion_level_cache[loc] = (get_geologic_index(x, y) + depth) % 20183;
+
+        return erosion_level_cache[loc];
+    }
+
+    std::map<std::pair<int, int>, char> type_cache;
+    auto get_type(int x, int y)
+    {
+        auto loc = std::make_pair(x, y);
+        if (type_cache.find(loc) == type_cache.end())
+        {
+            auto el_mod_3 = get_erosion_level(x, y) % 3;
+            if (el_mod_3 == 0) type_cache[loc] = '.';
+            else if (el_mod_3 == 1) type_cache[loc] = '=';
+            else type_cache[loc] = '|';
+        }
+
+        return type_cache[loc];
+    }
+
+    std::map<std::pair<int, int>, int> geologic_index_cache;
+    int get_geologic_index(int x, int y)
+    {
+        auto loc = std::make_pair(x, y);
+        if (geologic_index_cache.find(loc) == geologic_index_cache.end())
+        {
+            if (x == 0 && y == 0)
+                geologic_index_cache[loc] = 0;
+            else if (x == target.x && y == target.y)
+                geologic_index_cache[loc] = 0;
+            else if (y == 0)
+                geologic_index_cache[loc] = x * 16807;
+            else if (x == 0)
+                geologic_index_cache[loc] = y * 48271;
+            else
+                geologic_index_cache[loc] = get_erosion_level(x - 1, y) * get_erosion_level(x, y - 1);
+        }
+
+        return geologic_index_cache[loc];
+    }
+
+    auto is_allowed(const Index &index)
+    {
+        if (index.x < 0 || index.y < 0)
+            return false;
+
+        switch (get_type(index.x, index.y))
+        {
+        case '.': return index.tools == 'T' || index.tools == 'C';
+        case '=': return index.tools == 'C' || index.tools == 'N';
+        case '|': return index.tools == 'T' || index.tools == 'N';
+        default: return false;
+        }
+    }
+
+    int depth;
+    Index target;
+};
+
+auto do_part1(Cave &cave)
+{
+    auto total = 0;
+    for (auto row = 0; row <= cave.target.y; row++)
+    {
+        for (auto col = 0; col <= cave.target.x; col++)
+        {
+            char type = cave.get_type(col, row);
+            if (type == '.') total += 0;
+            else if (type == '=') total += 1;
+            else if (type == '|') total += 2;
+        }
+    }
+    return total;
+}
+
 struct State
 {
     int dist;
@@ -129,12 +133,10 @@ struct State
     }
 };
 
-auto do_part2()
+auto do_part2(Cave &cave)
 {
     std::map<Index, int> dist;
     std::priority_queue<State, std::vector<State>, std::greater<State>> q;
-
-    const auto target = Index{ target_x, target_y, 'T' };
     auto retval = 0;
 
     auto curr = Index{ 0, 0, 'T' };
@@ -146,7 +148,7 @@ auto do_part2()
         curr = q.top().index;
         q.pop();
 
-        if (curr == target)
+        if (curr == cave.target)
         {
             retval = dist[curr];
             break;
@@ -160,7 +162,7 @@ auto do_part2()
 
         for (const auto &next : next_indices)
         {
-            if (next == curr || !next.allowed())
+            if (next == curr || !cave.is_allowed(next))
                 continue;
 
             auto cost = (curr.tools == next.tools) ? 1 : 7;
@@ -177,8 +179,10 @@ auto do_part2()
 
 int main()
 {
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    Cave cave(5913, Index{ 8, 701, 'T' });
+
+    auto part1 = do_part1(cave);
+    auto part2 = do_part2(cave);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
