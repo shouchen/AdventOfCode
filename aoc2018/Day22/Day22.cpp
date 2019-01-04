@@ -7,26 +7,25 @@
 #include <functional>
 #include <cassert>
 
+enum RegionType { Rocky = 0, Wet = 1, Narrow = 2};
+enum Tools { Neither = 0, Torch = 1, ClimbingGear = 2 };
+
 struct Index
 {
     int x, y;
-    char tools;
+    Tools tools;
 
     bool operator<(const Index &other) const
     {
-        if (x < other.x) return true;
-        if (x > other.x) return false;
-        if (y < other.y) return true;
-        if (y > other.y) return false;
+        if (x < other.x) return true; else if (x > other.x) return false;
+        if (y < other.y) return true; else if (y > other.y) return false;
         return tools < other.tools;
     }
 
     bool operator>(const Index &other) const
     {
-        if (x > other.x) return true;
-        if (x < other.x) return false;
-        if (y > other.y) return true;
-        if (y < other.y) return false;
+        if (x > other.x) return true; else if (x < other.x) return false;
+        if (y > other.y) return true; else if (y < other.y) return false;
         return tools > other.tools;
     }
 
@@ -40,35 +39,21 @@ struct Cave
 {
     Cave(int depth, const Index &target) : depth(depth), target(target) {}
 
-    auto get_type(int x, int y)
+    RegionType get_type(int x, int y)
     {
         auto loc = std::make_pair(x, y);
         if (type_cache.find(loc) == type_cache.end())
-        {
-            auto el_mod_3 = get_erosion_level(x, y) % 3;
-            if (el_mod_3 == 0) type_cache[loc] = '.';
-            else if (el_mod_3 == 1) type_cache[loc] = '=';
-            else type_cache[loc] = '|';
-        }
+            type_cache[loc] = static_cast<RegionType>(get_erosion_level(x, y) % 3);
 
         return type_cache[loc];
     }
 
-    auto is_allowed(const Index &index)
+    bool is_allowed(const Index &index)
     {
-        if (index.x < 0 || index.y < 0)
-            return false;
-
-        switch (get_type(index.x, index.y))
-        {
-        case '.': return index.tools == 'T' || index.tools == 'C';
-        case '=': return index.tools == 'C' || index.tools == 'N';
-        case '|': return index.tools == 'T' || index.tools == 'N';
-        default: return false;
-        }
+        return index.x >= 0 && index.y >= 0 && get_type(index.x, index.y) != index.tools;
     }
 
-    Index target;
+    const Index target;
 
 private:
     int get_erosion_level(int x, int y)
@@ -101,8 +86,8 @@ private:
     }
 
     int depth;
+    std::map<std::pair<int, int>, RegionType> type_cache;
     std::map<std::pair<int, int>, int> erosion_level_cache;
-    std::map<std::pair<int, int>, char> type_cache;
     std::map<std::pair<int, int>, int> geologic_index_cache;
 };
 
@@ -110,15 +95,9 @@ auto do_part1(Cave &cave)
 {
     auto total = 0;
     for (auto row = 0; row <= cave.target.y; row++)
-    {
         for (auto col = 0; col <= cave.target.x; col++)
-        {
-            char type = cave.get_type(col, row);
-            if (type == '.') total += 0;
-            else if (type == '=') total += 1;
-            else if (type == '|') total += 2;
-        }
-    }
+            total += cave.get_type(col, row);
+
     return total;
 }
 
@@ -131,8 +110,7 @@ auto do_part2(Cave &cave)
 
         bool operator>(const State &other) const
         {
-            if (dist > other.dist) return true;
-            if (dist < other.dist) return false;
+            if (dist > other.dist) return true; else if (dist < other.dist) return false;
             return index > other.index;
         }
     };
@@ -141,7 +119,7 @@ auto do_part2(Cave &cave)
     std::priority_queue<State, std::vector<State>, std::greater<State>> q;
     auto retval = 0;
 
-    auto curr = Index{ 0, 0, 'T' };
+    auto curr = Index{ 0, 0, Torch };
     q.push({ 0, curr });
     dist[curr] = 0;
     
@@ -156,10 +134,10 @@ auto do_part2(Cave &cave)
             break;
         }
         
-        std::vector<Index> next_indices {
+        const std::vector<Index> next_indices {
             { curr.x - 1, curr.y, curr.tools }, { curr.x + 1, curr.y, curr.tools },
             { curr.x, curr.y - 1, curr.tools }, { curr.x, curr.y + 1, curr.tools },
-            { curr.x, curr.y, 'C' }, { curr.x, curr.y, 'N' }, { curr.x, curr.y, 'T' }
+            { curr.x, curr.y, Neither }, { curr.x, curr.y, Torch}, { curr.x, curr.y, ClimbingGear }
         };
 
         for (const auto &next : next_indices)
@@ -181,7 +159,7 @@ auto do_part2(Cave &cave)
 
 int main()
 {
-    Cave cave(5913, Index{ 8, 701, 'T' });
+    Cave cave(5913, Index{ 8, 701, Torch });
 
     auto part1 = do_part1(cave);
     auto part2 = do_part2(cave);
