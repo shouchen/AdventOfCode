@@ -8,29 +8,31 @@
 #include <iterator>
 #include <cassert>
 
+using namespace std::string_literals;
+
 struct TableRow
 {
     unsigned guard = 0;
     char minute[60] = { ' ' };
 };
 
-std::map<std::pair<unsigned, unsigned>, TableRow> table; // maps month+day -> TableRow
+using Table = std::map<std::pair<unsigned, unsigned>, TableRow>; // maps month+day -> TableRow
 
-void read_input(const std::string &filename)
+auto read_input(const std::string &filename)
 {
+    Table table;
+
     static const unsigned days_in_month[] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
     std::ifstream file(filename);
-    unsigned year, month, day, hour, minute;
-    char dash, colon, open_brace, close_brace;
-    std::string a;
-
-    unsigned id;
+    auto id = 0U, year = 0U, month = 0U, day = 0U, hour = 0U, minute = 0U;
+    auto dash = '-', colon = ':', open_brace = '{', close_brace = '}';
+    auto a = ""s;
 
     while (file >> open_brace >> year >> dash >> month >> dash >> day >> hour >> colon >> minute >> close_brace)
     {
-        std::string s, begins, shift, asleep, up;
-        char pound;
+        auto s = ""s, begins = ""s, shift = ""s, asleep = ""s, up = ""s;
+        auto pound = '#';
 
         file >> s;
 
@@ -64,7 +66,7 @@ void read_input(const std::string &filename)
 
     for (auto row : table)
     {
-        bool awake = true;
+        auto awake = true;
         for (auto &c : table[row.first].minute)
         {
             if (c == 'w') awake = true;
@@ -72,12 +74,14 @@ void read_input(const std::string &filename)
             else c = awake ? 'w' : 's';
         }
     }
+
+    return table;
 }
 
-unsigned do_part1()
+unsigned do_part1(Table &table)
 {
     std::map<unsigned, unsigned> total_sleep_per_guard;
-    for (auto item : table)
+    for (const auto item : table)
     {
         auto &table_row = item.second;
         auto id = table_row.guard;
@@ -98,16 +102,14 @@ unsigned do_part1()
 
     // Get cumulative data for the sleepiest guard
     std::array<unsigned, 60> asleep_count;
-    for (auto item : table)
+    for (const auto &item : table)
     {
         auto date = item.first;
         if (table[date].guard == sleepiest_guard)
         {
             for (int i = 0; i < 60; i++)
-            {
                 if (table[date].minute[i] == 's')
                     asleep_count[i]++;
-            }
         }
     }
 
@@ -118,15 +120,15 @@ unsigned do_part1()
     return sleepiest_minute * sleepiest_guard;
 }
 
-unsigned do_part2()
+unsigned do_part2(Table &table)
 {
     std::map<std::pair<unsigned, unsigned>, unsigned> guard_and_minute_to_sleep_count;
-    for (auto &item : table)
+    for (const auto &item : table)
     {
         auto date = item.first;
         auto id = table[date].guard;
 
-        for (int i = 0; i < 60; i++)
+        for (auto i = 0; i < 60; i++)
             if (table[date].minute[i] == 's')
                 guard_and_minute_to_sleep_count[std::make_pair(id, i)]++;
     }
@@ -146,10 +148,10 @@ unsigned do_part2()
 
 int main()
 {
-    read_input("input.txt");
+    auto input = read_input("input.txt");
 
-    auto part1 = do_part1();
-    auto part2 = do_part2();
+    auto part1 = do_part1(input);
+    auto part2 = do_part2(input);
 
     std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
