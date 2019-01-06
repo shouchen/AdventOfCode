@@ -7,6 +7,7 @@
 #include <cassert>
 
 using namespace std::string_literals;
+
 using Pots = std::map<int, char>;
 using Rules = std::vector<std::pair<std::string, char>>;
 
