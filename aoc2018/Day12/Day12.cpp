@@ -14,56 +14,38 @@
 #include <cassert>
 
 using namespace std::string_literals;
+using Rules = std::vector<std::pair<std::string, char>>;
 
 #define SIZE 20000
 
-std::map<int, char> state;
-std::vector<std::pair<std::string, char>> rule;
-
-auto transform(std::map<int, char> &current)
+void transform(std::map<int, char> &current, const Rules &rules)
 {
-    std::map<int, char> retval;
-    auto test = retval[-10];
+    std::map<int, char> next;
 
     for (auto i = -SIZE; i < SIZE; i++)
-        retval[i] = '.';
+        next[i] = '.';
 
     for (auto i = -SIZE; i < (SIZE - 1) - 4; i++)
     {
-        for (auto r : rule)
+        for (auto rule : rules)
         {
-            bool found = false;
-            if ((current[i] == '#') == (r.first[0] == '#') &&
-                current[i + 1] == r.first[1] &&
-                current[i + 2] == r.first[2] &&
-                current[i + 3] == r.first[3] &&
-                current[i + 4] == r.first[4])
+            if ((current[i] == '#') == (rule.first[0] == '#') &&
+                current[i + 1] == rule.first[1] &&
+                current[i + 2] == rule.first[2] &&
+                current[i + 3] == rule.first[3] &&
+                current[i + 4] == rule.first[4])
             {
-                retval[i + 2] = r.second;
-                found = true;
+                next[i + 2] = rule.second;
                 break;
             }
         }
     }
 
-    return retval;
+    std::swap(current, next);
 }
 
-auto get_count()
+void read_input(const std::string &filename, Rules &rules, std::string &initial_state)
 {
-    auto count = 0;
-    for (auto item : state)
-        if (item.second == '#')
-            count += item.first;
-
-    return count;
-}
-
-void read_input(const std::string &filename, std::string &initial_state)
-{
-    for (auto i = -20000; i < 20000; i++)
-        state[i] = '.';
-
     std::ifstream file("input.txt");
 
     auto initial = "initial"s, state_colon = "state:"s;
@@ -72,11 +54,16 @@ void read_input(const std::string &filename, std::string &initial_state)
     auto left_side = ""s, arrow = "=>"s;
     auto right_side = ' ';
     while (file >> left_side >> arrow >> right_side)
-        rule.push_back(std::make_pair(left_side, right_side));
+        rules.push_back({ left_side, right_side });
 }
 
-void do_parts(const std::string &initial_state, unsigned &part1, unsigned long long &part2)
+void do_parts(const Rules &rules, const std::string &initial_state, unsigned long long &part1, unsigned long long &part2)
 {
+    std::map<int, char> state;
+
+    for (auto i = -SIZE; i < SIZE; i++)
+        state[i] = '.';
+
     for (auto i = 0; i < initial_state.length(); i++)
         state[i] = initial_state[i];
 
@@ -84,12 +71,17 @@ void do_parts(const std::string &initial_state, unsigned &part1, unsigned long l
 
     for (auto i = 0; i <= 120; i++)
     {
-        auto count = get_count();
+        auto count = 0;
+        for (auto item : state)
+            if (item.second == '#')
+                count += item.first;
+
         if (i == 20)
             part1 = count;
 
         std::cout << i << ": " << " count = " << count << ", diff from prev = " << (count - prev) << std::endl;
-        state = transform(state);
+
+        transform(state, rules);
         prev = count;
     }
     std::cout << std::endl;
@@ -97,7 +89,7 @@ void do_parts(const std::string &initial_state, unsigned &part1, unsigned long l
     // Observe that for this program input, the count progression soon
     // stabilizes to just adding 62 each generation. Based on this observation,
     // a simple formula can be made to extrapolate the counts for much later
-    // generations:
+    // generations (which are otherwise computationally infeasible):
     //
     // f(x) = 62x + 655, where x >= 98
 
@@ -107,11 +99,11 @@ void do_parts(const std::string &initial_state, unsigned &part1, unsigned long l
 int main()
 {
     auto initial_state = ""s;
-    read_input("input.txt", initial_state);
+    Rules rules;
+    read_input("input.txt", rules, initial_state);
 
-    auto part1 = 0U;
-    auto part2 = 0ULL;
-    do_parts(initial_state, part1, part2);
+    auto part1 = 0ULL, part2 = 0ULL;
+    do_parts(rules, initial_state, part1, part2);
 
     std::cout << "Part 1: " << part1 << std::endl;
     std::cout << "Part 2: " << part2 << std::endl;
