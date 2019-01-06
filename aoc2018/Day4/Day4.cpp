@@ -64,7 +64,7 @@ auto read_input(const std::string &filename)
         }
     }
 
-    for (auto row : table)
+    for (const auto &row : table)
     {
         auto awake = true;
         for (auto &c : table[row.first].minute)
@@ -81,7 +81,7 @@ auto read_input(const std::string &filename)
 unsigned do_part1(Table &table)
 {
     std::map<unsigned, unsigned> total_sleep_per_guard;
-    for (const auto item : table)
+    for (const auto &item : table)
     {
         auto &table_row = item.second;
         auto id = table_row.guard;
