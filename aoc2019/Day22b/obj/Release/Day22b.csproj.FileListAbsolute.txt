@@ -1,0 +1,6 @@
+C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\bin\Release\Day22b.exe.config
+C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\bin\Release\Day22b.exe
+C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\bin\Release\Day22b.pdb
+C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.csprojResolveAssemblyReference.cache
+C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.exe
+C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.pdb
