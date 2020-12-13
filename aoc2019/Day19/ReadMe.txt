@@ -1,40 +1,78 @@
-========================================================================
-    CONSOLE APPLICATION : Day19 Project Overview
-========================================================================
+--- Day 19: Tractor Beam ---
 
-AppWizard has created this Day19 application for you.
+Unsure of the state of Santa's ship, you borrowed the tractor beam technology from Triton. Time to test it out.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day19 application.
+When you're safely away from anything else, you activate the tractor beam, but nothing happens. It's hard to tell whether it's working if there's nothing to use it on. Fortunately, your ship's drone system can be configured to deploy a drone to specific coordinates and then check whether it's being pulled. There's even an Intcode program (your puzzle input) that gives you access to the drone system.
 
+The program uses two input instructions to request the X and Y position to which the drone should be deployed. Negative numbers are invalid and will confuse the drone; all numbers should be zero or positive.
 
-Day19.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+Then, the program will output whether the drone is stationary (0) or being pulled by something (1). For example, the coordinate X=0, Y=0 is directly in front of the tractor beam emitter, so the drone control program will always report 1 at that location.
 
-Day19.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+To better understand the tractor beam, it is important to get a good picture of the beam itself. For example, suppose you scan the 10x10 grid of points closest to the emitter:
+       X
+  0->      9
+ 0#.........
+ |.#........
+ v..##......
+  ...###....
+  ....###...
+Y .....####.
+  ......####
+  ......####
+  .......###
+ 9........##
 
-Day19.cpp
-    This is the main application source file.
+In this example, the number of points affected by the tractor beam in the 10x10 area closest to the emitter is 27.
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+However, you'll need to scan a larger area to understand the shape of the beam. How many points are affected by the tractor beam in the 50x50 area closest to the emitter? (For each of X and Y, this will be 0 through 49.)
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day19.pch and a precompiled types file named StdAfx.obj.
+Your puzzle answer was 171.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+--- Part Two ---
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+You aren't sure how large Santa's ship is. You aren't even sure if you'll need to use this thing on Santa's ship, but it doesn't hurt to be prepared. You figure Santa's ship might fit in a 100x100 square.
 
-/////////////////////////////////////////////////////////////////////////////
+The beam gets wider as it travels away from the emitter; you'll need to be a minimum distance away to fit a square of that size into the beam fully. (Don't rotate the square; it should be aligned to the same axes as the drone grid.)
+
+For example, suppose you have the following tractor beam readings:
+#.......................................
+.#......................................
+..##....................................
+...###..................................
+....###.................................
+.....####...............................
+......#####.............................
+......######............................
+.......#######..........................
+........########........................
+.........#########......................
+..........#########.....................
+...........##########...................
+...........############.................
+............############................
+.............#############..............
+..............##############............
+...............###############..........
+................###############.........
+................#################.......
+.................########OOOOOOOOOO.....
+..................#######OOOOOOOOOO#....
+...................######OOOOOOOOOO###..
+....................#####OOOOOOOOOO#####
+.....................####OOOOOOOOOO#####
+.....................####OOOOOOOOOO#####
+......................###OOOOOOOOOO#####
+.......................##OOOOOOOOOO#####
+........................#OOOOOOOOOO#####
+.........................OOOOOOOOOO#####
+..........................##############
+..........................##############
+...........................#############
+............................############
+.............................###########
+
+In this example, the 10x10 square closest to the emitter that fits entirely within the tractor beam has been marked O. Within it, the point closest to the emitter (the only highlighted O) is at X=25, Y=20.
+
+Find the 100x100 square closest to the emitter that fits entirely within the tractor beam; within that square, find the point closest to the emitter. What value do you get if you take that point's X coordinate, multiply it by 10000, then add the point's Y coordinate? (In the example above, this would be 250020.)
+
+Your puzzle answer was 9741242.

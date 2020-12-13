@@ -1,40 +1,38 @@
-========================================================================
-    CONSOLE APPLICATION : Day25 Project Overview
-========================================================================
+--- Day 25: Cryostasis ---
 
-AppWizard has created this Day25 application for you.
+As you approach Santa's ship, your sensors report two important details:
 
-This file contains a summary of what you will find in each of the files that
-make up your Day25 application.
+First, that you might be too late: the internal temperature is -40 degrees.
 
+Second, that one faint life signature is somewhere on the ship.
 
-Day25.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+The airlock door is locked with a code; your best option is to send in a small droid to investigate the situation. You attach your ship to Santa's, break a small hole in the hull, and let the droid run in before you seal it up again. Before your ship starts freezing, you detach your ship and set it to automatically stay within range of Santa's ship.
 
-Day25.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+This droid can follow basic instructions and report on its surroundings; you can communicate with it through an Intcode program (your puzzle input) running on an ASCII-capable computer.
 
-Day25.cpp
-    This is the main application source file.
+As the droid moves through its environment, it will describe what it encounters. When it says Command?, you can give it a single instruction terminated with a newline (ASCII code 10). Possible instructions are:
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+- Movement via north, south, east, or west.
+- To take an item the droid sees in the environment, use the command take <name of item>. For example, if the droid reports seeing a red ball, you can pick it up with take red ball.
+- To drop an item the droid is carrying, use the command drop <name of item>. For example, if the droid is carrying a green ball, you can drop it with drop green ball.
+- To get a list of all of the items the droid is currently carrying, use the command inv (for "inventory").
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day25.pch and a precompiled types file named StdAfx.obj.
+Extra spaces or other characters aren't allowed - instructions must be provided precisely.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+Santa's ship is a Reindeer-class starship; these ships use pressure-sensitive floors to determine the identity of droids and crew members. The standard configuration for these starships is for all droids to weigh exactly the same amount to make them easier to detect. If you need to get past such a sensor, you might be able to reach the correct weight by carrying items from the environment.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Look around the ship and see if you can find the password for the main airlock.
 
-/////////////////////////////////////////////////////////////////////////////
+Your puzzle answer was 100667393.
+
+--- Part Two ---
+
+As you move through the main airlock, the air inside the ship is already heating up to reasonable levels. Santa explains that he didn't notice you coming because he was just taking a quick nap. The ship wasn't frozen; he just had the thermostat set to "North Pole".
+
+You make your way over to the navigation console. It beeps. "Status: Stranded. Please supply measurements from 49 stars to recalibrate."
+
+"49 stars? But the Elves told me you needed fifty--"
+
+Santa just smiles and nods his head toward the window. There, in the distance, you can see the center of the Solar System: the Sun!
+
+The navigation console beeps again.

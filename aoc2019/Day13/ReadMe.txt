@@ -1,40 +1,33 @@
-========================================================================
-    CONSOLE APPLICATION : Day13 Project Overview
-========================================================================
+--- Day 13: Care Package ---
 
-AppWizard has created this Day13 application for you.
+As you ponder the solitude of space and the ever-increasing three-hour roundtrip for messages between you and Earth, you notice that the Space Mail Indicator Light is blinking. To help keep you sane, the Elves have sent you a care package.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day13 application.
+It's a new game for the ship's arcade cabinet! Unfortunately, the arcade is all the way on the other end of the ship. Surely, it won't be hard to build your own - the care package even comes with schematics.
 
+The arcade cabinet runs Intcode software like the game the Elves sent (your puzzle input). It has a primitive screen capable of drawing square tiles on a grid. The software draws tiles to the screen with output instructions: every three output instructions specify the x position (distance from the left), y position (distance from the top), and tile id. The tile id is interpreted as follows:
+0 is an empty tile. No game object appears in this tile.
+1 is a wall tile. Walls are indestructible barriers.
+2 is a block tile. Blocks can be broken by the ball.
+3 is a horizontal paddle tile. The paddle is indestructible.
+4 is a ball tile. The ball moves diagonally and bounces off objects.
 
-Day13.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+For example, a sequence of output values like 1,2,3,6,5,4 would draw a horizontal paddle tile (1 tile from the left and 2 tiles from the top) and a ball tile (6 tiles from the left and 5 tiles from the top).
 
-Day13.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+Start the game. How many block tiles are on the screen when the game exits?
 
-Day13.cpp
-    This is the main application source file.
+Your puzzle answer was 363.
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+--- Part Two ---
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day13.pch and a precompiled types file named StdAfx.obj.
+The game didn't run because you didn't put in any quarters. Unfortunately, you did not bring any quarters. Memory address 0 represents the number of quarters that have been inserted; set it to 2 to play for free.
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+The arcade cabinet has a joystick that can move left and right. The software reads the position of the joystick with input instructions:
+If the joystick is in the neutral position, provide 0.
+If the joystick is tilted to the left, provide -1.
+If the joystick is tilted to the right, provide 1.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+The arcade cabinet also has a segment display capable of showing a single number that represents the player's current score. When three output instructions specify X=-1, Y=0, the third output instruction is not a tile; the value instead specifies the new score to show in the segment display. For example, a sequence of output values like -1,0,12345 would show 12345 as the player's current score.
 
-/////////////////////////////////////////////////////////////////////////////
+Beat the game by breaking all the blocks. What is your score after the last block is broken?
+
+Your puzzle answer was 17159.

@@ -1,40 +1,36 @@
-========================================================================
-    CONSOLE APPLICATION : Day4 Project Overview
-========================================================================
+--- Day 4: Secure Container ---
 
-AppWizard has created this Day4 application for you.
+You arrive at the Venus fuel depot only to discover it's protected by a password. The Elves had written the password on a sticky note, but someone threw it out.
 
-This file contains a summary of what you will find in each of the files that
-make up your Day4 application.
+However, they do remember a few key facts about the password:
 
+It is a six-digit number.
 
-Day4.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+The value is within the range given in your puzzle input.
 
-Day4.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
+Two adjacent digits are the same (like 22 in 122345).
 
-Day4.cpp
-    This is the main application source file.
+Going from left to right, the digits never decrease; they only ever increase or stay the same (like 111123 or 135679).
 
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
+Other than the range rule, the following are true:
+111111 meets these criteria (double 11, never decreases).
+223450 does not meet these criteria (decreasing pair of digits 50).
+123789 does not meet these criteria (no double).
 
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named Day4.pch and a precompiled types file named StdAfx.obj.
+How many different passwords within the range given in your puzzle input meet these criteria?
 
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
+Your puzzle answer was 889.
 
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+--- Part Two ---
 
-/////////////////////////////////////////////////////////////////////////////
+An Elf just remembered one more important detail: the two adjacent matching digits are not part of a larger group of matching digits.
+
+Given this additional criterion, but still ignoring the range rule, the following are now true:
+
+112233 meets these criteria because the digits never decrease and all repeated digits are exactly two digits long.
+123444 no longer meets the criteria (the repeated 44 is part of a larger group of 444).
+111122 meets the criteria (even though 1 is repeated more than twice, it still contains a double 22).
+
+How many different passwords within the range given in your puzzle input meet all of the criteria?
+
+Your puzzle answer was 589.
