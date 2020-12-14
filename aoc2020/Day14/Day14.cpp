@@ -13,11 +13,11 @@ void write_memory(unsigned long long addr, unsigned long long value, unsigned lo
         auto first_float = floats & (~floats + 1);
         floats &= ~first_float;
 
-        write_memory(addr & ~first_float, value, floats);
-        write_memory(addr | first_float, value, floats);
+        write_memory(addr, value, floats);
+        write_memory(addr ^ first_float, value, floats);
     }
     else
-        return (void)(mem[addr] = value);
+        mem[addr] = value;
 }
 
 auto do_part(const std::string &filename, bool part2)
