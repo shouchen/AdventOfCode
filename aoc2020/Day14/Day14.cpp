@@ -8,18 +8,16 @@ std::map<unsigned long long, unsigned long long> mem;
 
 void write_memory(unsigned long long addr, unsigned long long value, unsigned long long floats = 0)
 {
-    for (auto i = 1ULL; floats; i <<= 1)
+    if (floats)
     {
-        if (i & floats)
-        {
-            floats &= ~i;
+        auto first_float = floats & (~floats + 1);
+        floats &= ~first_float;
 
-            write_memory(addr & ~i, value, floats);
-            write_memory(addr | i, value, floats);
-        }
+        write_memory(addr & ~first_float, value, floats);
+        write_memory(addr | first_float, value, floats);
     }
-
-    mem[addr] = value;
+    else
+        return (void)(mem[addr] = value);
 }
 
 auto do_part(const std::string &filename, bool part2)
