@@ -1,86 +1,46 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <map>
-#include <set>
-#include <queue>
-#include <regex>
-#include <algorithm>
 #include <cassert>
 
-using namespace std;
-
-void read_formatted_file_line(const std::string& filename)
+auto transform(long long subject, long long loop_size)
 {
-    std::ifstream file(filename);
-    std::string s;
-    auto n = 0;
+    auto val = 1LL;
 
-    while (file >> s >> n)
-    {
-        std::cout << s << " " << n;
-    }
+    for (auto i = 0; i < loop_size; i++)
+        val = (val * subject) % 20201227;
+
+    return val;
 }
 
-void read_file_lines_in_groups_separated_by_blanks_lines(const std::string& filename)
+auto recover_loop_size(long long public_key)
 {
-    std::ifstream file(filename);
-    while (!file.eof())
-    {
-        std::string s;
-        while (std::getline(file, s) && !s.empty())
-        {
-            // process line inside current group
-            std::cout << s;
-        }
+    auto retval = 1LL;
 
-        // process above group as a whole
-    }
-}
+    for (auto t = 7; t != public_key; t = (t * 7) % 20201227)
+        retval++;
 
-void read_file_with_strstream(const std::string& filename)
-{
-    std::ifstream file(filename);
-    std::string(s);
-
-    while (file >> s)
-    {
-        std::stringstream ss(s);
-        // read from the string
-    }
-}
-
-void regex()
-{
-    std::string input;
-    std::smatch sm;
-
-    if (std::regex_match(input, sm, std::regex("^(\\d*)in$")))
-    {
-        // reading a number
-        auto n = atoi(sm[1].str().c_str());
-    }
-
-    // std::regex("^#[0-9a-f]{6}$")) &&
-    // std::regex("^(amb|blu|brn|gry|grn|hzl|oth)$")) &&
-    // std::regex("^\\d{9}$"));
-}
-
-auto process_input(const std::string &filename)
-{
-    auto retval = make_pair(0, 0);
     return retval;
 }
 
 int main()
 {
-    auto result = process_input("input.txt");
-    std::cout << "Part One: " << result.first << std::endl;
-    std::cout << "Part Two: " << result.second << std::endl;
+    std::ifstream file("input.txt");
 
-    //assert(result.first == );
-    //assert(result.second == );
+    auto door_public_key = 0LL, card_public_key = 0LL;
+    file >> door_public_key >> card_public_key;
+
+    auto door_loop_size = recover_loop_size(door_public_key);
+    auto card_loop_size = recover_loop_size(card_public_key);
+
+    auto encryption_key1 = transform(door_public_key, card_loop_size);
+    auto encryption_key2 = transform(card_public_key, door_loop_size);
+    assert(encryption_key1 == encryption_key2);
+
+    auto part1 = encryption_key1;
+
+    std::cout << "Part One: " << part1 << std::endl;
+    std::cout << "Part Two: N/A" << std::endl;
+
+    assert(part1 == 16457981);
     return 0;
 }
