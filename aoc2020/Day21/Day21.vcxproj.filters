@@ -19,4 +19,8 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+    <Text Include="input.txt" />
+  </ItemGroup>
 </Project>

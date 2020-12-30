@@ -113,4 +113,5 @@ int main()
 
     assert(part1 == 11004703763391);
     assert(part2 == 290726428573651);
+    return 0;
 }
