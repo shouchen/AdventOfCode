@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <stack>
+//#include <stack>
 #include <cassert>
 
 struct Rule
