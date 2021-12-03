@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <cassert>
 
 auto read_data(const std::string &filename)
@@ -19,10 +20,9 @@ auto read_data(const std::string &filename)
 auto do_ocr_or_csr_reduction_step(const std::vector<std::string> &lines, int pos, bool ocr)
 {
     std::vector<std::string> retval;
-    auto ones = 0, zeros = 0;
 
-    for (auto &s : lines)
-        if (s[pos] == '1') ones++; else zeros++;
+    unsigned ones = std::count_if(lines.cbegin(), lines.cend(), [pos](const std::string &s) { return s[pos] == '1'; });
+    auto zeros = lines.size() - ones;
 
     for (auto &line : lines)
     {
@@ -42,12 +42,11 @@ auto do_part1(const std::vector<std::string> &lines)
 
     for (auto i = 0U; i < lines[0].length(); i++)
     {
-        auto ones = 0, zeros = 0;
-        for (auto &s : lines)
-            if (s[i] == '1') ones++; else zeros++;
+        unsigned ones = std::count_if(lines.cbegin(), lines.cend(), [i](const std::string &s) { return s[i] == '1'; });
+        auto zeros = lines.size() - ones;
 
-        gamma.push_back((ones > zeros) ? '1' : '0');
-        epsilon.push_back((ones < zeros) ? '1' : '0');
+        gamma.push_back(ones > zeros ? '1' : '0');
+        epsilon.push_back(ones < zeros ? '1' : '0');
     }
 
     return stoi(gamma, nullptr, 2) * stoi(epsilon, nullptr, 2);
