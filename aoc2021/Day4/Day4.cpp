@@ -1,132 +1,111 @@
 #include <iostream>
 #include <fstream>
 #include <strstream>
-#include <string>
+#include <array>
 #include <vector>
-#include <map>
 #include <set>
 #include <cassert>
 
-using namespace std;
+using Card = std::array<std::array<int, 5>, 5>;
 
-typedef map<pair<int, int>, pair<int, bool>> Card; // row, col --> number, occupied
+std::vector<Card> cards;
+std::vector<int> calls;
 
-bool is_winner(Card &card, const set<int> &called)
+void read_data(const std::string &filename)
 {
-    for (auto row = 0; row < 5; row++)
-        if (card[make_pair(row, 0)].first && card[make_pair(row, 1)].first && card[make_pair(row, 2)].first && card[make_pair(row, 3)].first && card[make_pair(row, 4)].first)
-            return true;
-
-    for (auto col = 0; col < 5; col++)
-        if (card[make_pair(0, col)].second && card[make_pair(1, col)].second && card[make_pair(2, col)].second && card[make_pair(3, col)].second && card[make_pair(4, col)].second)
-            return true;
-
-    return false;
-}
-
-int uncalled_total(Card &card, const set<int> &called)
-{
-    int sum = 0;
-    for (int i = 0; i < 5; i++)
-        for (int j = 0; j < 5; j++)
-            if (!card[make_pair(i, j)].second)
-                sum += card[make_pair(i, j)].first;
-
-    return sum;
-}
-
-void read_data(const std::string &filename, int &part1, int &part2)
-{
-    part1 = part2 = 0;
-
     std::ifstream file(filename);
     std::string s;
-
-    vector<int> calls;
-
     file >> s;
-    int n;
 
-    istrstream ss(s.c_str());
+    std::istrstream ss(s.c_str());
+    auto n = 0;
+    auto comma = ',';
+
     while (ss >> n)
     {
         calls.push_back(n);
-
-        char c;
-        if (ss)
-            ss >> c;
+        ss >> comma;
     }
 
-    vector<Card> cards;
-
-    bool done = false;
     while (file)
     {
         Card card;
 
-        for (int i = 0; i < 5; i++)
-            for (int j = 0; j < 5; j++)
-            {
+        for (auto row = 0; row < 5; row++)
+            for (auto col = 0; col < 5; col++)
                 if (file >> n)
-                    card[make_pair(i, j)] = make_pair(n, false);
+                    card[row][col] = n;
                 else
-                    done = true;
-            }
-
-        if (!done)
-            cards.push_back(card);
+                    break;
+        
+        cards.push_back(card);
     }
+}
 
-    // play
-
-    set<int> has_won;
-    set<int> called;
-
-    for (int c : calls)
-    {
-        called.insert(c);
-
-        for (Card &card : cards)
+auto is_winner(const Card &card)
+{
+    for (auto i = 0; i < 5; i++)
+        if (card[i][0] == -1 && card[i][1] == -1 && card[i][2] == -1 && card[i][3] == -1 && card[i][4] == -1 ||
+            card[0][i] == -1 && card[1][i] == -1 && card[2][i] == -1 && card[3][i] == -1 && card[4][i] == -1)
         {
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                {
-                    if (card[make_pair(i,j )].first == c)
-                    {
-                        card[make_pair(i, j)].second = true;
-                    }
-                }
+            return true;
         }
 
-        for (auto i = 0U; i < cards.size(); i++)
-        {
-            Card &card = cards[i];
+    return false;
+}
 
-            if (is_winner(card, called))
+auto total(const Card &card)
+{
+    auto sum = 0;
+    for (auto row = 0; row < 5; row++)
+        for (auto col = 0; col < 5; col++)
+            if (card[row][col] != -1)
+                sum += card[row][col];
+
+    return sum;
+}
+
+auto play_game()
+{
+    auto part1 = 0, part2 = 0;
+    std::set<Card *> winners;
+
+    for (auto call : calls)
+    {
+        for (auto &card : cards)
+            if (winners.find(&card) == winners.end())
+                for (auto row = 0; row < 5; row++)
+                    for (auto col = 0; col < 5; col++)
+                        if (card[row][col] == call)
+                            card[row][col] = -1;
+
+        for (auto &card : cards)
+            if (is_winner(card))
             {
                 if (part1 == 0)
-                    part1 = uncalled_total(card, called) * c;
+                    part1 = total(card) * call;
 
-                has_won.insert(i);
-                if (has_won.size() == cards.size())
+                winners.insert(&card);
+                if (winners.size() == cards.size())
                 {
-                    part2 = uncalled_total(card, called) * c;
-                    return;
+                    part2 = total(card) * call;
+                    return std::make_pair(part1, part2);
                 }
             }
-        }
     }
+
+    return std::make_pair(part1, part2);
 }
 
 int main()
 {
-    auto part1 = 0, part2 = 0;
-    read_data("input.txt", part1, part2);
+    read_data("input.txt");
 
-    std::cout << "Part One: " << part1 << std::endl;
-    std::cout << "Part Two: " << part2 << std::endl;
+    auto result = play_game();
+    std::cout << "Part One: " << result.first << std::endl;
+    std::cout << "Part Two: " << result.second << std::endl;
 
-    assert(part1 == 11774);
-    assert(part2 == 4495);
+    assert(result.first == 11774);
+    assert(result.second == 4495);
     return 0;
 }
