@@ -71,28 +71,28 @@ auto play_game()
     std::set<Card *> winners;
 
     for (auto call : calls)
-    {
         for (auto &card : cards)
             if (winners.find(&card) == winners.end())
+            {
                 for (auto row = 0; row < 5; row++)
                     for (auto col = 0; col < 5; col++)
                         if (card[row][col] == call)
                             card[row][col] = -1;
 
-        for (auto &card : cards)
-            if (is_winner(card))
-            {
-                if (part1 == 0)
-                    part1 = total(card) * call;
-
-                winners.insert(&card);
-                if (winners.size() == cards.size())
+                if (is_winner(card))
                 {
-                    part2 = total(card) * call;
-                    return std::make_pair(part1, part2);
+                    if (winners.size() == 0)
+                        part1 = total(card) * call;
+
+                    winners.insert(&card);
+
+                    if (winners.size() == cards.size())
+                    {
+                        part2 = total(card) * call;
+                        return std::make_pair(part1, part2);
+                    }
                 }
             }
-    }
 
     return std::make_pair(part1, part2);
 }
