@@ -3,18 +3,18 @@
 #include <map>
 #include <cassert>
 
-auto do_part(const std::string &filename, bool part2)
+auto do_part(const std::string &filename, bool include_diagonals)
 {
     std::map<std::pair<int, int>, int> grid;
     std::ifstream file(filename);
 
     auto x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-    char comma;
+    auto comma = ',';
     std::string arrow;
 
     while (file >> x1 >> comma >> y1 >> arrow >> x2 >> comma >> y2)
     {
-        if (x1 == x2 || y1 == y2 || part2)
+        if (x1 == x2 || y1 == y2 || include_diagonals)
         {
             auto xdir = (x1 == x2) ? 0 : ((x1 < x2) ? 1 : -1);
             auto ydir = (y1 == y2) ? 0 : ((y1 < y2) ? 1 : -1);
