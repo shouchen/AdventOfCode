@@ -18,16 +18,13 @@ auto do_part(const std::string &filename, unsigned days)
 
     while (days--)
     {
-        auto temp = fish_count[0];
-        fish_count[0] = fish_count[1];
-        fish_count[1] = fish_count[2];
-        fish_count[2] = fish_count[3];
-        fish_count[3] = fish_count[4];
-        fish_count[4] = fish_count[5];
-        fish_count[5] = fish_count[6];
-        fish_count[6] = fish_count[7] + temp;
-        fish_count[7] = fish_count[8];
-        fish_count[8] = temp;
+        auto spawning = fish_count[0];
+
+        for (auto i = 0; i < 8; i++)
+            fish_count[i] = fish_count[i + 1];
+
+        fish_count[6] += spawning;
+        fish_count[8] = spawning;
     }
 
     auto count = 0ULL;
@@ -36,6 +33,17 @@ auto do_part(const std::string &filename, unsigned days)
 
     return count;
 }
+
+// For more optimization with less readability, it's possible to entirely avoid
+// the array rotations by replacing the while loop with this:
+// 
+// auto a = 0, b = 7;
+// while (days--)
+// {
+//     fish_count[b] += fish_count[a];
+//     if (++a == 9) a = 0;
+//     if (++b == 9) b = 0;
+// }
 
 int main()
 {
