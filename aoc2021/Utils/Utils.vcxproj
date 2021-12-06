@@ -151,9 +151,9 @@
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Computer.cpp" />
     <ClCompile Include="ParsingUtils.cpp" />
     <ClCompile Include="ReadingUtils.cpp" />
+    <ClCompile Include="UpDownLeftRight.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
