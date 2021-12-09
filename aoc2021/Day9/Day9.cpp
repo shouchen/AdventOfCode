@@ -37,20 +37,14 @@ auto do_parts(const std::string &filename)
         {
             auto curr = grid[row][col];
 
-            if (row > 0 && grid[row - 1][col] <= curr)
-                continue;
-
-            if (row < grid.size() - 1 && grid[row + 1][col] <= curr)
-                continue;
-
-            if (col > 0 && grid[row][col - 1] <= curr)
-                continue;
-
-            if (col < grid[0].size() - 1 && grid[row][col + 1] <= curr)
-                continue;
-
-            low_points.insert(std::make_pair(row, col));
-            part1 += curr - '0' + 1;
+            if ((row == 0 || grid[row - 1][col] > curr) &&
+                (row == grid.size() - 1 || grid[row + 1][col] > curr) &&
+                (col == 0 || grid[row][col - 1] > curr) &&
+                (col == grid[0].size() - 1 || grid[row][col + 1] > curr))
+            {
+                low_points.insert(std::make_pair(row, col));
+                part1 += curr - '0' + 1;
+            }
         }
     }
 
