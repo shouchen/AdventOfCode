@@ -60,3 +60,6 @@ auto count_cells_in_sparse_grid(const std::map <std::pair<int, int>, T>& grid)
 
     return count;
 }
+
+// Solution Template
+std::vector<std::pair<int, int>> find_cheapest_route(std::vector<std::vector<int>> &grid);

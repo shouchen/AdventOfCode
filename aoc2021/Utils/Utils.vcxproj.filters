@@ -26,7 +26,7 @@
     <ClCompile Include="ReadingUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UpDownLeftRight.cpp">
+    <ClCompile Include="DebuggingUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AStar.cpp">
@@ -38,7 +38,7 @@
     <ClCompile Include="Computer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DFS.cpp">
+    <ClCompile Include="UpDownLeftRight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
