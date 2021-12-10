@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <strstream>
 #include <vector>
 #include <algorithm>
 #include <cassert>
