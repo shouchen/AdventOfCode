@@ -149,11 +149,6 @@
   <ItemGroup>
     <ClCompile Include="Day10.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Utils\Utils.vcxproj">
-      <Project>{190848ff-fdb6-45fe-baba-0f4dfee9c8e9}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
