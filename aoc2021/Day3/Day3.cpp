@@ -21,7 +21,7 @@ auto do_ocr_or_csr_reduction_step(const std::vector<std::string> &lines, int pos
 {
     std::vector<std::string> retval;
 
-    unsigned ones = std::count_if(lines.cbegin(), lines.cend(), [pos](const std::string &s) { return s[pos] == '1'; });
+    auto ones = (unsigned)std::count_if(lines.cbegin(), lines.cend(), [pos](const std::string &s) { return s[pos] == '1'; });
     auto zeros = lines.size() - ones;
 
     for (auto &line : lines)
@@ -42,7 +42,7 @@ auto do_part1(const std::vector<std::string> &lines)
 
     for (auto i = 0U; i < lines[0].length(); i++)
     {
-        unsigned ones = std::count_if(lines.cbegin(), lines.cend(), [i](const std::string &s) { return s[i] == '1'; });
+        auto ones = (unsigned)std::count_if(lines.cbegin(), lines.cend(), [i](const std::string &s) { return s[i] == '1'; });
         auto zeros = lines.size() - ones;
 
         gamma.push_back(ones > zeros ? '1' : '0');

@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cassert>
 
-auto do_both_parts(const std::string& filename)
+auto do_both_parts(const std::string &filename)
 {
     static const std::pair<int, int> dirs[]{ { 0, -1 },{ 0, 1 },{ -1, 0 },{ 1, 0 } };
     std::map<std::pair<int, int>, int> dist1;

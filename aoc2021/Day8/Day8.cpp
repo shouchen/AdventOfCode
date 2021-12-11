@@ -47,7 +47,7 @@ auto find_word_with_letter_count(std::vector<std::string> &words, int n)
 
 auto part1_word_count(std::vector<std::string> &words)
 {
-    return std::count_if(words.begin(), words.end(),
+    return (unsigned)std::count_if(words.begin(), words.end(),
         [](auto& w) { return w.length() == 2 || w.length() == 3 || w.length() == 4 || w.length() == 7; });
 }
 

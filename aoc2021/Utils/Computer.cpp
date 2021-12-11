@@ -23,7 +23,7 @@ bool execute(int repair = -1)
     acc = 0;
     std::set<int> visited;
 
-    for (pc = 0; pc < program.size(); pc++)
+    for (pc = 0; pc < int(program.size()); pc++)
     {
         if (visited.find(pc) != visited.end())
             return false;
@@ -56,7 +56,7 @@ auto do_part1(const std::string& filename)
 
 auto do_part2()
 {
-    for (auto i = 0; i < program.size(); i++)
+    for (auto i = 0U; i < program.size(); i++)
         if (execute(i))
             return acc;
 
