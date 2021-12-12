@@ -1,62 +1,76 @@
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
-#include <algorithm>
 #include <cassert>
+#include "Utils.h"
 
-auto do_both_parts(const std::string &filename)
+std::pair<int, int> pos, dirn = std::make_pair(1, 0);
+
+// Absolute UDLR or Relative FB using dir (optional number of times)
+void move_pos(char c, int n)
 {
-    static const std::pair<int, int> dirs[]{ { 0, -1 },{ 0, 1 },{ -1, 0 },{ 1, 0 } };
-    std::map<std::pair<int, int>, int> dist1;
-    auto retval = std::make_pair(INT32_MAX, INT32_MAX);
-
-    std::ifstream file(filename);
-    for (auto string = 1; string <= 2; string++)
+    switch (c)
     {
-        std::string s;
-        file >> s;
-
-        std::stringstream ss(s);
-        auto pos = std::make_pair(0, 0);
-        auto step = 0;
-
-        while (!ss.eof())
-        {
-            auto udlr = ' ', comma = ',';
-            auto count = 0;
-            ss >> udlr >> count >> comma;
-
-            auto dir = dirs[std::string("UDLR").find(udlr)];
-
-            for (auto i = 0; i < count; i++)
-            {
-                pos.first += dir.first, pos.second += dir.second, step++;
-
-                if (string == 1)
-                    dist1[pos] = step;
-                else
-                {
-                    auto iter = dist1.find(pos);
-                    if (iter != dist1.end())
-                        retval = std::make_pair(
-                            std::min(retval.first, std::abs(pos.first) + std::abs(pos.second)),
-                            std::min(retval.second, iter->second + step));
-                }
-            }
-        }
+    case 'U': pos.second -= n; break;
+    case 'D': pos.second += n; break;
+    case 'L': pos.first -= n; break;
+    case 'R': pos.first += n; break;
+    case 'F': pos.first += dirn.first * n; pos.second += dirn.second * n; break;
+    case 'B': pos.first -= dirn.first * n; pos.second -= dirn.second * n; break;
+    default: assert(false);
     }
-
-    return retval;
 }
 
-//int main()
-//{
-//    auto result = do_both_parts("input.txt");
-//    std::cout << "Part One: " << result.first << std::endl;
-//    std::cout << "Part Two: " << result.second << std::endl;
-//
-//    assert(result.first == 721);
-//    assert(result.second == 7388);
-//    return 0;
-//}
+// Change direction facing: turn LR, or B (invert backwards 180 degrees)
+void turn_dirn(char c)
+{
+    switch (c)
+    {
+    case 'L': dirn = std::make_pair(dirn.second, -dirn.first); break; // Assumes dirn is (x,y)
+    case 'R': dirn = std::make_pair(-dirn.second, dirn.first); break; // Assumes dirn is (x,y)
+    case 'B': dirn = std::make_pair(-dirn.first, -dirn.second); break;
+    default: assert(false);
+    }
+
+    // If using row,col instead of x,y, use this instead:
+    // switch (c)
+    // {
+    // case 'L': dirn = std::make_pair(-dirn.second, dirn.first); break; // Assumes dirn is (row,col)
+    // case 'R': dirn = std::make_pair(dirn.second, -dirn.first); break; // Assumes dirn is (row,col)
+    // case 'B': dirn = std::make_pair(-dirn.first, -dirn.second); break;
+    // default: assert(false);
+    // }
+}
+
+void test_udlr()
+{
+    cout << "Move commands: MU, MD, ML, MR, MF, MB [dist]; Turn commands: TL, TR, TB; Exit: X" << endl << endl;
+
+    string line;
+    char c = ' ';
+    int n = 0;
+    for (;;)
+    {
+        cout << "Current pos is (" << pos.first << "," << pos.second << ") and dir is (" << dirn.first << "," << dirn.second << ")." << endl;
+        while (!std::getline(cin, line));
+        n = 1;
+        std::istringstream ss(line);
+        ss >> c;
+
+        c = toupper(c);
+        switch (toupper(c))
+        {
+        case 'X':
+            return;
+        case 'M':
+            n = 1;
+            ss >> c >> n;
+            move_pos(toupper(c), n);
+            break;
+        case 'T':
+            ss >> c;
+            turn_dirn(toupper(c));
+            break;
+        default:
+            return;
+        }
+    }
+}

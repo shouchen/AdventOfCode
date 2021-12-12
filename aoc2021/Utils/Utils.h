@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <strstream>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <array>
@@ -61,5 +61,10 @@ auto count_cells_in_sparse_grid(const std::map <std::pair<int, int>, T>& grid)
     return count;
 }
 
-// Solution Template
+// AStar
 std::vector<std::pair<int, int>> find_cheapest_route(std::vector<std::vector<int>> &grid);
+
+// UpDownLeftRight
+void move_pos(char c, int n = 1);
+void turn_dirn(char c);
+void test_udlr();

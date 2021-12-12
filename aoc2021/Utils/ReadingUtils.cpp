@@ -11,7 +11,7 @@ std::vector<std::vector<int>> read_matrix(std::ifstream &file)
     {
         retval.push_back(std::vector<int>());
         
-        std::istrstream ss(line.c_str());
+        std::istringstream ss(line);
         auto n = 0;
 
         while (ss >> n)

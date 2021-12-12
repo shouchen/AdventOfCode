@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{BE54B1B3-96ED-48AC-B29C-24E99755A250}</ProjectGuid>
+    <ProjectGuid>{3E6F755E-154A-42D0-8DDF-0B331CBB1921}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Day11</RootNamespace>
+    <RootNamespace>Day12</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -147,7 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Day11.cpp" />
+    <ClCompile Include="Day12.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="input.txt" />

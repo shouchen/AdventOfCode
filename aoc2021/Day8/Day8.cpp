@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <strstream>
+#include <sstream>
 #include <vector>
 #include <map>
 #include <string>
@@ -53,7 +53,7 @@ auto part1_word_count(std::vector<std::string> &words)
 
 auto read_words_into_vector_with_sorted_letters(const std::string &s)
 {
-    auto ss = std::istrstream(s.c_str());
+    auto ss = std::istringstream(s);
     std::string word;
     std::vector<std::string> retval;
 
