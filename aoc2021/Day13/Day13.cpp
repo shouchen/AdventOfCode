@@ -31,25 +31,13 @@ auto process_input(const std::string &filename)
         ss >> fold >> along >> axis >> equals >> crease;
 
         Dots next;
+
         for (auto dot : dots)
-        {
             if (axis == 'x' && dot.first > crease)
                 dot.first = crease * 2 - dot.first;
             else if (axis == 'y' && dot.second > crease)
                 dot.second = crease * 2 - dot.second;
 
-            //if (axis == 'x')
-            //{
-            //    if (dot.first > crease)
-            //        dot.first = crease * 2 - dot.first;
-            //}
-            //else
-            //{
-            //    if (dot.second > crease)
-            //        dot.second = crease * 2 - dot.second;
-            //}
-            next.insert(dot);
-        }
         dots = next;
 
         if (part1 == -1)
