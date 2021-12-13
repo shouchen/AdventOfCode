@@ -9,10 +9,9 @@
 
 using Dots = std::set<std::pair<int, int>>;
 
-Dots dots;
-
 auto process_input(const std::string &filename)
 {
+    Dots dots;
     std::ifstream file(filename);
     std::string line, fold, along;
     auto part1 = -1, x = 0, y = 0, crease = 0;
@@ -32,21 +31,24 @@ auto process_input(const std::string &filename)
         ss >> fold >> along >> axis >> equals >> crease;
 
         Dots next;
-        if (axis == 'y')
+        for (auto dot : dots)
         {
-            for (auto &dot : dots)
-                if (dot.second < crease)
-                    next.insert(std::make_pair(dot.first, dot.second));
-                else
-                    next.insert(std::make_pair(dot.first, crease * 2 - dot.second));
-        }
-        else
-        {
-            for (auto &dot : dots)
-                if (dot.first < crease)
-                    next.insert(std::make_pair(dot.first, dot.second));
-                else
-                    next.insert(std::make_pair(crease * 2 - dot.first, dot.second));
+            if (axis == 'x' && dot.first > crease)
+                dot.first = crease * 2 - dot.first;
+            else if (axis == 'y' && dot.second > crease)
+                dot.second = crease * 2 - dot.second;
+
+            //if (axis == 'x')
+            //{
+            //    if (dot.first > crease)
+            //        dot.first = crease * 2 - dot.first;
+            //}
+            //else
+            //{
+            //    if (dot.second > crease)
+            //        dot.second = crease * 2 - dot.second;
+            //}
+            next.insert(dot);
         }
         dots = next;
 
@@ -54,7 +56,7 @@ auto process_input(const std::string &filename)
             part1 = int(dots.size());
     }
 
-    return part1;
+    return std::make_pair(part1, dots);
 }
 
 std::ostream &operator<<(std::ostream &o, const Dots &dots)
@@ -75,12 +77,12 @@ std::ostream &operator<<(std::ostream &o, const Dots &dots)
 
 int main()
 {
-    auto part1 = process_input("input.txt");
+    auto result = process_input("input.txt");
 
-    std::cout << "Part One: " << part1 << std::endl;
-    std::cout << "Part Two: " << std::endl << dots;
+    std::cout << "Part One: " << result.first << std::endl;
+    std::cout << "Part Two: " << std::endl << result.second;
 
-    assert(part1 == 781);
+    assert(result.first == 781);
     // Part two visually displays "PERCGJPB"
     return 0;
 }
