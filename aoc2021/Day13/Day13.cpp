@@ -4,6 +4,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include <cassert>
 
 using Dots = std::set<std::pair<int, int>>;
@@ -56,23 +57,20 @@ auto process_input(const std::string &filename)
     return part1;
 }
 
-void dump()
+std::ostream &operator<<(std::ostream &o, const Dots &dots)
 {
     auto max_x = INT_MIN, max_y = INT_MIN;
     for (auto &dot : dots)
-    {
-        if (dot.first > max_x) max_x = dot.first;
-        if (dot.second > max_y) max_y = dot.second;
-    }
+        max_x = std::max(dot.first, max_x), max_y = std::max(dot.second, max_y);
 
     for (auto y = 0; y <= max_y; y++)
     {
         for (auto x = 0; x <= max_x; x++)
-            std::cout << (dots.find(std::make_pair(x, y)) == dots.end() ? '.' : '#');
+            o << (dots.find(std::make_pair(x, y)) == dots.end() ? '.' : '#');
 
-        std::cout << std::endl;
+        o << std::endl;
     }
-    std::cout << std::endl;
+    return o << std::endl;
 }
 
 int main()
@@ -80,8 +78,7 @@ int main()
     auto part1 = process_input("input.txt");
 
     std::cout << "Part One: " << part1 << std::endl;
-    std::cout << "Part Two: " << std::endl;
-    dump();
+    std::cout << "Part Two: " << std::endl << dots;
 
     assert(part1 == 781);
     // Part two visually displays "PERCGJPB"
