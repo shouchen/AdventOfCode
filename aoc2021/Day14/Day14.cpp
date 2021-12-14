@@ -60,13 +60,11 @@ auto get_max_min_diff(PairCounts &pair_counts, const std::string &polymer)
 auto process_data(const std::string &filename)
 {
     std::ifstream file("input.txt");
-    std::string polymer;
-    file >> polymer;
-
+    std::string polymer, arrow;
     auto from1 = ' ', from2 = ' ', to = ' ';
-    std::string arrow = "->";
-
     Mappings mappings;
+
+    file >> polymer;
     while (file >> from1 >> from2 >> arrow >> to)
         mappings.push_back(std::make_pair(std::make_pair(from1, from2), to));
 
