@@ -61,7 +61,7 @@ std::ostream &operator<<(std::ostream &o, const Dots &dots)
 
         o << std::endl;
     }
-    return o << std::endl;
+    return o;
 }
 
 int main()

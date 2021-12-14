@@ -2,7 +2,7 @@
 #include <cassert>
 #include "Utils.h"
 
-std::pair<int, int> pos, dirn = std::make_pair(1, 0);
+static std::pair<int, int> pos, dirn = std::make_pair(1, 0);
 
 // Absolute UDLR or Relative FB using dir (optional number of times)
 void move_pos(char c, int n)
