@@ -20,23 +20,23 @@ S........................  ........................S  ............S............
 
  Selecting the range for xv:
  * The x velocity never switches left/right, so initial xv must be in the
-   direction of the target.
+   direction of the target for cases (i) and (ii), but could be zero for (iii).
  * An initial step in the x direction that passes the whole target will never
    return so it needs to be less than that initially.
  * Both of the above are satisfied for categories (i), (ii), (iii) using this
-   range for xv:  min(1, x_min_target)..max(-1,x_max_target).
+   range for xv: min(1, x_min_target)..max(-1,x_max_target).
 
 Selecting the range for yv:
 * The initial yv could be negative or zero (down-pointing), but if it goes below
-  the target's in the first step, it's a non-starter, so we can use that for the
+  the target in the first step, it's a non-starter, so we can use that for the
   min (negativemost) starting point.
 * The initial yv could be positive (up-pointing). Since the projectile traces a
-  parabolic arc, it will return to y = 0, at which point, yv will be the
-  negative of the initial yv. So, when the projectile reaches y = 0, if yv is
-  below the target minimum, it would skip the target in the next step. Any
+  parabolic arc, it will eventually return to y = 0, at which point, yv will be
+  the negative of the initial yv. So, when the projectile reaches y = 0, if yv
+  is below the target minimum, it would skip the target in the next step. Any
   larger initial yv also would.
 * So, regardless of category (i), (ii), (iii), we can just use this range for
-  yv:  y_min_target..y_max_target.
+  yv: y_min_target..y_max_target.
 */
 
 auto x_min_target = 0, x_max_target = 0, y_min_target = 0, y_max_target = 0;
@@ -62,7 +62,7 @@ auto test_velocities(int xv, int yv)
         if (x >= x_min_target && x <= x_max_target && y >= y_min_target && y <= y_max_target)
             return max_height;
 
-        // if y falls below the minimum target, it will never recover--it's a miss.
+        // If y falls below the minimum target, it will never recover--it's a miss.
         if (y < y_min_target)
             return -1;
     }
