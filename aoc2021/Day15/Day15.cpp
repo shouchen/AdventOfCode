@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <set>
 #include <queue>
 #include <string>
 #include <cassert>
@@ -43,17 +44,29 @@ auto do_path()
     using State = std::pair<int, RowCol>;
 
     std::map<RowCol, int> dist;
+    std::set<RowCol> locked, visited;
     std::priority_queue<State, std::vector<State>, std::greater<State>> q;
     auto retval = 0;
 
     auto curr = RowCol{ 0, 0 };
     q.push({ 0, curr });
     dist[curr] = 0;
+    locked.insert(std::make_pair(0, 0));
+    visited.insert(std::make_pair(0, 0));
 
     while (!q.empty())
     {
+        auto curr_cost = q.top().first;
         curr = q.top().second;
         q.pop();
+
+        // discard stale ones because a lower-cost one was already processed
+        if (curr_cost != dist[curr])
+        {
+            continue; // THIS IS NEVER GETTING HIT
+        }
+
+        locked.insert(curr);
 
         if (curr.first == grid.size() - 1 && curr.second == grid[0].size() - 1)
         {
@@ -73,11 +86,23 @@ auto do_path()
                 next.second < 0 || next.second > grid[0].size() - 1)
                 continue;
 
-            auto cost = grid[next.first][next.second] - '0';
-            if (!dist.count(next) || dist[curr] + cost < dist[next])
+            if (locked.find(next) != locked.end())
+                continue;
+
+            auto new_cost = grid[next.first][next.second] - '0';
+            if (visited.find(next) != visited.end())
             {
-                dist[next] = dist[curr] + cost;
-                q.push({ dist[next], next });
+                if (curr_cost + new_cost < dist[next])
+                {
+                    q.push({ curr_cost + new_cost, next }); // THIS IS NEVER GETTING HIT
+                    dist[next] = curr_cost + new_cost;
+                }
+            }
+            else
+            {
+                visited.insert(next);
+                q.push({ curr_cost + new_cost, next });
+                dist[next] = curr_cost + new_cost;
             }
         }
     }
