@@ -46,11 +46,14 @@ auto test_velocities(int xv, int yv)
 {
     auto x = 0, y = 0, max_height = 0;
 
-    for (;;)
+    while (y >= y_min_target)
     {
         max_height = std::max(max_height, y);
 
         x += xv, y += yv;
+
+        if (x >= x_min_target && x <= x_max_target && y >= y_min_target && y <= y_max_target)
+            return max_height;
 
         if (xv > 0)
             xv--;
@@ -58,14 +61,9 @@ auto test_velocities(int xv, int yv)
             xv++;
 
         yv--;
-
-        if (x >= x_min_target && x <= x_max_target && y >= y_min_target && y <= y_max_target)
-            return max_height;
-
-        // If y falls below the minimum target, it will never recover--it's a miss.
-        if (y < y_min_target)
-            return -1;
     }
+
+    return -1;
 }
 
 auto process_input(const std::string &filename)
