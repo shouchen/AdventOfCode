@@ -9,10 +9,10 @@
 #include <cmath>
 #include <cassert>
 
-struct MyCoords
+struct Coords
 {
     int x, y, z;
-    bool operator<(const MyCoords &rhs) const
+    bool operator<(const Coords &rhs) const
     {
         if (x < rhs.x) return true; else if (x > rhs.x) return false;
         if (y < rhs.y) return true; else if (y > rhs.y) return false;
@@ -22,44 +22,43 @@ struct MyCoords
 
 struct Scanner
 {
-    std::vector<std::vector<MyCoords>> beacons; // first index is orientation (0-24), second is list of points
-    MyCoords *coords = nullptr; // location of the beacon (if known, else nullptr)
+    std::vector<std::vector<Coords>> beacons;
+    Coords *location = nullptr;
 };
 
-std::vector<Scanner> my_scanners;
-std::set<MyCoords> all_beacons; // relative to scanner 0
+std::vector<Scanner> scanners;
+std::set<Coords> all_beacons;
 
-std::vector<MyCoords> my_get_orientation(const std::vector<MyCoords> &ref, int orientation)
+Coords reorient(Coords &c, int orientation)
 {
-    std::vector<MyCoords> retval;
     switch (orientation)
     {
-    case  0: for (auto &b : ref) retval.push_back(MyCoords{ b.x,  b.y,  b.z}); break;
-    case  1: for (auto &b : ref) retval.push_back(MyCoords{ b.x, -b.z,  b.y}); break;
-    case  2: for (auto &b : ref) retval.push_back(MyCoords{ b.x, -b.y, -b.z}); break;
-    case  3: for (auto &b : ref) retval.push_back(MyCoords{ b.x,  b.z, -b.y}); break;
-    case  4: for (auto &b : ref) retval.push_back(MyCoords{ b.y,  b.z,  b.x}); break;
-    case  5: for (auto &b : ref) retval.push_back(MyCoords{ b.y, -b.x,  b.z}); break;
-    case  6: for (auto &b : ref) retval.push_back(MyCoords{ b.y, -b.z, -b.x}); break;
-    case  7: for (auto &b : ref) retval.push_back(MyCoords{ b.y,  b.x, -b.z}); break;
-    case  8: for (auto &b : ref) retval.push_back(MyCoords{ b.z,  b.x,  b.y}); break;
-    case  9: for (auto &b : ref) retval.push_back(MyCoords{ b.z, -b.y,  b.x}); break;
-    case 10: for (auto &b : ref) retval.push_back(MyCoords{ b.z, -b.x, -b.y}); break;
-    case 11: for (auto &b : ref) retval.push_back(MyCoords{ b.z,  b.y, -b.x}); break;
-    case 12: for (auto &b : ref) retval.push_back(MyCoords{-b.z, -b.y, -b.x}); break;
-    case 13: for (auto &b : ref) retval.push_back(MyCoords{-b.z,  b.x, -b.y}); break;
-    case 14: for (auto &b : ref) retval.push_back(MyCoords{-b.z,  b.y,  b.x}); break;
-    case 15: for (auto &b : ref) retval.push_back(MyCoords{-b.z, -b.x,  b.y}); break;
-    case 16: for (auto &b : ref) retval.push_back(MyCoords{-b.y, -b.x, -b.z}); break;
-    case 17: for (auto &b : ref) retval.push_back(MyCoords{-b.y,  b.z, -b.x}); break;
-    case 18: for (auto &b : ref) retval.push_back(MyCoords{-b.y,  b.x,  b.z}); break;
-    case 19: for (auto &b : ref) retval.push_back(MyCoords{-b.y, -b.z,  b.x}); break;
-    case 20: for (auto &b : ref) retval.push_back(MyCoords{-b.x, -b.z, -b.y}); break;
-    case 21: for (auto &b : ref) retval.push_back(MyCoords{-b.x,  b.y, -b.z}); break;
-    case 22: for (auto &b : ref) retval.push_back(MyCoords{-b.x,  b.z,  b.y}); break;
-    case 23: for (auto &b : ref) retval.push_back(MyCoords{-b.x, -b.y,  b.z}); break;
+    case  0: return Coords{  c.x,  c.y,  c.z };
+    case  1: return Coords{  c.x, -c.z,  c.y };
+    case  2: return Coords{  c.x, -c.y, -c.z };
+    case  3: return Coords{  c.x,  c.z, -c.y };
+    case  4: return Coords{  c.y,  c.z,  c.x };
+    case  5: return Coords{  c.y, -c.x,  c.z };
+    case  6: return Coords{  c.y, -c.z, -c.x };
+    case  7: return Coords{  c.y,  c.x, -c.z };
+    case  8: return Coords{  c.z,  c.x,  c.y };
+    case  9: return Coords{  c.z, -c.y,  c.x };
+    case 10: return Coords{  c.z, -c.x, -c.y };
+    case 11: return Coords{  c.z,  c.y, -c.x };
+    case 12: return Coords{ -c.z, -c.y, -c.x };
+    case 13: return Coords{ -c.z,  c.x, -c.y };
+    case 14: return Coords{ -c.z,  c.y,  c.x };
+    case 15: return Coords{ -c.z, -c.x,  c.y };
+    case 16: return Coords{ -c.y, -c.x, -c.z };
+    case 17: return Coords{ -c.y,  c.z, -c.x };
+    case 18: return Coords{ -c.y,  c.x,  c.z };
+    case 19: return Coords{ -c.y, -c.z,  c.x };
+    case 20: return Coords{ -c.x, -c.z, -c.y };
+    case 21: return Coords{ -c.x,  c.y, -c.z };
+    case 22: return Coords{ -c.x,  c.z,  c.y };
+    case 23: return Coords{ -c.x, -c.y,  c.z };
     }
-    return retval;
+    return c;
 };
 
 void read_data(const std::string &filename)
@@ -71,64 +70,49 @@ void read_data(const std::string &filename)
 
     while (std::getline(file, scanner_header))
     {
-        Scanner my_scanner;
-        std::vector<MyCoords> coords;
+        Scanner scanner;
+        for (auto i = 0; i < 24; i++)
+            scanner.beacons.push_back(std::vector<Coords>());
 
         while (std::getline(file, s) && s.length())
         {
             std::stringstream ss(s);
             ss >> x >> comma >> y >> comma >> z;
-            coords.push_back(MyCoords{ x,y,z });
-        }
-        my_scanner.beacons.push_back(coords);
+            auto c = Coords{ x,y,z };
 
-        for (auto i = 1; i < 24; i++)
-        {
-            auto reoriented = my_get_orientation(my_scanner.beacons[0], i);
-            my_scanner.beacons.push_back(reoriented);
+            for (auto i = 0; i < 24; i++)
+                scanner.beacons[i].push_back(reorient(c, i));
         }
 
-        my_scanners.push_back(my_scanner);
+        scanners.push_back(scanner);
     }
 }
 
 auto eliminate_one_scanner()
 {
-    for (auto &s : my_scanners)
+    for (auto &scanner : scanners)
     {
-        if (s.coords)
-            continue; // already eliminated
+        if (scanner.location)
+            continue;
 
-        // loop over each orientation of this scanner
-        for (int i = 0; i < 24; i++)
+        for (int orientation = 0; orientation < 24; orientation++)
         {
             std::map<std::tuple<int, int, int>, int> deltas_count;
 
-            // try all possible pairs of "all" and this orientation, computing dx, dy, dz
             for (auto &a : all_beacons)
-                for (auto &b : s.beacons[i])
+                for (auto &b : scanner.beacons[orientation])
                 {
-                    auto d = std::make_tuple(b.x - a.x, b.y - a.y, b.z - a.z);
-                    deltas_count[d]++;
-                }
+                    auto dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
 
-            // if more than 12 had the same dx, dy, dz it's an overlap
-            for (auto &dc : deltas_count)
-            {
-                if (dc.second >= 12)
-                {
-                    std::cout << "HIT" << std::endl;
+                    if (++deltas_count[std::make_tuple(dx, dy, dz)] < 12)
+                        continue;
 
-                    // Add beacons from this one to "all" (with delta adjustments)
-                    for (auto &b : s.beacons[i])
-                        all_beacons.insert(MyCoords{b.x - std::get<0>(dc.first), b.y - std::get<1>(dc.first), b.z - std::get<2>(dc.first) });
+                    for (auto &bb : scanner.beacons[orientation])
+                        all_beacons.insert(Coords{ bb.x - dx, bb.y - dy, bb.z - dz });
 
-                    // Add the location of this scanner (for part and so it will be skipped in part1)
-                    s.coords = new MyCoords{std::get<0>(dc.first), std::get<1>(dc.first), std::get<2>(dc.first) }; // TODO: Real location?
-
+                    scanner.location = new Coords{ dx, dy, dz };
                     return true;
                 }
-            }
         }
     }
 
@@ -137,17 +121,20 @@ auto eliminate_one_scanner()
 
 auto solve()
 {
-    for (auto &c : my_scanners[0].beacons[0])
+    for (auto &c : scanners[0].beacons[0])
         all_beacons.insert(c);
-    my_scanners[0].coords = new MyCoords{ 0, 0, 0 };
+    scanners[0].location = new Coords{ 0, 0, 0 };
 
     while (eliminate_one_scanner());
 
     auto part2 = 0;
-    for (auto &s1 : my_scanners)
-        for (auto &s2 : my_scanners)
+    for (auto &s1 : scanners)
+        for (auto &s2 : scanners)
         {
-            auto md = std::abs(s1.coords->x - s2.coords->x) + std::abs(s1.coords->y - s2.coords->y) + std::abs(s1.coords->z - s2.coords->z);
+            auto md =
+                std::abs(s1.location->x - s2.location->x) +
+                std::abs(s1.location->y - s2.location->y) +
+                std::abs(s1.location->z - s2.location->z);
             part2 = std::max(part2, md);
         }
 
