@@ -9,24 +9,21 @@
 struct InputStep
 {
     bool on;
-    int x_min, x_max, y_min, y_max, z_min, z_max;
+    std::pair<int, int> x, y, z;
 };
 
 std::vector<InputStep> steps;
 
 void read_input(const std::string &filename)
 {
-    std::vector<int> x_seam, y_seam, z_seam;
-
-    std::string s, on_off;
-    char x = 'x', y = 'y', z = 'z', equals = '=', dot = '.', comma = ',';
-
     std::ifstream file(filename);
+    std::string on_off;
+    auto x = 'x', y = 'y', z = 'z', equals = '=', dot = '.', comma = ',';
 
     InputStep step;
-    while (file >> on_off >> x >> equals >> step.x_min >> dot >> dot >> step.x_max >> comma >>
-        y >> equals >> step.y_min >> dot >> dot >> step.y_max >> comma >>
-        z >> equals >> step.z_min >> dot >> dot >> step.z_max)
+    while (file >> on_off >> x >> equals >> step.x.first >> dot >> dot >> step.x.second >> comma >>
+        y >> equals >> step.y.first >> dot >> dot >> step.y.second >> comma >>
+        z >> equals >> step.z.first >> dot >> dot >> step.z.second)
     {
         step.on = on_off == "on";
         steps.push_back(step);
@@ -37,10 +34,10 @@ auto do_part1(void)
 {
     std::set<std::tuple<int, int, int>> grid;
     for (auto &step : steps)
-        if (std::abs(step.x_min) <= 50 && std::abs(step.y_min) <= 50 && std::abs(step.z_min) <= 50)
-            for (auto x = step.x_min; x <= step.x_max; x++)
-                for (auto y = step.y_min; y <= step.y_max; y++)
-                    for (auto z = step.z_min; z <= step.z_max; z++)
+        if (std::abs(step.x.first) <= 50 && std::abs(step.y.first) <= 50 && std::abs(step.z.first) <= 50)
+            for (auto x = step.x.first; x <= step.x.second; x++)
+                for (auto y = step.y.first; y <= step.y.second; y++)
+                    for (auto z = step.z.first; z <= step.z.second; z++)
                         if (step.on)
                             grid.insert(std::make_tuple(x, y, z));
                         else
@@ -51,22 +48,23 @@ auto do_part1(void)
 
 auto do_part2()
 {
-    // Find all the "seams" for each axis (x, y, z boundaries where on/off could possibly change)
+    // Find all the "seams" for each axis (x, y, z boundaries where on/off could possibly change).
     std::vector<int> x_seam, y_seam, z_seam;
     for (auto &step : steps)
     {
-        x_seam.push_back(step.x_min); x_seam.push_back(step.x_max + 1);
-        y_seam.push_back(step.y_min); y_seam.push_back(step.y_max + 1);
-        z_seam.push_back(step.z_min); z_seam.push_back(step.z_max + 1);
+        x_seam.push_back(step.x.first); x_seam.push_back(step.x.second + 1);
+        y_seam.push_back(step.y.first); y_seam.push_back(step.y.second + 1);
+        z_seam.push_back(step.z.first); z_seam.push_back(step.z.second + 1);
     }
 
-    // Sort the seams on each axis
+    // Sort the seams for each axis
     sort(x_seam.begin(), x_seam.end());
     sort(y_seam.begin(), y_seam.end());
     sort(z_seam.begin(), z_seam.end());
 
-    // Use the seams to partition 3D space, where each point in the partition has same on/off
-    std::vector<std::vector<std::vector<bool>>> cubettes(
+    // Use the seams to partition 3D space, where each point in the partition has same on/off.
+    // Create this 3D vector, sized at runtime, to hold on/off for all the partitions.
+    std::vector<std::vector<std::vector<bool>>> partitions(
         x_seam.size(),
         std::vector<
             std::vector<bool>>(
@@ -74,30 +72,31 @@ auto do_part2()
                 std::vector<bool>(
                     z_seam.size())));
 
-    // Play back the input steps to determine the on/off for each partition
+    // Play back the input steps to determine the on/off for each partition - multiple
+    // adjacent partitions may be affected at each step.
     for (auto &step : steps)
     {
-        auto x_min = lower_bound(x_seam.begin(), x_seam.end(), step.x_min) - x_seam.begin();
-        auto x_max = lower_bound(x_seam.begin(), x_seam.end(), step.x_max + 1) - x_seam.begin();
+        auto x_min = lower_bound(x_seam.begin(), x_seam.end(), step.x.first) - x_seam.begin();
+        auto x_max = lower_bound(x_seam.begin(), x_seam.end(), step.x.second + 1) - x_seam.begin();
 
-        auto y_min = lower_bound(y_seam.begin(), y_seam.end(), step.y_min) - y_seam.begin();
-        auto y_max = lower_bound(y_seam.begin(), y_seam.end(), step.y_max + 1) - y_seam.begin();
+        auto y_min = lower_bound(y_seam.begin(), y_seam.end(), step.y.first) - y_seam.begin();
+        auto y_max = lower_bound(y_seam.begin(), y_seam.end(), step.y.second + 1) - y_seam.begin();
 
-        auto z_min = lower_bound(z_seam.begin(), z_seam.end(), step.z_min) - z_seam.begin();
-        auto z_max = lower_bound(z_seam.begin(), z_seam.end(), step.z_max + 1) - z_seam.begin();
+        auto z_min = lower_bound(z_seam.begin(), z_seam.end(), step.z.first) - z_seam.begin();
+        auto z_max = lower_bound(z_seam.begin(), z_seam.end(), step.z.second + 1) - z_seam.begin();
 
         for (auto i = x_min; i < x_max; i++)
             for (auto j = y_min; j < y_max; j++)
                 for (auto k = z_min; k < z_max; k++)
-                    cubettes[i][j][k] = step.on;
+                    partitions[i][j][k] = step.on;
     }
 
-    // For all partitions that are "on", sum the volume of points they contain
+    // For all partitions that are "on", sum the volume of points they contain.
     auto retval = 0LL;
     for (auto i = 0; i < x_seam.size() - 1; i++)
         for (auto j = 0; j < y_seam.size() - 1; j++)
             for (auto k = 0; k < z_seam.size() - 1; k++)
-                if (cubettes[i][j][k])
+                if (partitions[i][j][k])
                     retval += (long long)(x_seam[i + 1] - x_seam[i]) * (y_seam[j + 1] - y_seam[j]) * (z_seam[k + 1] - z_seam[k]);
 
     return retval;
