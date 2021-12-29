@@ -9,8 +9,10 @@
 #include <algorithm>
 #include <cassert>
 
-std::array<std::array<std::vector<int>, 23>, 23> path;
-std::array<std::array<int, 23>, 23> dist;
+const auto num_spaces = 23;
+
+std::array<std::array<std::vector<int>, num_spaces>, num_spaces> path;
+std::array<std::array<int, num_spaces>, num_spaces> dist;
 
 void build_paths()
 {
@@ -24,39 +26,39 @@ void build_paths()
     };
 
     std::map<std::pair<int, int>, int> to_index;
-    for (auto i = 0; i < 23; i++)
+    for (auto i = 0; i < num_spaces; i++)
         to_index[index_to_row_col[i]] = i;
 
-    for (auto from = 0; from < 23; from++)
-        for (auto to = 0; to < 23; to++)
+    for (auto from = 0; from < num_spaces; from++)
+        for (auto to = 0; to < num_spaces; to++)
         {
-            auto a_rc = index_to_row_col[from], b_rc = index_to_row_col[to];
+            auto from_rc = index_to_row_col[from], to_rc = index_to_row_col[to];
 
-            // hallway-to-hallway never allowed
-            if (a_rc.first == 1 && b_rc.first == 1)
+            // moving hallway-to-hallway never allowed
+            if (from_rc.first == 1 && to_rc.first == 1)
                 continue;
 
-            // within same burrow never allowed
-            if (a_rc.first > 1 && b_rc.first > 1 && a_rc.second == b_rc.second)
+            // moving within same burrow never allowed
+            if (from_rc.first > 1 && from_rc.second == to_rc.second)
                 continue;
 
-            while (a_rc != b_rc)
+            while (from_rc != to_rc)
             {
-                if ((a_rc.first > 1 && a_rc.second != b_rc.second) || (b_rc.first < a_rc.first))
-                    a_rc.first--;
-                else if (a_rc.first == 1 && b_rc.second < a_rc.second)
-                    a_rc.second--;
-                else if (a_rc.first == 1 && b_rc.second > a_rc.second)
-                    a_rc.second++;
+                if ((from_rc.first > 1 && from_rc.second != to_rc.second) || (to_rc.first < from_rc.first))
+                    from_rc.first--;
+                else if (from_rc.first == 1 && to_rc.second < from_rc.second)
+                    from_rc.second--;
+                else if (from_rc.first == 1 && to_rc.second > from_rc.second)
+                    from_rc.second++;
                 else
-                    a_rc.first++;
+                    from_rc.first++;
 
                 dist[from][to]++;
 
-                if (a_rc != b_rc)
+                if (from_rc != to_rc)
                 {
-                    // grid spaces that aren't stopping points are never occupied
-                    auto it = to_index.find(a_rc);
+                    // don't include spaces that are never stopping points
+                    auto it = to_index.find(from_rc);
                     if (it != to_index.end())
                         path[from][to].push_back(it->second);
                 }
@@ -81,14 +83,26 @@ auto read_input_and_initialize(const std::string &filename)
     }
 
     build_paths();
-
     return retval;
 }
 
-auto top_burrow(char letter)
+auto burrow_has_wrong_letters(const std::string &s, char letter)
 {
     assert(isalpha(letter));
-    return 7 + letter - 'A';
+    for (auto index = 7 + letter - 'A'; index < s.length(); index += 4)
+        if (s[index] != letter && s[index] != '.')
+            return true;
+
+    return false;
+}
+
+auto is_deeper_burrow_spot_free(const std::string &s, int index)
+{
+    while ((index += 4) < s.length())
+        if (s[index] == '.')
+            return true;
+
+    return false;
 }
 
 auto letter_cost(char letter)
@@ -103,30 +117,9 @@ auto compute_projected_cost(const std::string &s, const std::string &end)
     auto retval = 0;
     for (auto i = 0; i < s.length(); i++)
         if (isalpha(s[i]) && s[i] != end[i])
-            retval += dist[i][top_burrow(s[i])] * letter_cost(s[i]);
+            retval += dist[i][7 + s[i] - 'A'] * letter_cost(s[i]);
 
     return retval;
-}
-
-auto burrow_has_wrong_letters(const std::string &s, char letter)
-{
-    assert(isalpha(letter));
-    auto tb = top_burrow(letter);
-    if (s.length() == 15)
-        return (s[tb] != letter && s[tb] != '.') || (s[tb + 4] != letter && s[tb + 4] != '.');
-    else
-        return
-            (s[tb] != letter && s[tb] != '.') || (s[tb + 4] != letter && s[tb + 4] != '.') ||
-            (s[tb + 8] != letter && s[tb + 8] != '.') || (s[tb + 12] != letter && s[tb + 12] != '.');
-}
-
-auto is_deeper_in_burrow_free(const std::string &s, int index)
-{
-    while ((index += 4) < s.length())
-        if (s[index] == '.')
-            return true;
-
-    return false;
 }
 
 auto is_path_free(const std::string &s, int a, int b)
@@ -134,15 +127,16 @@ auto is_path_free(const std::string &s, int a, int b)
     for (auto i : path[a][b])
         if (s[i] != '.')
             return false;
+
     return true;
 }
 
-auto do_part(std::string input, bool part2)
+auto do_part(std::string pos, bool part2)
 {
     struct State
     {
         int cost, projected;
-        std::string s;
+        std::string pos;
 
         bool operator<(const State &other) const
         {
@@ -150,7 +144,7 @@ auto do_part(std::string input, bool part2)
             if (projected < other.projected) return false;
             if (cost > other.cost) return true;
             if (cost < other.cost) return false;
-            return s > other.s;
+            return pos > other.pos;
         }
     };
 
@@ -158,7 +152,7 @@ auto do_part(std::string input, bool part2)
     std::set<std::pair<std::string, int>> seen;
     auto min_cost = INT_MAX;
 
-    std::string start = part2 ? input.insert(11, "DCBADBAC") : input;
+    std::string start = part2 ? pos.insert(11, "DCBADBAC") : pos;
     std::string end = part2 ? ".......ABCDABCDABCDABCD" : ".......ABCDABCD";
 
     q.push({ 0, compute_projected_cost(start, end), start });
@@ -171,13 +165,13 @@ auto do_part(std::string input, bool part2)
         if (state.projected >= min_cost)
             continue;
 
-        auto pos_cost = make_pair(state.s, state.cost);
+        auto pos_cost = make_pair(state.pos, state.cost);
         if (seen.find(pos_cost) != seen.end())
             continue;
 
         seen.insert(pos_cost);
 
-        if (state.s == end)
+        if (state.pos == end)
         {
             min_cost = std::min(min_cost, state.cost);
             continue; 
@@ -185,42 +179,35 @@ auto do_part(std::string input, bool part2)
 
         for (auto from = 0; from <= end.length(); from++)
         {
-            if (!isalpha(state.s[from])) continue;
+            if (!isalpha(state.pos[from]))
+                continue;
 
             // don't move out of a finished burrow
-            if (!burrow_has_wrong_letters(state.s, state.s[from]) && state.s[from] == end[from])
+            if (state.pos[from] == end[from] && !burrow_has_wrong_letters(state.pos, state.pos[from]))
                 continue;
 
             for (auto to = 0; to <= end.length(); to++)
             {
-                if (state.s[to] != '.') continue;
-
-                auto d = dist[from][to];
-                if (d <= 0) continue;
-
-                // Check if way is blocked by intermediate pieces
-                if (!is_path_free(state.s, from, to))
+                if (state.pos[to] != '.')
                     continue;
 
-                if (to > 6)
+                auto d = dist[from][to];
+                if (d == 0 || !is_path_free(state.pos, from, to))
+                    continue;
+
+                // don't enter wrong burrow, nor one with wrong letters, nor stop before end of one
+                if (to > 6 &&
+                    (state.pos[from] != end[to] ||
+                     burrow_has_wrong_letters(state.pos, end[to]) ||
+                     is_deeper_burrow_spot_free(state.pos, to)))
                 {
-                    // don't move into wrong burrow
-                    if (state.s[from] != end[to])
-                        continue;
-
-                    // don't move into any burrow that still has wrong letters
-                    if (burrow_has_wrong_letters(state.s, end[to]))
-                        continue;
-
-                    // when entering a burrow, only go to deepest available
-                    if (is_deeper_in_burrow_free(state.s, to))
-                        continue;
+                    continue;
                 }
 
                 State new_state = state;
-                std::swap(new_state.s[from], new_state.s[to]);
-                new_state.cost = state.cost + d * letter_cost(state.s[from]);
-                new_state.projected = new_state.cost + compute_projected_cost(new_state.s, end);
+                std::swap(new_state.pos[from], new_state.pos[to]);
+                new_state.cost = state.cost + d * letter_cost(state.pos[from]);
+                new_state.projected = new_state.cost + compute_projected_cost(new_state.pos, end);
                 q.push(new_state);
             }
         }
