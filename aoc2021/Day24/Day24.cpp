@@ -47,27 +47,32 @@
 // A simple brute force against those criteria finds the answers almost
 // immediately.
 
-auto do_part1()
+auto do_part(bool part2)
 {
-    for (auto w1 = 9; w1 > 0; w1--)
+    auto start = part2 ? 1 : 9;
+    auto past_end = part2 ? 10 : 0;
+    auto inc_dec = part2 ? 1 : -1;
+    auto retval = -1LL;
+
+    for (auto w1 = start; w1 != past_end; w1 += inc_dec)
     {
-        for (auto w2 = 9; w2 > 0; w2--)
+        for (auto w2 = start; w2 != past_end; w2 += inc_dec)
         {
-            for (auto w3 = 9; w3 > 0; w3--)
+            for (auto w3 = start; w3 != past_end; w3 += inc_dec)
             {
                 auto w4 = w3 - 6;
                 if (w4 < 1 || w4 > 9) continue;
 
-                for (auto w5 = 9; w5 > 0; w5--)
+                for (auto w5 = start; w5 != past_end; w5 += inc_dec)
                 {
                     auto w6 = w5 + 5;
                     if (w6 < 1 || w6 > 9) continue;
 
-                    for (auto w7 = 9; w7 > 0; w7--)
+                    for (auto w7 = start; w7 != past_end; w7 += inc_dec)
                     {
-                        for (auto w8 = 9; w8 > 0; w8--)
+                        for (auto w8 = start; w8 != past_end; w8 += inc_dec)
                         {
-                            for (auto w9 = 9; w9 > 0; w9--)
+                            for (auto w9 = start; w9 != past_end; w9 += inc_dec)
                             {
                                 auto w10 = w9 - 5;
                                 if (w10 < 1 || w10 > 9) continue;
@@ -86,7 +91,8 @@ auto do_part1()
 
                                 std::stringstream ss;
                                 ss << w1 << w2 << w3 << w4 << w5 << w6 << w7 << w8 << w9 << w10 << w11 << w12 << w13 << w14;
-                                return ss.str();
+                                ss >> retval;
+                                return retval;
                             }
                         }
                     }
@@ -94,68 +100,19 @@ auto do_part1()
             }
         }
     }
-    return std::string();
-}
 
-auto do_part2()
-{
-    for (auto w1 = 1; w1 <= 9; w1++)
-    {
-        for (auto w2 = 1; w2 <= 9; w2++)
-        {
-            for (auto w3 = 1; w3 <= 9; w3++)
-            {
-                auto w4 = w3 - 6;
-                if (w4 < 1 || w4 > 9) continue;
-
-                for (auto w5 = 1; w5 <= 9; w5++)
-                {
-                    auto w6 = w5 + 5;
-                    if (w6 < 1 || w6 > 9) continue;
-
-                    for (auto w7 = 1; w7 <= 9; w7++)
-                    {
-                        for (auto w8 = 1; w8 <= 9; w8++)
-                        {
-                            for (auto w9 = 1; w9 <= 9; w9++)
-                            {
-                                auto w10 = w9 - 5;
-                                if (w10 < 1 || w10 > 9) continue;
-
-                                auto w11 = w8 + 1;
-                                if (w11 < 1 || w11 > 9) continue;
-
-                                auto w12 = w7 - 8;
-                                if (w12 < 1 || w12 > 9) continue;
-
-                                auto w13 = w2 + 7;
-                                if (w13 < 1 || w13 > 9) continue;
-
-                                auto w14 = w1 + 8;
-                                if (w14 < 1 || w14 > 9) continue;
-
-                                std::stringstream ss;
-                                ss << w1 << w2 << w3 << w4 << w5 << w6 << w7 << w8 << w9 << w10 << w11 << w12 << w13 << w14;
-                                return ss.str();
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return std::string();
+    return retval;
 }
 
 int main()
 {
-    auto part1 = do_part1();  
+    auto part1 = do_part(false);  
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part2();
+    auto part2 = do_part(true);
     std::cout << "Part Two: " << part2 << std::endl;
 
-    assert(part1 == "12934998949199");
-    assert(part2 == "11711691612189");
+    assert(part1 == 12934998949199);
+    assert(part2 == 11711691612189);
     return 0;
 }
