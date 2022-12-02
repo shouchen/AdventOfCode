@@ -79,57 +79,46 @@ Option get_my_option(Option they_play, Outcome outcome)
     return Option::Rock;
 }
 
-int score_me1(char abc, char xyz)
+auto score_me1(char abc, char xyz)
 {
     auto they_play = map_ABC_to_option(abc), i_play = map_XYZ_to_option(xyz);
     auto outcome = get_my_outcome(they_play, i_play);
     return unsigned(i_play) + unsigned(outcome);
 }
 
-int score_me2(char abc, char xyz)
+auto score_me2(char abc, char xyz)
 {
     Outcome outcome = map_XYZ_to_outcome(xyz);
     Option they_play = map_ABC_to_option(abc), i_play = get_my_option(they_play, outcome);
     return unsigned(i_play) + unsigned(outcome);
 }
 
-auto do_part1(const std::string &filename)
+void process_input(const std::string &filename, unsigned &part1, unsigned &part2)
 {
     std::ifstream file(filename);
-    auto c1 = ' ', c2 = ' ';
-    auto total_score = 0;
+    auto abc = ' ', xyz = ' ';
+    
+    part1 = part2 = 0;
 
-    while (file >> c1 >> c2)
+    while (file >> abc >> xyz)
     {
-        auto s = score_me1(c1, c2);
-        total_score += s;
+        auto they_play = map_ABC_to_option(abc), i_play = map_XYZ_to_option(xyz);
+        auto outcome = get_my_outcome(they_play, i_play);
+        part1 += unsigned(i_play) + unsigned(outcome);
+
+        outcome = map_XYZ_to_outcome(xyz);
+        they_play = map_ABC_to_option(abc), i_play = get_my_option(they_play, outcome);
+        part2 += unsigned(i_play) + unsigned(outcome);
+
+        //part1 += score_me1(c1, c2);
+        //part2 += score_me2(c1, c2);
     }
-
-    return total_score;
-}
-
-auto do_part2(const std::string &filename)
-{
-    std::ifstream file(filename);
-    auto c1 = ' ', c2 = ' ';
-    auto total_score = 0;
-
-    while (file >> c1 >> c2)
-    {
-        auto s = score_me2(c1, c2);
-        total_score += s;
-    }
-
-    return total_score;
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
-
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl;
+    auto part1 = 0U, part2 = 0U;
+    process_input("input.txt", part1, part2);
 
     assert(part1 == 10718);
     assert(part2 == 14652);
