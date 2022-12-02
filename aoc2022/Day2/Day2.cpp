@@ -1,92 +1,119 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <cassert>
-#include <string>
-#include <algorithm>
-#include <numeric>
 
-int score_me(char c1, char c2)
+enum class Option { Rock = 1, Paper = 2, Scissors = 3 };
+enum class Outcome { Lose = 0, Draw = 3, Win = 6 };
+
+Option map_ABC_to_option(char abc)
 {
-    bool win = (c1 == 'A' && c2 == 'Y' || c1 == 'B' && c2 == 'Z' || c1 == 'C' && c2 == 'X');
-    bool tie = (c1 == 'A' && c2 == 'X' || c1 == 'B' && c2 == 'Y' || c1 == 'C' && c2 == 'Z');
-    bool lose = !win && !tie;
-
-    int retval = c2 - 'W';
-    if (win)
-        return retval + 6;
-    else if (tie)
-        return retval + 3;
-    else
-        return retval;
+    static const Option options[] = { Option::Rock, Option::Paper, Option::Scissors };
+    return options[abc - 'A'];
 }
 
-// x = lose , y = draw z=win
-int score_me2(char c1, char c2)
+Option map_XYZ_to_option(char xyz)
 {
-    std::string play;
+    static const Option option[] = { Option::Rock, Option::Paper, Option::Scissors };
+    return option[xyz - 'X'];
+}
 
-    switch (c1)
+Outcome map_XYZ_to_outcome(char xyz)
+{
+    static const Outcome outcome[] = { Outcome::Lose, Outcome::Draw, Outcome::Win };
+    return outcome[xyz - 'X'];
+}
+
+Outcome get_my_outcome(Option they_play, Option i_play)
+{
+    switch (they_play)
     {
-    case 'A': // they play rock
-        if (c2 == 'X')  // must lose
-            play = "scissors";
-        else if (c2 == 'Y') // must tie
-            play = "rock";
-        else  // must win
-            play = "paper";
-        break;
-
-    case 'B': // they play paper
-        if (c2 == 'X')  // must lose
-            play = "rock";
-        else if (c2 == 'Y') // must tie
-            play = "paper";
-        else  // must win
-            play = "scissors";
-        break;
-
-    case 'C': // they play scissors
-        if (c2 == 'X')  // must lose
-            play = "paper";
-        else if (c2 == 'Y')// must tie
-            play = "scissors";
-        else  // must win
-            play = "rock";
-        break;
+    case Option::Rock:
+        if (i_play == Option::Paper)
+            return Outcome::Win;
+        if (i_play == Option::Scissors)
+            return Outcome::Lose;
+        return Outcome::Draw;
+    case Option::Paper:
+        if (i_play == Option::Scissors)
+            return Outcome::Win;
+        if (i_play == Option::Rock)
+            return Outcome::Lose;
+        return Outcome::Draw;
+    case Option::Scissors:
+        if (i_play == Option::Rock)
+            return Outcome::Win;
+        if (i_play == Option::Paper)
+            return Outcome::Lose;
+        return Outcome::Draw;
     }
 
-    auto retval = 0;
-
-    if (play == "rock")
-        retval = 1;
-    else if (play == "paper")
-        retval = 2;
-    else if (play == "scissors")
-        retval = 3;
-    else
-        assert(false);
-
-    if (c2 == 'X')
-        return retval;
-    if (c2 == 'Y')
-        return retval + 3;
-    if (c2 == 'Z')
-        return retval + 6;
+    assert(false);
+    return Outcome::Draw;
 }
 
-auto read_data(const std::string &filename)
+Option get_my_option(Option they_play, Outcome outcome)
+{
+    switch (they_play)
+    {
+    case Option::Rock:
+        if (outcome == Outcome::Lose)
+            return Option::Scissors;
+        if (outcome == Outcome::Draw)
+            return Option::Rock;
+        return Option::Paper;
+    case Option::Paper:
+        if (outcome == Outcome::Lose)
+            return Option::Rock;
+        if (outcome == Outcome::Draw)
+            return Option::Paper;
+        return Option::Scissors;
+    case Option::Scissors:
+        if (outcome == Outcome::Lose)
+            return Option::Paper;
+        if (outcome == Outcome::Draw)
+            return Option::Scissors;
+        return Option::Rock;
+    }
+
+    assert(false);
+    return Option::Rock;
+}
+
+int score_me1(char abc, char xyz)
+{
+    auto they_play = map_ABC_to_option(abc), i_play = map_XYZ_to_option(xyz);
+    auto outcome = get_my_outcome(they_play, i_play);
+    return unsigned(i_play) + unsigned(outcome);
+}
+
+int score_me2(char abc, char xyz)
+{
+    Outcome outcome = map_XYZ_to_outcome(xyz);
+    Option they_play = map_ABC_to_option(abc), i_play = get_my_option(they_play, outcome);
+    return unsigned(i_play) + unsigned(outcome);
+}
+
+auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
+    auto c1 = ' ', c2 = ' ';
+    auto total_score = 0;
 
-    char c1, c2;
+    while (file >> c1 >> c2)
+    {
+        auto s = score_me1(c1, c2);
+        total_score += s;
+    }
 
-    // A = rock, B = papar, C= scissors  (opponent)
-    // X =       Y          Z   (what I should play)
+    return total_score;
+}
 
-    // sroce for round: score for shape (1-3) + outcome (0 if loss, 3 is draw, 6 if win)
+auto do_part2(const std::string &filename)
+{
+    std::ifstream file(filename);
+    auto c1 = ' ', c2 = ' ';
+    auto total_score = 0;
 
-    int total_score = 0;
     while (file >> c1 >> c2)
     {
         auto s = score_me2(c1, c2);
@@ -96,22 +123,15 @@ auto read_data(const std::string &filename)
     return total_score;
 }
 
-auto do_part(std::vector<int> &data, int n)
-{
-    return std::accumulate(data.end() - n, data.end(), 0);
-}
-
 int main()
 {
-    auto part1 = read_data("input.txt");
-
-    //auto part1 = do_part(data, 1);
+    auto part1 = do_part1("input.txt");
     std::cout << "Part One: " << part1 << std::endl;
 
-    //auto part2 = do_part(data, 3);
-    //std::cout << "Part Two: " << part2 << std::endl;
+    auto part2 = do_part2("input.txt");
+    std::cout << "Part Two: " << part2 << std::endl;
 
-    //assert(part1 == 10718);
-    //assert(part2 == 200945);
+    assert(part1 == 10718);
+    assert(part2 == 14652);
     return 0;
 }
