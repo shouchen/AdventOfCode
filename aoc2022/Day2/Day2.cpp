@@ -24,10 +24,12 @@ void process_input(const std::string &filename, unsigned &part1, unsigned &part2
     {
         auto them = Play(abc - 'A' + 1);
         auto me = Play(xyz - 'X' + 1);
-        part1 += me + get_outcome(them, me);
+        auto outcome = get_outcome(them, me);
+        part1 += me + outcome;
 
-        auto outcome = Outcome((xyz - 'X') * 3);
-        part2 += get_play(them, outcome) + outcome;
+        outcome = Outcome((xyz - 'X') * 3);
+        me = get_play(them, outcome);
+        part2 += me + outcome;
     }
 }
 
