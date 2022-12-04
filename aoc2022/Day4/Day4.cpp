@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
-#include <string>
 
 auto part1_overlap(int a, int b, int c, int d)
 {
