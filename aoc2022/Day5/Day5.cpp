@@ -9,11 +9,10 @@ typedef void (MoveFunc)(std::vector<std::deque<char>> &data, int quantity, int f
 
 void move_part1(std::vector<std::deque<char>> &data, int quantity, int from, int to)
 {
-    for (int i = 0; i < quantity; i++)
+    for (auto i = 0; i < quantity; i++)
     {
         auto temp = data[from].front();
         data[from].pop_front();
-
         data[to].push_front(temp);
     }
 }
@@ -22,7 +21,7 @@ void move_part2(std::vector<std::deque<char>> &data, int quantity, int from, int
 {
     std::string qqq;
 
-    for (int i = 0; i < quantity; i++)
+    for (auto i = 0; i < quantity; i++)
     {
         auto temp = data[from].front();
         data[from].pop_front();
@@ -36,41 +35,29 @@ void move_part2(std::vector<std::deque<char>> &data, int quantity, int from, int
 auto process_data(const std::string &filename, MoveFunc move_func)
 {
     std::vector<std::deque<char>> data;
-    for (int i = 0; i < 1000; i++)
+    for (auto i = 0; i < 1000; i++)
         data.push_back(std::deque<char>());
 
     std::ifstream file(filename);
     std::string line;
-    auto open_brace = '[', close_brace= ']', letter = ' ';
 
-    while (std::getline(file, line))
-    {
-        if (line[1] == '1')
-        {
-            break;
-        }
-
-        for (int i = 0; i < line.length(); i += 4)
-        {
+    while (std::getline(file, line) && line[1] != '1')
+        for (auto i = 0; i < line.length(); i += 4)
             if (line[i] == '[')
             {
                 char l = line[i + 1];
                 data[i / 4 + 1].push_back(l);
             }
-        }
-    }
 
     std::string move, from, to;
-    int quantity, s1, s2;
-    while (file >> move >> quantity >> from >> s1 >> to >> s2)
-        move_func(data, quantity, s1, s2);
+    int quantity = 0, from_stack = 0, to_stack = 0;
+    while (file >> move >> quantity >> from >> from_stack >> to >> to_stack)
+        move_func(data, quantity, from_stack, to_stack);
 
     std::string retval;
-    for (int i = 1; i < 100; i++)
-    {
+    for (auto i = 1; i < 100; i++)
         if (!data[i].empty())
             retval += data[i].front();
-    }
 
     return retval;
 }
