@@ -4,7 +4,6 @@
 #include <string>
 #include <array>
 #include <queue>
-#include <algorithm>
 
 auto process_data(const std::string &filename, bool part2)
 {
@@ -22,19 +21,18 @@ auto process_data(const std::string &filename, bool part2)
 
     while (file >> move >> quantity >> from >> from_stack >> to >> to_stack)
     {
-        std::string removed_creates;
+        std::deque<char> removed_crates;
 
         for (auto i = 0; i < quantity; i++)
         {
-            removed_creates.push_back(data[from_stack].front());
+            auto crate = data[from_stack].front();
             data[from_stack].pop_front();
+
+            part2 ? removed_crates.push_front(crate) : removed_crates.push_back(crate);
         }
 
-        if (part2)
-            std::reverse(removed_creates.begin(), removed_creates.end());
-
-        for (auto j = removed_creates.begin(); j != removed_creates.end(); j++)
-            data[to_stack].push_front(*j);
+        for (auto i = removed_crates.begin(); i != removed_crates.end(); i++)
+            data[to_stack].push_front(*i);
     }
 
     std::string retval;
