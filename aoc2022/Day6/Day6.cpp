@@ -15,7 +15,7 @@ auto any_repeats(const std::string &s, int start, int end)
     return any_repeats(s, start + 1, end);
 }
 
-auto process_data(const std::string &filename, int n)
+auto do_part(const std::string &filename, int n)
 {
     std::ifstream file(filename);
     std::string line;
@@ -30,10 +30,10 @@ auto process_data(const std::string &filename, int n)
 
 int main()
 {
-    auto part1 = process_data("input.txt", 4);
+    auto part1 = do_part("input.txt", 4);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = process_data("input.txt", 14);
+    auto part2 = do_part("input.txt", 14);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 1042);
