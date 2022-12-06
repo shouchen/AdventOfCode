@@ -1,18 +1,18 @@
 #include <iostream>
 #include <fstream>
-#include <cassert>
 #include <string>
+#include <cassert>
 
-auto any_repeats(const std::string &s, int start, int end)
+auto any_repeats(std::string::iterator begin, std::string::iterator end)
 {
-    if (start >= end)
+    if (begin >= end)
         return false;
 
-    for (auto other = start + 1; other <= end; other++)
-        if (s[start] == s[other])
+    for (auto other = begin + 1; other < end; other++)
+        if (*begin == *other)
             return true;
 
-    return any_repeats(s, start + 1, end);
+    return any_repeats(begin + 1, end);
 }
 
 auto do_part(const std::string &filename, int n)
@@ -21,11 +21,11 @@ auto do_part(const std::string &filename, int n)
     std::string line;
     file >> line;
 
-    auto start = 0, end = n - 1;
-    while (any_repeats(line, start, end))
-        start++, end++;
+    auto begin = line.begin(), end = line.begin() + n;
+    while (any_repeats(begin, end))
+        begin++, end++;
 
-    return end + 1;
+    return end - line.begin();
 }
 
 int main()
