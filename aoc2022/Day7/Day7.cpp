@@ -6,17 +6,17 @@
 
 struct File
 {
-    long long size;
     std::string name;
+    long long size;
 };
 
 struct Folder
 {
     std::string name;
+    long long size = 0;
     Folder *parent;
     std::vector<Folder> folders;
     std::vector<File> files;
-    long long size = 0;
 };
 
 long long FillInFolderSizes(Folder *folder)
@@ -48,7 +48,7 @@ void FindSmallestFolderAtLeastAmount(Folder *folder, long long amount, long long
         FindSmallestFolderAtLeastAmount(&f, amount, smallest);
 }
 
-Folder root{ "/", nullptr };
+Folder root{ "/", 0, nullptr };
 Folder *curr = &root;
 
 auto read_input(const std::string &filename)
@@ -85,9 +85,9 @@ auto read_input(const std::string &filename)
                 file >> b;
 
                 if (a == "dir")
-                    curr->folders.push_back(Folder{ b, curr });
+                    curr->folders.push_back(Folder{ b, 0, curr });
                 else
-                    curr->files.push_back(File{ atoi(a.c_str()), b });
+                    curr->files.push_back(File{ b, atoi(a.c_str()) });
             }
 
             dollar = a;
