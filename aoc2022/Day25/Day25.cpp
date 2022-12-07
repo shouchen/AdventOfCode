@@ -8,6 +8,7 @@
 #include <map>
 #include <stack>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include <numeric>
 #include <limits>
@@ -75,10 +76,10 @@ int main()
     auto part1 = process_data("input.txt", false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = process_data("input.txt", true);
-    std::cout << "Part Two: " << part2 << std::endl;
+    //auto part2 = process_data("input.txt", true);
+    //std::cout << "Part Two: " << part2 << std::endl;
 
-    assert(part1 == "HBTMTBSDC");
-    assert(part2 == "PQTJRSHWS");
+    //assert(part1 == "HBTMTBSDC");
+    //assert(part2 == "PQTJRSHWS");
     return 0;
 }
