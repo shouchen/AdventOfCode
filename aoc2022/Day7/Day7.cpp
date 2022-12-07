@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <cassert>
 #include <string>
 #include <vector>
@@ -15,32 +14,14 @@ struct Folder
 {
     std::string name;
     Folder *parent;
-    std::vector<Folder> children;
+    std::vector<Folder> folders;
     std::vector<File> files;
     long long size = 0;
 };
 
-//void Dump(Folder *folder, int indent)
-//{
-//    for (int i = 0; i < indent; i++)
-//        std::cout << "  ";
-//
-//    std::cout << "-" << folder->name << " (dir)" << std::endl;
-//    for (Folder &f : folder->children)
-//    {
-//        Dump(&f, indent + 2);
-//    }
-//    for (File &file : folder->files)
-//    {
-//        for (int i = 0; i <= indent; i++)
-//            std::cout << "  ";
-//        std::cout << file.name << " (file, size=" << file.size << ")" << std::endl;
-//    }
-//}
-
 long long FillInFolderSizes(Folder *folder)
 {
-    for (Folder &f : folder->children)
+    for (Folder &f : folder->folders)
         folder->size += FillInFolderSizes(&f);
 
     for (File &file : folder->files)
@@ -54,7 +35,7 @@ void SumFoldersUnderLimit(Folder *folder, long long limit, long long &sum)
     if (folder->size <= limit)
         sum += folder->size;
 
-    for (Folder &f : folder->children)
+    for (Folder &f : folder->folders)
         SumFoldersUnderLimit(&f, limit, sum);
 }
 
@@ -63,7 +44,7 @@ void FindSmallestFolderAtLeastAmount(Folder *folder, long long amount, long long
     if (folder->size >= amount && folder->size < smallest)
         smallest = folder->size;
 
-    for (Folder &f : folder->children)
+    for (Folder &f : folder->folders)
         FindSmallestFolderAtLeastAmount(&f, amount, smallest);
 }
 
@@ -73,54 +54,46 @@ Folder *curr = &root;
 auto read_input(const std::string &filename)
 {
     std::ifstream file(filename);
-    std::string line;
+    std::string dollar, cd, slash;
 
-    while (getline(file, line))
+    file >> dollar >> cd >> slash >> dollar;
+
+    while (dollar == "$")
     {
-        if (line[0] == '$')
+        std::string cmd, param;
+
+        file >> cmd;
+        if (cmd == "cd")
         {
-HERE:
-            std::stringstream ss(line);
-            std::string dollar, cmd, param;
+            file >> param;
 
-            ss >> dollar >> cmd;
-            if (cmd == "cd")
-            {
-                ss >> param;
-                if (param == "/") continue;
-                if (param == "..") curr = curr->parent;
-                for (Folder &f : curr->children)
-                    if (f.name == param)
-                    {
-                        curr = &f;
-                        break;
-                    }
-            }
-            else if (cmd == "ls")
-            {
-                while (getline(file, line))
+            if (param == "..")
+                curr = curr->parent;
+
+            for (Folder &f : curr->folders)
+                if (f.name == param)
                 {
-                    if (line[0] == '$') goto HERE;
-
-                    std::stringstream ss(line);
-                    std::string a;
-                    std::string b;
-                    ss >> a >> b;
-
-                    if (a == "dir")
-                    {
-                        curr->children.push_back(Folder{ b, curr });
-                    }
-                    else
-                    {
-                        curr->files.push_back(File{ atoi(a.c_str()), b });
-                    }
+                    curr = &f;
+                    break;
                 }
+        }
+        else if (cmd == "ls")
+        {
+            std::string a, b;
+            while (file >> a && a != "$")
+            {
+                file >> b;
+
+                if (a == "dir")
+                    curr->folders.push_back(Folder{ b, curr });
+                else
+                    curr->files.push_back(File{ atoi(a.c_str()), b });
             }
+
+            dollar = a;
         }
     }
 
-    //Dump(&root, 0);
     FillInFolderSizes(&root);
 }
 
@@ -133,10 +106,9 @@ auto do_part1()
 
 auto do_part2()
 {
-    long long total_space = 70000000;
-    long long need_unused = 30000000;
-    long long have_unused = total_space - root.size;
-    long long size_to_free_up = need_unused - have_unused;
+    auto total_space = 70000000LL, need_unused = 30000000LL;
+    auto have_unused = total_space - root.size;
+    auto size_to_free_up = need_unused - have_unused;
 
     auto retval = LLONG_MAX;
     FindSmallestFolderAtLeastAmount(&root, size_to_free_up, retval);
