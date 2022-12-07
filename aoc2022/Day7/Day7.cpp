@@ -10,98 +10,94 @@ struct File
     long long size;
 };
 
-struct Folder
+struct Directory
 {
     std::string name;
-    long long size = 0;
-    Folder *parent;
-    std::vector<Folder> folders;
+    long long size;
+    Directory *parent;
+    std::vector<Directory> directories;
     std::vector<File> files;
 };
 
-long long FillInFolderSizes(Folder *folder)
+Directory root{ "", 0, nullptr, { Directory{"/", 0, &root} } };
+
+long long FillInDirectorySizes(Directory *directory = &root)
 {
-    for (Folder &f : folder->folders)
-        folder->size += FillInFolderSizes(&f);
+    for (File &f : directory->files)
+        directory->size += f.size;
 
-    for (File &file : folder->files)
-        folder->size += file.size;
+    for (Directory &d : directory->directories)
+        directory->size += FillInDirectorySizes(&d);
 
-    return folder->size;
+    return directory->size;
 }
 
-void SumFoldersUnderLimit(Folder *folder, long long limit, long long &sum)
+void SumDirectoriesUnderLimit(Directory *directory, long long limit, long long &sum)
 {
-    if (folder->size <= limit)
-        sum += folder->size;
+    if (directory->size <= limit)
+        sum += directory->size;
 
-    for (Folder &f : folder->folders)
-        SumFoldersUnderLimit(&f, limit, sum);
+    for (Directory &d : directory->directories)
+        SumDirectoriesUnderLimit(&d, limit, sum);
 }
 
-void FindSmallestFolderAtLeastAmount(Folder *folder, long long amount, long long &smallest)
+void FindSmallestDirectorySizeAtLeastAmount(Directory *directory, long long amount, long long &smallest)
 {
-    if (folder->size >= amount && folder->size < smallest)
-        smallest = folder->size;
+    if (directory->size >= amount && directory->size < smallest)
+        smallest = directory->size;
 
-    for (Folder &f : folder->folders)
-        FindSmallestFolderAtLeastAmount(&f, amount, smallest);
+    for (Directory &d : directory->directories)
+        FindSmallestDirectorySizeAtLeastAmount(&d, amount, smallest);
 }
 
-Folder root{ "/", 0, nullptr };
-Folder *curr = &root;
-
-auto read_input(const std::string &filename)
+auto process_input(const std::string &filename)
 {
     std::ifstream file(filename);
-    std::string dollar, cd, slash;
+    std::string s, cmd, param, name;
+    auto *curr = &root;
 
-    file >> dollar >> cd >> slash >> dollar;
+    file >> s;
 
-    while (dollar == "$")
+    while (s == "$")
     {
-        std::string cmd, param;
-
         file >> cmd;
+
         if (cmd == "cd")
         {
             file >> param;
 
             if (param == "..")
                 curr = curr->parent;
-
-            for (Folder &f : curr->folders)
-                if (f.name == param)
-                {
-                    curr = &f;
-                    break;
-                }
+            else
+                for (Directory &d : curr->directories)
+                    if (d.name == param)
+                    {
+                        curr = &d;
+                        break;
+                    }
         }
         else if (cmd == "ls")
         {
-            std::string a, b;
-            while (file >> a && a != "$")
+            while (file >> s && s != "$")
             {
-                file >> b;
+                file >> name;
 
-                if (a == "dir")
-                    curr->folders.push_back(Folder{ b, 0, curr });
+                if (s == "dir")
+                    curr->directories.push_back(Directory{ name, 0, curr });
                 else
-                    curr->files.push_back(File{ b, atoi(a.c_str()) });
+                    curr->files.push_back(File{ name, atoi(s.c_str()) });
             }
-
-            dollar = a;
         }
     }
 
-    FillInFolderSizes(&root);
+    FillInDirectorySizes();
 }
 
 auto do_part1()
 {
-    long long part1 = 0;
-    SumFoldersUnderLimit(&root, 100000, part1);
-    return part1;
+    auto retval = 0LL;
+    SumDirectoriesUnderLimit(&root, 100000, retval);
+    return retval;
 }
 
 auto do_part2()
@@ -111,13 +107,13 @@ auto do_part2()
     auto size_to_free_up = need_unused - have_unused;
 
     auto retval = LLONG_MAX;
-    FindSmallestFolderAtLeastAmount(&root, size_to_free_up, retval);
+    FindSmallestDirectorySizeAtLeastAmount(&root, size_to_free_up, retval);
     return retval;
 }
 
 int main()
 {
-    read_input("input.txt");
+    process_input("input.txt");
 
     auto part1 = do_part1();
     std::cout << "Part One: " << part1 << std::endl;
