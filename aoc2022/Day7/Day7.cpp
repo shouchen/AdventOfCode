@@ -21,33 +21,33 @@ struct Directory
 
 Directory root{ "", 0, nullptr, { Directory{"/", 0, &root} } };
 
-long long FillInDirectorySizes(Directory *directory = &root)
+long long FillInDirectorySizes(Directory &directory = root)
 {
-    for (File &f : directory->files)
-        directory->size += f.size;
+    for (auto &d : directory.directories)
+        directory.size += FillInDirectorySizes(d);
 
-    for (Directory &d : directory->directories)
-        directory->size += FillInDirectorySizes(&d);
+    for (auto &f : directory.files)
+        directory.size += f.size;
 
-    return directory->size;
+    return directory.size;
 }
 
-void SumDirectoriesUnderLimit(Directory *directory, long long limit, long long &sum)
+void SumDirectoriesUnderLimit(Directory &directory, long long limit, long long &sum)
 {
-    if (directory->size <= limit)
-        sum += directory->size;
+    for (auto &d : directory.directories)
+        SumDirectoriesUnderLimit(d, limit, sum);
 
-    for (Directory &d : directory->directories)
-        SumDirectoriesUnderLimit(&d, limit, sum);
+    if (directory.size <= limit)
+        sum += directory.size;
 }
 
-void FindSmallestDirectorySizeAtLeastAmount(Directory *directory, long long amount, long long &smallest)
+void FindSmallestDirectorySizeAtLeastAmount(Directory &directory, long long amount, long long &smallest)
 {
-    if (directory->size >= amount && directory->size < smallest)
-        smallest = directory->size;
+    for (auto &d : directory.directories)
+        FindSmallestDirectorySizeAtLeastAmount(d, amount, smallest);
 
-    for (Directory &d : directory->directories)
-        FindSmallestDirectorySizeAtLeastAmount(&d, amount, smallest);
+    if (directory.size >= amount && directory.size < smallest)
+        smallest = directory.size;
 }
 
 auto process_input(const std::string &filename)
@@ -96,7 +96,7 @@ auto process_input(const std::string &filename)
 auto do_part1()
 {
     auto retval = 0LL;
-    SumDirectoriesUnderLimit(&root, 100000, retval);
+    SumDirectoriesUnderLimit(root, 100000, retval);
     return retval;
 }
 
@@ -107,7 +107,7 @@ auto do_part2()
     auto size_to_free_up = need_unused - have_unused;
 
     auto retval = LLONG_MAX;
-    FindSmallestDirectorySizeAtLeastAmount(&root, size_to_free_up, retval);
+    FindSmallestDirectorySizeAtLeastAmount(root, size_to_free_up, retval);
     return retval;
 }
 
