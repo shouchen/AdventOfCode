@@ -14,52 +14,26 @@ void read_input(const std::string &filename)
         grid.push_back(line);
 }
 
-auto is_visible_vertically(int row, int col)
+auto all_trees_below_height(int row1, int col1, int row2, int col2, int height)
 {
-    for (auto r = 0; r < grid.size(); r++)
-        if (r != row && grid[r][col] >= grid[row][col])
-            return false;
+    for (auto row = row1; row <= row2; row++)
+        for (int col = col1; col <= col2; col++)
+            if (grid[row][col] >= height)
+                return false;
 
     return true;
 }
 
-auto is_visible_up(int row, int col)
+auto is_visible(int row, int col)
 {
-    for (auto r = 0; r < row; r++)
-        if (grid[r][col] >= grid[row][col])
-            return false;
-
-    return true;
+    return
+        all_trees_below_height(0, col, row - 1, col, grid[row][col]) ||
+        all_trees_below_height(row + 1, col, grid.size() - 1, col, grid[row][col]) ||
+        all_trees_below_height(row, 0, row, col - 1, grid[row][col]) ||
+        all_trees_below_height(row, col + 1, row, grid[row].size() - 1, grid[row][col]);
 }
 
-auto is_visible_down(int row, int col)
-{
-    for (auto r = row + 1; r < grid.size(); r++)
-        if (grid[r][col] >= grid[row][col])
-            return false;
-
-    return true;
-}
-
-auto is_visible_left(int row, int col)
-{
-    for (auto c = 0; c < col; c++)
-        if (grid[row][c] >= grid[row][col])
-            return false;
-
-    return true;
-}
-
-auto is_visible_right(int row, int col)
-{
-    for (auto c = col + 1; c < grid[0].size(); c++)
-        if (grid[row][c] >= grid[row][col])
-            return false;
-
-    return true;
-}
-
-int scenic_score(int row, int col)
+auto scenic_score(int row, int col)
 {
     auto up = 0, down = 0, left = 0, right = 0;
 
