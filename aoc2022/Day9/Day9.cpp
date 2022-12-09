@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cassert>
 
+inline auto signum(int x) { return (x == 0) ? 0 : ((x < 0) ? -1 : 1); }
+
 auto do_part(const std::string &filename, int n)
 {
     auto pos = std::vector<std::pair<int, int>>(n);
@@ -28,17 +30,13 @@ auto do_part(const std::string &filename, int n)
 
             for (auto i = 1; i < n; i++)
             {
-                auto drow = pos[i].first - pos[i - 1].first;
-                auto dcol = pos[i].second - pos[i - 1].second;
+                auto diff_row = pos[i - 1].first - pos[i].first;
+                auto diff_col = pos[i - 1].second - pos[i].second;
 
-                if (abs(drow) == 2 && dcol == 0)
-                    pos[i].first -= drow / 2;
-                else if (drow == 0 && abs(dcol) == 2)
-                    pos[i].second -= dcol / 2;
-                else if (abs(drow) == 2 || abs(dcol) == 2)
+                if (abs(diff_row) == 2 || abs(diff_col) == 2)
                 {
-                    pos[i].first += (drow < 0) ? 1 : -1;
-                    pos[i].second += (dcol < 0) ? 1 : -1;
+                    pos[i].first += signum(diff_row);
+                    pos[i].second += signum(diff_col);
                 }
             }
 
