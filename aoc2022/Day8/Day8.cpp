@@ -14,10 +14,10 @@ void read_input(const std::string &filename)
         grid.push_back(line);
 }
 
-auto all_trees_below_height(int row1, int col1, int row2, int col2, int height)
+auto all_trees_below_height(int row1, int col1, int row2, int col2, char height)
 {
     for (auto row = row1; row <= row2; row++)
-        for (int col = col1; col <= col2; col++)
+        for (auto col = col1; col <= col2; col++)
             if (grid[row][col] >= height)
                 return false;
 
