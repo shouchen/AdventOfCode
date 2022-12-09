@@ -37,10 +37,8 @@ auto do_part(const std::string &filename, int n)
                     pos[i].second -= dcol / 2;
                 else if (abs(drow) == 2 || abs(dcol) == 2)
                 {
-                    if (drow > 0) pos[i].first--;
-                    if (drow < 0) pos[i].first++;
-                    if (dcol > 0) pos[i].second--;
-                    if (dcol < 0) pos[i].second++;
+                    pos[i].first += (drow < 0) ? 1 : -1;
+                    pos[i].second += (dcol < 0) ? 1 : -1;
                 }
             }
 
