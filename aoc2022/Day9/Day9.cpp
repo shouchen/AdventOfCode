@@ -5,26 +5,6 @@
 #include <cstdlib>
 #include <cassert>
 
-/*
-void dump1()
-{
-    for (int r = -4; r <= 0; r++)
-    {
-        for (int c = 0; c < 6; c++)
-        {
-            if (h_rc.first == r && h_rc.second == c)
-                cout << "H";
-            else if (t_rc.first == r && t_rc.second == c)
-                cout << "T";
-            else
-                cout << ".";
-        }
-        cout << endl;
-    }
-    cout << endl;
-}
-*/
-
 auto do_part1(const std::string &filename)
 {
     std::pair<int, int> h_rc = std::make_pair(0, 0), t_rc = std::make_pair(0, 0);
@@ -34,13 +14,9 @@ auto do_part1(const std::string &filename)
     auto dir = ' ';
     auto dist = 0;
 
-    //dump1();
-
     while (file >> dir >> dist)
     {
-        //cout << "== " << dir << " " << dist << " ==" << endl << endl;
-
-        for (int i = 0; i < dist; i++)
+        for (auto i = 0; i < dist; i++)
         {
             if (dir == 'U')
                 --h_rc.first;
@@ -72,50 +48,12 @@ auto do_part1(const std::string &filename)
                     t_rc.second++;
             }
 
-            //dump1();
-
             visited.insert(t_rc);
         }
     }
 
     return visited.size();
 }
-
-/*
-void dump2()
-{
-    for (int r = -15; r <= 5; r++)
-    {
-        for (int c = -11; c <= 14; c++)
-        {
-            if (pos[0].first == r && pos[0].second == c)
-                cout << "H";
-            else if (pos[1].first == r && pos[1].second == c)
-                cout << "1";
-            else if (pos[2].first == r && pos[2].second == c)
-                cout << "2";
-            else if (pos[3].first == r && pos[3].second == c)
-                cout << "3";
-            else if (pos[4].first == r && pos[4].second == c)
-                cout << "4";
-            else if (pos[5].first == r && pos[5].second == c)
-                cout << "5";
-            else if (pos[6].first == r && pos[6].second == c)
-                cout << "6";
-            else if (pos[7].first == r && pos[7].second == c)
-                cout << "7";
-            else if (pos[8].first == r && pos[8].second == c)
-                cout << "8";
-            else if (pos[9].first == r && pos[9].second == c)
-                cout << "9";
-            else
-                cout << ".";
-        }
-        cout << endl;
-    }
-    cout << endl;
-}
-*/
 
 auto do_part2(const std::string &filename)
 {
@@ -126,13 +64,9 @@ auto do_part2(const std::string &filename)
     auto dir = ' ';
     auto dist = 0;
 
-    //dump2();
-
     while (file >> dir >> dist)
     {
-        //cout << "== " << dir << " " << dist << " ==" << endl << endl;
-
-        for (int i = 0; i < dist; i++)
+        for (auto i = 0; i < dist; i++)
         {
             // move head
             if (dir == 'U')
@@ -145,7 +79,7 @@ auto do_part2(const std::string &filename)
                 pos[0].second++;
 
             // check tail move if two steps
-            for (int j = 1; j <= 9; j++)
+            for (auto j = 1; j <= 9; j++)
             {
                 if (pos[j].first - pos[j - 1].first == 2 && pos[j].second == pos[j - 1].second)
                     pos[j].first--;
@@ -168,7 +102,6 @@ auto do_part2(const std::string &filename)
                 }
             }
 
-            //dump2();
             visited.insert(pos[9]);
         }
     }
