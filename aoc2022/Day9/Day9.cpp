@@ -1,72 +1,22 @@
 #include <iostream>
 #include <fstream>
-#include <array>
+#include <vector>
 #include <set>
 #include <cstdlib>
 #include <cassert>
 
-auto do_part1(const std::string &filename)
+auto do_part(const std::string &filename, int n)
 {
-    std::pair<int, int> h_rc = std::make_pair(0, 0), t_rc = std::make_pair(0, 0);
+    auto pos = std::vector<std::pair<int, int>>(n);
     std::set<std::pair<int, int>> visited;
 
     std::ifstream file(filename);
     auto dir = ' ';
-    auto dist = 0;
+    auto times = 0;
 
-    while (file >> dir >> dist)
+    while (file >> dir >> times)
     {
-        for (auto i = 0; i < dist; i++)
-        {
-            if (dir == 'U')
-                --h_rc.first;
-            else if (dir == 'D')
-                h_rc.first++;
-            else if (dir == 'L')
-                --h_rc.second;
-            else if (dir == 'R')
-                h_rc.second++;
-
-            // check tail move if two steps
-            if (t_rc.first - h_rc.first == 2 && t_rc.second == h_rc.second)
-                t_rc.first--;
-            else if (h_rc.first - t_rc.first == 2 && t_rc.second == h_rc.second)
-                t_rc.first++;
-            else if (t_rc.second - h_rc.second == 2 && t_rc.first == h_rc.first)
-                t_rc.second--;
-            else if (h_rc.second - t_rc.second == 2 && t_rc.first == h_rc.first)
-                t_rc.second++;
-            else if (abs(h_rc.first - t_rc.first) == 2 || abs(h_rc.second - t_rc.second) == 2)
-            {
-                if (h_rc.first < t_rc.first)
-                    t_rc.first--;
-                if (h_rc.first > t_rc.first)
-                    t_rc.first++;
-                if (h_rc.second < t_rc.second)
-                    t_rc.second--;
-                if (h_rc.second > t_rc.second)
-                    t_rc.second++;
-            }
-
-            visited.insert(t_rc);
-        }
-    }
-
-    return visited.size();
-}
-
-auto do_part2(const std::string &filename)
-{
-    std::array<std::pair<int, int>, 10> pos;
-    std::set<std::pair<int, int>> visited;
-
-    std::ifstream file(filename);
-    auto dir = ' ';
-    auto dist = 0;
-
-    while (file >> dir >> dist)
-    {
-        for (auto i = 0; i < dist; i++)
+        for (auto i = 0; i < times; i++)
         {
             // move head
             if (dir == 'U')
@@ -79,7 +29,7 @@ auto do_part2(const std::string &filename)
                 pos[0].second++;
 
             // check tail move if two steps
-            for (auto j = 1; j <= 9; j++)
+            for (auto j = 1; j < n; j++)
             {
                 if (pos[j].first - pos[j - 1].first == 2 && pos[j].second == pos[j - 1].second)
                     pos[j].first--;
@@ -102,7 +52,7 @@ auto do_part2(const std::string &filename)
                 }
             }
 
-            visited.insert(pos[9]);
+            visited.insert(pos[n - 1]);
         }
     }
 
@@ -111,10 +61,10 @@ auto do_part2(const std::string &filename)
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
+    auto part1 = do_part("input.txt", 2);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part2("input.txt");
+    auto part2 = do_part("input.txt", 10);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 6090);
