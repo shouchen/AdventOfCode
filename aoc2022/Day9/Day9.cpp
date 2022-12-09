@@ -16,39 +16,31 @@ auto do_part(const std::string &filename, int n)
 
     while (file >> dir >> times)
     {
-        for (auto i = 0; i < times; i++)
+        while (times--)
         {
-            // move head
-            if (dir == 'U')
-                --pos[0].first;
-            else if (dir == 'D')
-                pos[0].first++;
-            else if (dir == 'L')
-                --pos[0].second;
-            else if (dir == 'R')
-                pos[0].second++;
-
-            // check tail move if two steps
-            for (auto j = 1; j < n; j++)
+            switch (dir)
             {
-                if (pos[j].first - pos[j - 1].first == 2 && pos[j].second == pos[j - 1].second)
-                    pos[j].first--;
-                else if (pos[j - 1].first - pos[j].first == 2 && pos[j].second == pos[j - 1].second)
-                    pos[j].first++;
-                else if (pos[j].second - pos[j - 1].second == 2 && pos[j].first == pos[j - 1].first)
-                    pos[j].second--;
-                else if (pos[j - 1].second - pos[j].second == 2 && pos[j].first == pos[j - 1].first)
-                    pos[j].second++;
-                else if (abs(pos[j - 1].first - pos[j].first) == 2 || abs(pos[j - 1].second - pos[j].second) == 2)
+                case 'U': pos[0].first--; break;
+                case 'D': pos[0].first++; break;
+                case 'L': pos[0].second--; break;
+                case 'R': pos[0].second++; break;
+            }
+
+            for (auto i = 1; i < n; i++)
+            {
+                auto drow = pos[i].first - pos[i - 1].first;
+                auto dcol = pos[i].second - pos[i - 1].second;
+
+                if (abs(drow) == 2 && dcol == 0)
+                    pos[i].first -= drow / 2;
+                else if (drow == 0 && abs(dcol) == 2)
+                    pos[i].second -= dcol / 2;
+                else if (abs(drow) == 2 || abs(dcol) == 2)
                 {
-                    if (pos[j - 1].first < pos[j].first)
-                        pos[j].first--;
-                    if (pos[j - 1].first > pos[j].first)
-                        pos[j].first++;
-                    if (pos[j - 1].second < pos[j].second)
-                        pos[j].second--;
-                    if (pos[j - 1].second > pos[j].second)
-                        pos[j].second++;
+                    if (drow > 0) pos[i].first--;
+                    if (drow < 0) pos[i].first++;
+                    if (dcol > 0) pos[i].second--;
+                    if (dcol < 0) pos[i].second++;
                 }
             }
 
