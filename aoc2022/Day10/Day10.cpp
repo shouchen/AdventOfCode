@@ -3,22 +3,16 @@
 #include <cstdlib>
 #include <cassert>
 
-auto get_signal_strength(int cycle, int x)
+void do_cycle(int x, int &cycle, int &ss, std::string &screen)
 {
-    return (cycle % 40 == 20) ? (cycle * x) : 0;
-}
+    auto crt = cycle - 1;
 
-auto get_pixel(int crt, int x)
-{
-    return (abs(crt % 40 - x) < 2) ? '#' : '.';
-}
+    if (cycle % 40 == 20)
+        ss += cycle * x;;
 
-void do_cycle(int x, int &cycle, int &ss, int &crt, std::string &screen)
-{
-    ss += get_signal_strength(cycle++, x);
-    screen.push_back(get_pixel(crt++, x));
+    screen.push_back((abs(crt % 40 - x) < 2) ? '#' : '.');
 
-    if (crt % 40 == 0)
+    if (cycle++ % 40 == 1)
         screen.push_back('\n');
 }
 
@@ -26,15 +20,15 @@ void process_input(const std::string &filename, int &part1, std::string &part2)
 {
     std::ifstream file(filename);
     std::string instruction, screen;
-    auto operand = 0, ss = 0, cycle = 1, crt = 0, x = 1;
+    auto operand = 0, ss = 0, cycle = 1, x = 1;
 
     while (file >> instruction)
     {
-        do_cycle(x, cycle, ss, crt, screen);
+        do_cycle(x, cycle, ss, screen);
 
         if (instruction == "addx")
         {
-            do_cycle(x, cycle, ss, crt, screen);
+            do_cycle(x, cycle, ss, screen);
 
             file >> operand;
             x += operand;
