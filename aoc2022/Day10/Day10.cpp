@@ -5,18 +5,17 @@
 
 void do_cycle(int x, int &cycle, int &ss, std::string &screen)
 {
-    auto crt = cycle - 1;
-
     if (cycle % 40 == 20)
-        ss += cycle * x;;
+        ss += cycle * x;
 
+    auto crt = cycle - 1;
     screen.push_back((abs(crt % 40 - x) < 2) ? '#' : '.');
 
     if (cycle++ % 40 == 1)
         screen.push_back('\n');
 }
 
-void process_input(const std::string &filename, int &part1, std::string &part2)
+auto process_input(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string instruction, screen;
@@ -35,20 +34,16 @@ void process_input(const std::string &filename, int &part1, std::string &part2)
         }
     }
 
-    part1 = ss;
-    part2 = screen;
+    return std::make_pair(ss, screen);
 }
 
 int main()
 {
-    auto part1 = 0;
-    std::string part2;
-    process_input("input.txt", part1, part2);
+    auto output = process_input("input.txt");
+    std::cout << "Part One: " << output.first << std::endl;
+    std::cout << "Part Two: " << output.second << std::endl;
 
-    std::cout << "Part One: " << part1 << std::endl;
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    assert(part1 == 13180);
+    assert(output.first == 13180);
     // part2 displays "EZFCHJAB" in ASCII art
     return 0;
 }
