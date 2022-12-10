@@ -1,83 +1,64 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
 #include <cassert>
 
-void update_ss(int &ss, int cycle, int x)
+void update_signal_strength(int &ss, int cycle, int x)
 {
-    if ((cycle + 20) % 40 == 0)
+    if (cycle % 40 == 20)
+        //if ((cycle + 20) % 40 == 0)
         ss += cycle * x;
-}
-
-auto do_part1(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string instruction;
-    auto operand = 0, ss = 0, cycle = 1, x = 1;
-
-    while (file >> instruction)
-    {
-        update_ss(ss, cycle++, x);
-        if (instruction == "addx")
-        {
-            update_ss(ss, cycle++, x);
-            file >> operand;
-            x += operand;
-        }
-    }
-
-    return ss;
 }
 
 void update_screen(std::string &screen, int crt, int x)
 {
-    auto temp = crt % 40;
-
-    if (x == temp - 1 || x == temp || x == temp + 1)
+    if (abs(crt % 40 - x) < 2)
         screen[crt] = '#';
 }
 
-auto format_screen(const std::string &screen)
-{
-    std::stringstream ss;
-
-    for (auto i = 0; i < 240; i++)
-    {
-        if (i % 40 == 0)
-            ss << std::endl;
-        ss << screen[i];
-    }
-
-    return ss.str();
-}
-
-auto do_part2(const std::string &filename)
+void process_input(const std::string &filename, int &part1, std::string &part2)
 {
     std::ifstream file(filename);
     std::string instruction;
-    auto operand = 0, crt = 0, x = 1;
+    auto operand = 0, ss = 0, cycle = 1, crt = 0, x = 1;
     std::string screen(240, '.');
 
     while (file >> instruction)
     {
+        update_signal_strength(ss, cycle++, x);
         update_screen(screen, crt++, x);
+
         if (instruction == "addx")
         {
+            update_signal_strength(ss, cycle++, x);
             update_screen(screen, crt++, x);
+
             file >> operand;
             x += operand;
         }
     }
 
-    return format_screen(screen);
+    part1 = ss;
+    std::stringstream ss2;
+
+    for (auto i = 0; i < screen.length(); i++)
+    {
+        if (i % 40 == 0)
+            ss2 << std::endl;
+        ss2 << screen[i];
+    }
+
+    part2 = ss2.str();
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
+    auto part1 = 0;
+    std::string part2;
+    process_input("input.txt", part1, part2);
 
-    auto part2 = do_part2("input.txt");
+    std::cout << "Part One: " << part1 << std::endl;
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 13180);
