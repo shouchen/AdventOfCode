@@ -1,38 +1,40 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <cstdlib>
 #include <cassert>
 
-void update_signal_strength(int &ss, int cycle, int x)
+auto get_signal_strength(int cycle, int x)
 {
-    if (cycle % 40 == 20)
-        //if ((cycle + 20) % 40 == 0)
-        ss += cycle * x;
+    return (cycle % 40 == 20) ? (cycle * x) : 0;
 }
 
-void update_screen(std::string &screen, int crt, int x)
+auto get_pixel(int crt, int x)
 {
-    if (abs(crt % 40 - x) < 2)
-        screen[crt] = '#';
+    return (abs(crt % 40 - x) < 2) ? '#' : '.';
+}
+
+void do_cycle(int x, int &cycle, int &ss, int &crt, std::string &screen)
+{
+    ss += get_signal_strength(cycle++, x);
+    screen.push_back(get_pixel(crt++, x));
+
+    if (crt % 40 == 0)
+        screen.push_back('\n');
 }
 
 void process_input(const std::string &filename, int &part1, std::string &part2)
 {
     std::ifstream file(filename);
-    std::string instruction;
+    std::string instruction, screen;
     auto operand = 0, ss = 0, cycle = 1, crt = 0, x = 1;
-    std::string screen(240, '.');
 
     while (file >> instruction)
     {
-        update_signal_strength(ss, cycle++, x);
-        update_screen(screen, crt++, x);
+        do_cycle(x, cycle, ss, crt, screen);
 
         if (instruction == "addx")
         {
-            update_signal_strength(ss, cycle++, x);
-            update_screen(screen, crt++, x);
+            do_cycle(x, cycle, ss, crt, screen);
 
             file >> operand;
             x += operand;
@@ -40,16 +42,7 @@ void process_input(const std::string &filename, int &part1, std::string &part2)
     }
 
     part1 = ss;
-    std::stringstream ss2;
-
-    for (auto i = 0; i < screen.length(); i++)
-    {
-        if (i % 40 == 0)
-            ss2 << std::endl;
-        ss2 << screen[i];
-    }
-
-    part2 = ss2.str();
+    part2 = screen;
 }
 
 int main()
