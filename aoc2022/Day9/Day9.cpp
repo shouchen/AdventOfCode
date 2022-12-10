@@ -33,7 +33,7 @@ auto do_part(const std::string &filename, int n)
                 auto diff_row = pos[i - 1].first - pos[i].first;
                 auto diff_col = pos[i - 1].second - pos[i].second;
 
-                if (abs(diff_row) == 2 || abs(diff_col) == 2)
+                if (abs(diff_row) > 1 || abs(diff_col) > 1)
                 {
                     pos[i].first += signum(diff_row);
                     pos[i].second += signum(diff_col);
