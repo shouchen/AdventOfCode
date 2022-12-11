@@ -1,10 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <cassert>
 #include <string>
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <cassert>
 
 struct Monkey
 {
@@ -39,22 +39,22 @@ auto process_input(const std::string &filename, bool divide_by_three, int rounds
     }
 
     auto modulo = 1LL;
-    for (Monkey &m : monkeys)
+    for (auto &m : monkeys)
         modulo *= m.divisible_by;
 
-    std::map<int, long long> monkey_count;
+    std::map<int, long long> monkey_inspections;
 
     while (rounds--)
     {
-        for (auto i = 0; i < monkeys.size(); i++)
+        for (auto id = 0; id < monkeys.size(); id++)
         {
-            Monkey &m = monkeys[i];
+            Monkey &m = monkeys[id];
 
-            for (auto &j : m.items)
+            for (auto i : m.items)
             {
-                monkey_count[i]++;
+                monkey_inspections[id]++;
 
-                auto worry = j;
+                auto worry = i;
                 auto operand = ((m.operand == "old") ? worry : atoi(m.operand.c_str()));
                 worry = (m.operation == '*') ? (worry * operand) : (worry + operand);
 
@@ -72,7 +72,7 @@ auto process_input(const std::string &filename, bool divide_by_three, int rounds
     }
 
     std::vector<long long> counts;
-    for (auto &i : monkey_count)
+    for (auto &i : monkey_inspections)
         counts.push_back(i.second);
 
     sort(counts.begin(), counts.end());
