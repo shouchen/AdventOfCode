@@ -42,7 +42,7 @@ auto process_input(const std::string &filename, bool divide_by_three, int rounds
     for (auto &m : monkeys)
         modulo *= m.divisible_by;
 
-    std::map<int, long long> monkey_inspections;
+    std::map<int, int> monkey_inspections;
 
     while (rounds--)
     {
@@ -76,7 +76,7 @@ auto process_input(const std::string &filename, bool divide_by_three, int rounds
         counts.push_back(i.second);
 
     sort(counts.begin(), counts.end());
-    return counts.back() * counts[counts.size() - 2];
+    return counts[counts.size() - 1] * counts[counts.size() - 2];
 }
 
 int main()
