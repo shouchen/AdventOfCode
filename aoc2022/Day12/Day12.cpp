@@ -8,12 +8,12 @@
 
 using RowCol = std::pair<int, int>;
 
-static const std::array<RowCol, 4> deltas{
+const std::array<RowCol, 4> deltas{
     std::make_pair(-1, 0), std::make_pair(1, 0), std::make_pair(0, -1), std::make_pair(0, 1)
 };
 
 std::vector<std::string> grid;
-RowCol startpos, endpos;
+RowCol s_pos, e_pos;
 
 void read_input(const std::string &filename)
 {
@@ -23,17 +23,17 @@ void read_input(const std::string &filename)
     while (getline(file, line))
     {
         auto pos = line.find('S');
-        if (pos != -1)
+        if (pos != std::string::npos)
         {
             line[pos] = 'a';
-            startpos = std::make_pair(grid.size(), pos);
+            s_pos = std::make_pair(grid.size(), pos);
         }
 
         pos = line.find('E');
-        if (pos != -1)
+        if (pos != std::string::npos)
         {
             line[pos] = 'z';
-            endpos = std::make_pair(grid.size(), pos);
+            e_pos = std::make_pair(grid.size(), pos);
         }
 
         grid.push_back(line);
@@ -47,7 +47,7 @@ auto do_part(bool part2)
     for (auto i = 0; i < grid.size(); i++)
         for (auto j = 0; j < grid[i].length(); j++)
             dist[std::make_pair(i, j)] = INT_MAX;
-    dist[endpos] = 0;
+    dist[e_pos] = 0;
 
     for (auto d = 0; ; d++)
     {
@@ -64,13 +64,14 @@ auto do_part(bool part2)
                 {
                     auto next = std::make_pair(i + delta.first, j + delta.second);
 
-                    if (next.first >= 0 && next.first < grid.size() && next.second >= 0 && next.second < grid[0].length() &&
-                        grid[curr.first][curr.second] - grid[next.first][next.second] <= 1 && dist[next] > next_dist)
-                    {
-                        if (part2 && grid[next.first][next.second] == 'a' || next == startpos)
-                            return next_dist;
-                        dist[next] = next_dist;
-                    }
+                    if (next.first < 0 || next.first > grid.size() - 1 || next.second < 0 || next.second > grid[0].length() - 1 ||
+                        grid[curr.first][curr.second] - grid[next.first][next.second] > 1 || dist[next] <= next_dist)
+                        continue;
+
+                    dist[next] = next_dist;
+
+                    if (part2 && grid[next.first][next.second] == 'a' || next == s_pos)
+                        return next_dist;
                 }
             }
     }
