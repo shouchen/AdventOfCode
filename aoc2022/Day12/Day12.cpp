@@ -9,10 +9,6 @@
 
 using RowCol = std::pair<int, int>;
 
-const std::array<RowCol, 4> deltas{
-    std::make_pair(-1, 0), std::make_pair(1, 0), std::make_pair(0, -1), std::make_pair(0, 1)
-};
-
 std::vector<std::string> height;
 RowCol s_pos, e_pos;
 
@@ -46,6 +42,10 @@ auto is_inside_grid(const RowCol &rc)
 
 auto new_do_part(bool part2)
 {
+    static const std::array<RowCol, 4> deltas{
+        std::make_pair(-1, 0), std::make_pair(1, 0), std::make_pair(0, -1), std::make_pair(0, 1)
+    };
+
     std::map<RowCol, int> dist;
     dist[e_pos] = 0;
     auto best = INT_MAX;
@@ -63,16 +63,6 @@ auto new_do_part(bool part2)
             auto next = std::make_pair(curr.first + delta.first, curr.second + delta.second);
             auto next_dist = dist[curr] + 1;
 
-            //if (!is_inside_grid(next) || height[curr.first][curr.second] - height[next.first][next.second] > 1 ||
-            //    dist.find(next) != dist.end() && next_dist >= dist[next])
-            //    continue;
-
-            //dist[next] = next_dist;
-
-            //if (part2 && height[next.first][next.second] == 'a' || next == s_pos)
-            //    best = std::min(best, next_dist);
-
-            //q.push(next);
             if (is_inside_grid(next) && height[curr.first][curr.second] - height[next.first][next.second] <= 1 &&
                 (dist.find(next) == dist.end() || next_dist < dist[next]))
             {
