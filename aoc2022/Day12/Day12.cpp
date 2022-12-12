@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <map>
+#include <queue>
 #include <cassert>
 
 using RowCol = std::pair<int, int>;
@@ -12,8 +13,18 @@ const std::array<RowCol, 4> deltas{
     std::make_pair(-1, 0), std::make_pair(1, 0), std::make_pair(0, -1), std::make_pair(0, 1)
 };
 
-std::vector<std::string> grid;
+std::vector<std::string> height;
 RowCol s_pos, e_pos;
+
+void replace_letter(std::string &line, char letter, char new_letter, RowCol &pos)
+{
+    auto p = line.find(letter);
+    if (p == std::string::npos)
+        return;
+
+    line[p] = new_letter;
+    pos = std::make_pair(height.size(), p);
+}
 
 void read_input(const std::string &filename)
 {
@@ -22,69 +33,70 @@ void read_input(const std::string &filename)
 
     while (getline(file, line))
     {
-        auto pos = line.find('S');
-        if (pos != std::string::npos)
-        {
-            line[pos] = 'a';
-            s_pos = std::make_pair(grid.size(), pos);
-        }
-
-        pos = line.find('E');
-        if (pos != std::string::npos)
-        {
-            line[pos] = 'z';
-            e_pos = std::make_pair(grid.size(), pos);
-        }
-
-        grid.push_back(line);
+        replace_letter(line, 'S', 'a', s_pos);
+        replace_letter(line, 'E', 'z', e_pos);
+        height.push_back(line);
     }
 }
 
-auto do_part(bool part2)
+auto is_inside_grid(const RowCol &rc)
+{
+    return rc.first >= 0 && rc.first < height.size() && rc.second >= 0 && rc.second < height[0].length();
+}
+
+auto new_do_part(bool part2)
 {
     std::map<RowCol, int> dist;
-
-    for (auto i = 0; i < grid.size(); i++)
-        for (auto j = 0; j < grid[i].length(); j++)
-            dist[std::make_pair(i, j)] = INT_MAX;
     dist[e_pos] = 0;
+    auto best = INT_MAX;
 
-    for (auto d = 0; ; d++)
+    std::queue<RowCol> q;
+    q.push(e_pos);
+
+    while (!q.empty())
     {
-        auto next_dist = d + 1;
+        RowCol curr = q.front();
+        q.pop();
+        
+        for (auto &delta : deltas)
+        {
+            auto next = std::make_pair(curr.first + delta.first, curr.second + delta.second);
+            auto next_dist = dist[curr] + 1;
 
-        for (auto i = 0; i < grid.size(); i++)
-            for (auto j = 0; j < grid[i].length(); j++)
+            //if (!is_inside_grid(next) || height[curr.first][curr.second] - height[next.first][next.second] > 1 ||
+            //    dist.find(next) != dist.end() && next_dist >= dist[next])
+            //    continue;
+
+            //dist[next] = next_dist;
+
+            //if (part2 && height[next.first][next.second] == 'a' || next == s_pos)
+            //    best = std::min(best, next_dist);
+
+            //q.push(next);
+            if (is_inside_grid(next) && height[curr.first][curr.second] - height[next.first][next.second] <= 1 &&
+                (dist.find(next) == dist.end() || next_dist < dist[next]))
             {
-                auto curr = std::make_pair(i, j);
-                if (dist[curr] != d)
-                    continue;
+                dist[next] = next_dist;
 
-                for (auto &delta : deltas)
-                {
-                    auto next = std::make_pair(i + delta.first, j + delta.second);
+                if (part2 && height[next.first][next.second] == 'a' || next == s_pos)
+                    best = std::min(best, next_dist);
 
-                    if (next.first < 0 || next.first > grid.size() - 1 || next.second < 0 || next.second > grid[0].length() - 1 ||
-                        grid[curr.first][curr.second] - grid[next.first][next.second] > 1 || dist[next] <= next_dist)
-                        continue;
-
-                    dist[next] = next_dist;
-
-                    if (part2 && grid[next.first][next.second] == 'a' || next == s_pos)
-                        return next_dist;
-                }
+                q.push(next);
             }
+        }
     }
+
+    return best;
 }
 
 int main()
 {
     read_input("input.txt");
 
-    auto part1 = do_part(false);
+    auto part1 = new_do_part(false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part(true);
+    auto part2 = new_do_part(true);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 408);
