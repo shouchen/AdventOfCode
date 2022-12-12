@@ -2,9 +2,21 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <array>
 #include <vector>
 #include <set>
 #include <cassert>
+
+static const std::array<std::pair<int, int>, 4> deltas{
+    std::make_pair(-1, 0), std::make_pair(1, 0), std::make_pair(0, -1), std::make_pair(0, 1)
+};
+
+bool can_move_back(const std::vector<std::string> &grid, std::map<std::pair<int, int>, int> &dist, const std::pair<int, int> &pos1, const std::pair<int, int> &pos2)
+{
+    return
+        pos2.first >= 0 && pos2.first < grid.size() && pos2.second >= 0 && pos2.second < grid[0].length() &&
+        grid[pos1.first][pos1.second] - grid[pos2.first][pos2.second] <= 1;
+}
 
 auto process_input(const std::string &filename, bool part2)
 {
@@ -17,72 +29,48 @@ auto process_input(const std::string &filename, bool part2)
 
     while (getline(file, line))
     {
-        auto temp = line.find('S');
-        if (temp != -1)
+        auto pos = line.find('S');
+        if (pos != -1)
         {
-            line[temp] = 'a';
-            startpos = std::make_pair(grid.size(), temp);
+            line[pos] = 'a';
+            startpos = std::make_pair(grid.size(), pos);
         }
 
-        temp = line.find('E');
-        if (temp != -1)
+        pos = line.find('E');
+        if (pos != -1)
         {
-            line[temp] = 'z';
-            endpos = std::make_pair(grid.size(), temp);
+            line[pos] = 'z';
+            endpos = std::make_pair(grid.size(), pos);
         }
 
         grid.push_back(line);
     }
 
     std::map<std::pair<int, int>, int> dist;
-    for (int i = 0; i < grid.size(); i++)
-        for (int j = 0; j < grid[i].length(); j++)
+    for (auto i = 0; i < grid.size(); i++)
+        for (auto j = 0; j < grid[i].length(); j++)
             dist[std::make_pair(i, j)] = INT_MAX;
     dist[endpos] = 0;
 
-    for (int d = 0; ; d++)
-    {
-        for (int i = 0; i < grid.size(); i++)
-            for (int j = 0; j < grid[i].length(); j++)
+    for (auto d = 0; ; d++)
+        for (auto i = 0; i < grid.size(); i++)
+            for (auto j = 0; j < grid[i].length(); j++)
             {
-                auto temp = dist[std::make_pair(i, j)];
-                if (temp == d)
+                auto curr = std::make_pair(i, j);
+                if (dist[curr] != d)
+                    continue;
+
+                for (auto &delta : deltas)
                 {
-                    if (i > 0 &&
-                        dist[std::make_pair(i - 1, j)] > d + 1 &&
-                        grid[i][j] - grid[i - 1][j] <= 1)
+                    auto next = std::make_pair(i + delta.first, j + delta.second);
+                    if (can_move_back(grid, dist, curr, next) && dist[next] > d + 1)
                     {
-                        dist[std::make_pair(i - 1, j)] = d + 1;
-                        if (part2 && grid[i - 1][j] == 'a' || std::make_pair(i - 1, j) == startpos)
-                            return d + 1;
-                    }
-                    if (i < grid.size() - 1 &&
-                        dist[std::make_pair(i + 1, j)] > d + 1 &&
-                        grid[i][j] - grid[i + 1][j] <= 1)
-                    {
-                        dist[std::make_pair(i + 1, j)] = d + 1;
-                        if (part2 && grid[i + 1][j] == 'a' || std::make_pair(i + 1, j) == startpos)
-                            return d + 1;
-                    }
-                    if (j > 0 &&
-                        dist[std::make_pair(i, j - 1)] > d + 1 &&
-                        grid[i][j] - grid[i][j - 1] <= 1)
-                    {
-                        dist[std::make_pair(i, j - 1)] = d + 1;
-                        if (part2 && grid[i][j - 1] == 'a' || std::make_pair(i, j - 1) == startpos)
-                            return d + 1;
-                    }
-                    if (j < grid[i].length() - 1 &&
-                        dist[std::make_pair(i, j + 1)] > d + 1 &&
-                        grid[i][j] - grid[i][j + 1] <= 1)
-                    {
-                        dist[std::make_pair(i, j + 1)] = d + 1;
-                        if (part2 && grid[i][j + 1] == 'a' || std::make_pair(i, j + 1) == startpos)
+                        dist[next] = d + 1;
+                        if (part2 && grid[next.first][next.second] == 'a' || next == startpos)
                             return d + 1;
                     }
                 }
             }
-    }
 }
 
 int main()
