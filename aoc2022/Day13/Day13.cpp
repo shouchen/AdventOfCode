@@ -7,6 +7,8 @@
 
 struct Packet;
 
+int compare(const Packet &p1, const Packet &p2);
+
 struct Item
 {
     int value;
@@ -40,10 +42,8 @@ Packet *parse_packet(std::istream &in)
     return retval;
 }
 
-int compare(const Packet &p1, const Packet &p2);
-
 // -1 if left < right, 0 if left == right, 1 if left > right
-int compare(const Item &i1, const Item &i2)
+auto compare(const Item &i1, const Item &i2)
 {
     if (i1.packet == nullptr && i2.packet == nullptr)
     {
@@ -132,7 +132,7 @@ auto do_part2(const std::string &filename)
         [](const Packet *lhs, const Packet *rhs) -> bool { return compare(*lhs, *rhs) < 0; });
 
     auto index1 = -1, index2 = -1;
-    for (int i = 0; i < packets.size(); i++)
+    for (auto i = 0; i < packets.size(); i++)
     {
         if (compare(*packets[i], *div1) == 0) index1 = i;
         if (compare(*packets[i], *div2) == 0) index2 = i;
