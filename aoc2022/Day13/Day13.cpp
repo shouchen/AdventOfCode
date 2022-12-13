@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <string>
 #include <vector>
 #include <algorithm>
 #include <cassert>
@@ -22,28 +21,18 @@ struct Packet
 Packet *parse_packet(std::istream &in)
 {
     auto retval = new Packet();
-    auto c = '[';
+    auto c = ' ';
 
-    in >> c;
-
-    while (c != ']')
+    while (in >> c && c != ']')
     {
-        auto peek = in.peek();
-
-        if (peek == '[')
+        if (in.peek() == '[')
         {
-            auto p = parse_packet(in);
-            retval->items.push_back(Item{ 0, p });
-            in >> c;
+            retval->items.push_back(Item{ 0, parse_packet(in) });
         }
-        else if (peek == ']')
-        {
-            in >> c;
-        }
-        else
+        else if (in.peek() != ']')
         {
             auto v = 0;
-            in >> v >> c;
+            in >> v;
             retval->items.push_back(Item{ v, nullptr });
         }
     }
@@ -53,20 +42,14 @@ Packet *parse_packet(std::istream &in)
 
 int compare(const Packet &p1, const Packet &p2);
 
-// -1 if right order, 0 if equal, 1 if wrong order
+// -1 if left < right, 0 if left == right, 1 if left > right
 int compare(const Item &i1, const Item &i2)
 {
     if (i1.packet == nullptr && i2.packet == nullptr)
     {
-        if (i1.value < i2.value)
-            return -1;
-        if (i1.value > i2.value)
-            return 1;
+        if (i1.value < i2.value) return -1;
+        if (i1.value > i2.value) return 1;
         return 0;
-    }
-    else if (i1.packet != nullptr && i2.packet != nullptr)
-    {
-        return compare(*i1.packet, *i2.packet);
     }
     else if (i1.packet == nullptr && i2.packet != nullptr)
     {
@@ -80,37 +63,35 @@ int compare(const Item &i1, const Item &i2)
         p.items.push_back(Item{ i2.value });
         return compare(*i1.packet, p);
     }
-    assert(false);
-    return 0;
+
+    return compare(*i1.packet, *i2.packet);
 }
 
-// -1 if right order, 0 if equal, 1 if wrong order
+// -1 if left < right, 0 if left == right, 1 if left > right
 int compare(const Packet &p1, const Packet &p2)
 {
-    auto until = std::max(p1.items.size(), p2.items.size());
-    for (auto i = 0; i < until; i++)
-    {
-        if (i >= p1.items.size())
-            return -1;
-        if (i >= p2.items.size())
-            return 1;
+    auto c = 0;
 
-        auto temp = compare(p1.items[i], p2.items[i]);
-        if (temp != 0)
-            return temp;
+    for (auto i1 = p1.items.begin(), i2 = p2.items.begin();
+         !c && (i1 != p1.items.end() || i2 != p2.items.end());
+         i1++, i2++)
+    {
+        if (i1 == p1.items.end()) return -1;
+        if (i2 == p2.items.end()) return 1;
+
+        c = compare(*i1, *i2);
     }
 
-    return 0;
+    return c;
 }
 
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line1, line2;
-    auto num = 1;
     auto retval = 0;
 
-    while (getline(file, line1) && getline(file, line2))
+    for (auto n = 1; (file >> line1) && (file >> line2); n++)
     {
         std::stringstream ss(line1);
         auto p1 = parse_packet(ss);
@@ -119,10 +100,7 @@ auto do_part1(const std::string &filename)
         auto p2 = parse_packet(ss);
 
         if (compare(*p1, *p2) < 0)
-            retval += num;
-
-        getline(file, line1);
-        num++;
+            retval += n;
     }
 
     return retval;
@@ -133,7 +111,6 @@ auto do_part2(const std::string &filename)
     std::ifstream file(filename);
     std::string line;
     std::vector<Packet *> packets;
-    auto retval = 0;
 
     while (file >> line)
     {
@@ -157,11 +134,8 @@ auto do_part2(const std::string &filename)
     auto index1 = -1, index2 = -1;
     for (int i = 0; i < packets.size(); i++)
     {
-        if (compare(*packets[i], *div1) == 0)
-            index1 = i;
-
-        if (compare(*packets[i], *div2) == 0)
-            index2 = i;
+        if (compare(*packets[i], *div1) == 0) index1 = i;
+        if (compare(*packets[i], *div2) == 0) index2 = i;
     }
     
     return (index1 + 1) * (index2 + 1);
