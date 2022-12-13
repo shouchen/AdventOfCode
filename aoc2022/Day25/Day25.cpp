@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <cassert>
 #include <string>
 #include <array>
 #include <queue>
@@ -12,6 +11,8 @@
 #include <algorithm>
 #include <numeric>
 #include <limits>
+#include <cstdlib>
+#include <cassert>
 
 using namespace std;
 
@@ -71,12 +72,12 @@ auto read_file_line_by_line(const std::string &filename)
 
 int main()
 {
-    read_file_line_by_line("input.txt");
+    read_file_line_by_line("test.txt");
 
-    auto part1 = process_data("input.txt", false);
+    auto part1 = process_data("test.txt", false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    //auto part2 = process_data("input.txt", true);
+    //auto part2 = process_data("test.txt", true);
     //std::cout << "Part Two: " << part2 << std::endl;
 
     //assert(part1 == "HBTMTBSDC");
