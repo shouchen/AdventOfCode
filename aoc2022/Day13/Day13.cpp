@@ -22,37 +22,29 @@ struct Packet
 Packet *parse_packet(std::istream &in)
 {
     auto retval = new Packet();
-
     auto c = '[';
+
     in >> c;
 
-    for (;;)
+    while (c != ']')
     {
-        auto v = 0;
-
         auto peek = in.peek();
 
         if (peek == '[')
         {
             auto p = parse_packet(in);
             retval->items.push_back(Item{ 0, p });
-
             in >> c;
-
-            if (c == ']')
-                break;
-        } else if (peek == ']')
+        }
+        else if (peek == ']')
         {
             in >> c;
-            break;
         }
         else
         {
+            auto v = 0;
             in >> v >> c;
             retval->items.push_back(Item{ v, nullptr });
-
-            if (c == ']')
-                break;
         }
     }
 
@@ -96,7 +88,7 @@ int compare(const Item &i1, const Item &i2)
 int compare(const Packet &p1, const Packet &p2)
 {
     auto until = std::max(p1.items.size(), p2.items.size());
-    for (int i = 0; i < until; i++)
+    for (auto i = 0; i < until; i++)
     {
         if (i >= p1.items.size())
             return -1;
@@ -104,7 +96,6 @@ int compare(const Packet &p1, const Packet &p2)
             return 1;
 
         auto temp = compare(p1.items[i], p2.items[i]);
-
         if (temp != 0)
             return temp;
     }
@@ -117,8 +108,8 @@ auto do_part1(const std::string &filename)
     std::ifstream file(filename);
     std::string line1, line2;
     auto num = 1;
-
     auto retval = 0;
+
     while (getline(file, line1) && getline(file, line2))
     {
         std::stringstream ss(line1);
@@ -142,8 +133,8 @@ auto do_part2(const std::string &filename)
     std::ifstream file(filename);
     std::string line;
     std::vector<Packet *> packets;
-
     auto retval = 0;
+
     while (file >> line)
     {
         std::stringstream ss(line);
@@ -159,22 +150,9 @@ auto do_part2(const std::string &filename)
     auto div2 = parse_packet(ss2);
     packets.push_back(div2);
 
-    for (;;)
-    {
-        bool swapped = false;
-        for (int i = 0; i < packets.size() - 1; i++)
-        {
-            auto temp = compare(*packets[i], *packets[i + 1]);
-            if (temp == 1)
-            {
-                std::swap(packets[i], packets[i + 1]);
-                swapped = true;
-            }
-        }
-
-        if (!swapped)
-            break;
-    }
+    std::sort(
+        packets.begin(), packets.end(),
+        [](const Packet *lhs, const Packet *rhs) -> bool { return compare(*lhs, *rhs) < 0; });
 
     auto index1 = -1, index2 = -1;
     for (int i = 0; i < packets.size(); i++)
