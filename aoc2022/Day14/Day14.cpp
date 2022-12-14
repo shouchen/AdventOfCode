@@ -78,7 +78,7 @@ auto do_part1(const std::string &filename)
             else
                 break;
 
-            if (sand.first < min_x || sand.first > max_x)
+            if (sand.second == max_y + 1)
                 return units;
         }
 
@@ -92,9 +92,6 @@ auto do_part2(const std::string &filename)
     read_input(filename);
     auto units = 0;
 
-    for (auto i = -10000; i <= 10000; i++)
-        grid[std::make_pair(i, max_y + 2)] = '#';
-
     for (;;)
     {
         auto sand = source;
@@ -107,6 +104,9 @@ auto do_part2(const std::string &filename)
             else if (grid.find(std::make_pair(sand.first + 1, sand.second + 1)) == grid.end())
                 sand.first++, sand.second++;
             else
+                break;
+
+            if (sand.second == max_y + 1)
                 break;
         }
 
