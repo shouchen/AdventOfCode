@@ -11,7 +11,7 @@ auto process_input(const std::string &filename)
 {
     std::map<std::pair<int, int>, char> grid;
     static const auto source = std::make_pair(500, 0);
-    auto max_y = INT_MIN;
+    auto max_second = INT_MIN;
 
     std::ifstream file(filename);
     std::string line;
@@ -26,7 +26,7 @@ auto process_input(const std::string &filename)
         ss >> from.first >> comma >> from.second;
         while (ss >> arrow >> to.first >> comma >> to.second)
         {
-            max_y = std::max(std::max(max_y, from.second), to.second);
+            max_second = std::max(std::max(max_second, from.second), to.second);
 
             auto d1 = signum(to.first - from.first), d2 = signum(to.second - from.second);
             grid[from] = '#';
@@ -45,7 +45,7 @@ auto process_input(const std::string &filename)
     {
         auto sand = source;
 
-        while (sand.second != max_y + 1)
+        while (sand.second != max_second + 1)
         {
             if (grid.find(std::make_pair(sand.first, sand.second + 1)) == grid.end())
                 sand.second++;
@@ -59,7 +59,7 @@ auto process_input(const std::string &filename)
 
         grid[sand] = 'o';
 
-        if (sand.second == max_y + 1 && retval.first == -1)
+        if (retval.first == -1 && sand.second == max_second + 1)
             retval.first = units - 1;
         else if (sand == source)
         {
