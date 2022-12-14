@@ -54,63 +54,42 @@ void read_input(const std::string &filename)
         max_y = std::max(max_y, i.first.second);
 }
 
+auto drop_sand()
+{
+    auto sand = source;
+
+    while (sand.second != max_y + 1)
+    {
+        if (grid.find(std::make_pair(sand.first, sand.second + 1)) == grid.end())
+            sand.second++;
+        else if (grid.find(std::make_pair(sand.first - 1, sand.second + 1)) == grid.end())
+            sand.first--, sand.second++;
+        else if (grid.find(std::make_pair(sand.first + 1, sand.second + 1)) == grid.end())
+            sand.first++, sand.second++;
+        else
+            break;
+    }
+
+    grid[sand] = 'o';
+    return sand;
+}
+
 auto do_part1(const std::string &filename)
 {
     read_input(filename);
-    auto units = 0;
 
-    for (;;)
-    {
-        auto sand = source;
-        for (;;)
-        {
-            if (grid.find(std::make_pair(sand.first, sand.second + 1)) == grid.end())
-                sand.second++;
-            else if (grid.find(std::make_pair(sand.first - 1, sand.second + 1)) == grid.end())
-                sand.first--, sand.second++;
-            else if (grid.find(std::make_pair(sand.first + 1, sand.second + 1)) == grid.end())
-                sand.first++, sand.second++;
-            else
-                break;
-
-            if (sand.second == max_y + 1)
-                return units;
-        }
-
-        grid[sand] = 'o';
-        units++;
-    }
+    for (auto units = 0; ; units++)
+        if (drop_sand().second == max_y + 1)
+            return units;
 }
 
 auto do_part2(const std::string &filename)
 {
     read_input(filename);
-    auto units = 0;
 
-    for (;;)
-    {
-        auto sand = source;
-        for (;;)
-        {
-            if (grid.find(std::make_pair(sand.first, sand.second + 1)) == grid.end())
-                sand.second++;
-            else if (grid.find(std::make_pair(sand.first - 1, sand.second + 1)) == grid.end())
-                sand.first--, sand.second++;
-            else if (grid.find(std::make_pair(sand.first + 1, sand.second + 1)) == grid.end())
-                sand.first++, sand.second++;
-            else
-                break;
-
-            if (sand.second == max_y + 1)
-                break;
-        }
-
-        grid[sand] = 'o';
-        units++;
-
-        if (sand == source)
+    for (auto units = 1; ; units++)
+        if (drop_sand() == source)
             return units;
-    }
 }
 
 int main()
