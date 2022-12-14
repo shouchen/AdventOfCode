@@ -16,6 +16,8 @@
 
 using namespace std;
 
+inline auto signum(int x) { return (x == 0) ? 0 : ((x < 0) ? -1 : 1); }
+
 auto process_data(const std::string &filename, bool part2)
 {
     std::array<std::deque<char>, 10> data;

@@ -5,14 +5,13 @@
 #include <map>
 #include <cassert>
 
-std::map<std::pair<int, int>, char> grid;
-auto max_y = INT_MIN;
-auto source = std::make_pair(500, 0);
+inline auto signum(int x) { return (x == 0) ? 0 : ((x < 0) ? -1 : 1); }
 
-void read_input(const std::string &filename)
+auto process_input(const std::string &filename)
 {
-    grid.clear();
-    max_y = INT_MIN;
+    std::map<std::pair<int, int>, char> grid;
+    static const auto source = std::make_pair(500, 0);
+    auto max_y = INT_MIN;
 
     std::ifstream file(filename);
     std::string line;
@@ -27,80 +26,56 @@ void read_input(const std::string &filename)
         ss >> from.first >> comma >> from.second;
         while (ss >> arrow >> to.first >> comma >> to.second)
         {
-            if (from.first == to.first)
-            {
-                if (from.second < to.second)
-                    for (auto i = from.second; i <= to.second; i++)
-                        grid[std::make_pair(from.first, i)] = '#';
-                else
-                    for (auto i = from.second; i >= to.second; i--)
-                        grid[std::make_pair(from.first, i)] = '#';
-            }
-            else
-            {
-                if (from.first < to.first)
-                    for (auto i = from.first; i <= to.first; i++)
-                        grid[std::make_pair(i, from.second)] = '#';
-                else
-                    for (auto i = from.first; i >= to.first; i--)
-                        grid[std::make_pair(i, from.second)] = '#';
-            }
+            max_y = std::max(std::max(max_y, from.second), to.second);
 
-            from = to;
+            auto d1 = signum(to.first - from.first), d2 = signum(to.second - from.second);
+            grid[from] = '#';
+
+            while (from != to)
+            {
+                from.first += d1, from.second += d2;
+                grid[from] = '#';
+            }
         }
     }
 
-    for (auto &i : grid)
-        max_y = std::max(max_y, i.first.second);
-}
-
-auto drop_sand()
-{
-    auto sand = source;
-
-    while (sand.second != max_y + 1)
-    {
-        if (grid.find(std::make_pair(sand.first, sand.second + 1)) == grid.end())
-            sand.second++;
-        else if (grid.find(std::make_pair(sand.first - 1, sand.second + 1)) == grid.end())
-            sand.first--, sand.second++;
-        else if (grid.find(std::make_pair(sand.first + 1, sand.second + 1)) == grid.end())
-            sand.first++, sand.second++;
-        else
-            break;
-    }
-
-    grid[sand] = 'o';
-    return sand;
-}
-
-auto do_part1(const std::string &filename)
-{
-    read_input(filename);
-
-    for (auto units = 0; ; units++)
-        if (drop_sand().second == max_y + 1)
-            return units;
-}
-
-auto do_part2(const std::string &filename)
-{
-    read_input(filename);
+    auto retval = std::make_pair(-1, -1);
 
     for (auto units = 1; ; units++)
-        if (drop_sand() == source)
-            return units;
+    {
+        auto sand = source;
+
+        while (sand.second != max_y + 1)
+        {
+            if (grid.find(std::make_pair(sand.first, sand.second + 1)) == grid.end())
+                sand.second++;
+            else if (grid.find(std::make_pair(sand.first - 1, sand.second + 1)) == grid.end())
+                sand.first--, sand.second++;
+            else if (grid.find(std::make_pair(sand.first + 1, sand.second + 1)) == grid.end())
+                sand.first++, sand.second++;
+            else
+                break;
+        }
+
+        grid[sand] = 'o';
+
+        if (sand.second == max_y + 1 && retval.first == -1)
+            retval.first = units - 1;
+        else if (sand == source)
+        {
+            retval.second = units;
+            return retval;
+        }
+    }
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
+    auto output = process_input("input.txt");
+    std::cout << "Part One: " << output.first << std::endl;
+    std::cout << "Part Two: " << output.second << std::endl;
 
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    assert(part1 == 901);
-    assert(part2 == 24589);
+    assert(output.first == 901);
+    assert(output.second == 24589);
     return 0;
 }
