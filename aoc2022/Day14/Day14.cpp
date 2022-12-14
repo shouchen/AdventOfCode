@@ -6,13 +6,13 @@
 #include <cassert>
 
 std::map<std::pair<int, int>, char> grid;
-auto min_x = INT_MAX, max_x = INT_MIN, min_y = INT_MAX, max_y = INT_MIN;
+auto max_y = INT_MIN;
 auto source = std::make_pair(500, 0);
 
 void read_input(const std::string &filename)
 {
     grid.clear();
-    min_x = INT_MAX, max_x = INT_MIN, min_y = INT_MAX, max_y = INT_MIN;
+    max_y = INT_MIN;
 
     std::ifstream file(filename);
     std::string line;
@@ -51,12 +51,7 @@ void read_input(const std::string &filename)
     }
 
     for (auto &i : grid)
-    {
-        min_x = std::min(min_x, i.first.first);
-        max_x = std::max(max_x, i.first.first);
-        min_y = std::min(min_y, i.first.second);
         max_y = std::max(max_y, i.first.second);
-    }
 }
 
 auto do_part1(const std::string &filename)
