@@ -85,17 +85,14 @@ auto do_part2(const std::string &filename, int grace)
 
         for (auto y = start_y; y <= end_y; y++)
         {
-            auto temp = n.dist + y - n.sy + 1;
-            auto left = n.sx - temp, right = n.sx + temp;
+            auto row_width = n.dist + 1 + y - n.sy;
+            auto left = n.sx - row_width, right = n.sx + row_width;
 
             if (left < 0 || left > grace || right < 0 || right > grace)
                 continue;
 
-            if (allowed(left, y))
-                return 4000000LL * left + y;
-
-            if (allowed(right, y))
-                return 4000000LL * right + y;
+            if (allowed(left, y)) return 4000000LL * left + y;
+            if (allowed(right, y)) return 4000000LL * right + y;
         }
     }
 
