@@ -80,23 +80,25 @@ auto do_part2(const std::string &filename, int grace)
     // walk diamond along edges of boundaries to find the one that works
     for (auto &n : nodes)
     {
+        auto x = n.sx, y = n.sy - (n.dist + 1);
+
         // top right diamond
-        for (auto x = n.sx, y = n.sy - (n.dist + 1); y < n.sy; x++, y++)
+        for (; y < n.sy; x++, y++)
             if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
                 return 4000000LL * x + y;
 
         // bottom right diamond
-        for (auto x = n.sx + (n.dist + 1), y = n.sy; x > n.sx; x--, y++)
+        for (; x > n.sx; x--, y++)
             if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
                 return 4000000LL * x + y;
 
         // bottom left diamond
-        for (auto x = n.sx, y = n.sy + (n.dist + 1); y > n.sy; x--, y--)
+        for (; y > n.sy; x--, y--)
             if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
                 return 4000000LL * x + y;
 
         // top left diamond
-        for (auto x = n.sx - (n.dist + 1), y = n.sy; x < n.sx; x++, y--)
+        for (; x < n.sx; x++, y--)
             if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
                 return 4000000LL * x + y;
     }
