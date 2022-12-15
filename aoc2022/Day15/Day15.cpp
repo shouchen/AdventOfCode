@@ -65,7 +65,7 @@ auto do_part1(const std::string &filename, int row)
     return retval;
 }
 
-auto test(int x, int y)
+auto allowed(int x, int y)
 {
     // See if for any node, this point is closer than their closest beacon
     for (auto &n : nodes)
@@ -77,30 +77,26 @@ auto test(int x, int y)
 
 auto do_part2(const std::string &filename, int grace)
 {
-    // walk diamond along edges of boundaries to find the one that works
+    // walk diamond along edges of boundaries to find the one that works, but only for allowed rows
     for (auto &n : nodes)
     {
-        auto x = n.sx, y = n.sy - (n.dist + 1);
+        auto start_y = std::max(n.sy - (n.dist + 1), 0);
+        auto end_y = std::min(n.sy + (n.dist + 1), grace);
 
-        // top right diamond
-        for (; y < n.sy; x++, y++)
-            if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
-                return 4000000LL * x + y;
+        for (auto y = start_y; y <= end_y; y++)
+        {
+            auto temp = n.dist + y - n.sy + 1;
+            auto left = n.sx - temp, right = n.sx + temp;
 
-        // bottom right diamond
-        for (; x > n.sx; x--, y++)
-            if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
-                return 4000000LL * x + y;
+            if (left < 0 || left > grace || right < 0 || right > grace)
+                continue;
 
-        // bottom left diamond
-        for (; y > n.sy; x--, y--)
-            if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
-                return 4000000LL * x + y;
+            if (allowed(left, y))
+                return 4000000LL * left + y;
 
-        // top left diamond
-        for (; x < n.sx; x++, y--)
-            if (x >= 0 && y >= 0 && x <= grace && y <= grace && test(x, y))
-                return 4000000LL * x + y;
+            if (allowed(right, y))
+                return 4000000LL * right + y;
+        }
     }
 
     return -1LL;
