@@ -33,14 +33,15 @@ auto get_neighbors(const Cube &cube)
 
 void flood_fill_exteriors(const Cube &cube)
 {
-    if (cube.x < min_x - 1 || cube.y < min_y - 1 || cube.z < min_z - 1 ||
-        cube.x > max_x + 1 || cube.y > max_y + 1 || cube.z > max_z + 1 ||
-        occupied.find(cube) != occupied.end() || exterior.find(cube) != exterior.end())
-        return;
-
-    exterior.insert(cube);
-    for (auto &c : get_neighbors(cube))
-        flood_fill_exteriors(c);
+    if (cube.x >= min_x - 1 && cube.y >= min_y - 1 && cube.z >= min_z - 1 &&
+        cube.x <= max_x + 1 && cube.y <= max_y + 1 && cube.z <= max_z + 1 &&
+        occupied.find(cube) == occupied.end() &&
+        exterior.find(cube) == exterior.end())
+    {
+        exterior.insert(cube);
+        for (auto &c : get_neighbors(cube))
+            flood_fill_exteriors(c);
+    }
 }
 
 auto process_input(const std::string &filename)
@@ -56,13 +57,14 @@ auto process_input(const std::string &filename)
         cubes.push_back(cube);
         occupied.insert(cube);
 
-        min_x = std::min(min_x, x); min_y = std::min(min_y, y); min_z = std::min(min_z, z);
-        max_x = std::max(max_x, x); max_y = std::max(max_y, y); max_z = std::max(max_z, z);
+        min_x = std::min(min_x, x); max_x = std::max(max_x, x);
+        min_y = std::min(min_y, y); max_y = std::max(max_y, y);
+        min_z = std::min(min_z, z); max_z = std::max(max_z, z);
     }
 
     flood_fill_exteriors(Cube{ min_x - 1, min_y - 1, min_z - 1 });
 
-    for (const Cube &c1 : cubes)
+    for (auto &c1 : cubes)
         for (auto &c2 : get_neighbors(c1))
         {
             if (occupied.find(c2) == occupied.end()) retval.first++;
