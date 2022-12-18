@@ -35,8 +35,7 @@ auto find_empty_outside_cube()
                     return cube;
             }
 
-    assert(false);
-    return Cube{ 0,0,0 };
+    return Cube{ 0, 0, 0 };
 }
 
 void flood_fill_exteriors(const Cube &cube)
