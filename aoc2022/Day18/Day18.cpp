@@ -6,9 +6,7 @@
 
 struct Cube
 {
-    int x;
-    int y;
-    int z;
+    int x, y, z;
 };
 
 bool operator<(const Cube &lhs, const Cube &rhs)
@@ -21,12 +19,10 @@ bool operator<(const Cube &lhs, const Cube &rhs)
 }
 
 std::vector<Cube> cubes;
-std::set<Cube> occupied;
-std::set<Cube> exterior;
+std::set<Cube> occupied, exterior;
 
-int min_x = INT_MAX, max_x = INT_MIN;
-int min_y = INT_MAX, max_y = INT_MIN;
-int min_z = INT_MAX, max_z = INT_MIN;
+auto min_x = INT_MAX, min_y = INT_MAX, min_z = INT_MAX;
+auto max_x = INT_MIN, max_y = INT_MIN, max_z = INT_MIN;
 
 auto find_empty_outside_cube()
 {
@@ -43,22 +39,22 @@ auto find_empty_outside_cube()
     return Cube{ 0,0,0 };
 }
 
-void flood_fill(Cube cube)
+void flood_fill_exteriors(const Cube &cube)
 {
-    if (cube.x < min_x - 1 || cube.x > max_x + 1 || cube.y < min_y - 1 || cube.y > max_y + 1 || cube.z < min_z - 1 || cube.z > max_z + 1)
+    if (cube.x < min_x - 1 || cube.y < min_y - 1 || cube.z < min_z - 1 ||
+        cube.x > max_x + 1 || cube.y > max_y + 1 || cube.z > max_z + 1)
         return;
 
     if (occupied.find(cube) != occupied.end() || exterior.find(cube) != exterior.end())
         return;
 
     exterior.insert(cube);
-
-    flood_fill(Cube{ cube.x - 1, cube.y, cube.z });
-    flood_fill(Cube{ cube.x + 1, cube.y, cube.z });
-    flood_fill(Cube{ cube.x, cube.y - 1, cube.z });
-    flood_fill(Cube{ cube.x, cube.y + 1, cube.z });
-    flood_fill(Cube{ cube.x, cube.y, cube.z - 1 });
-    flood_fill(Cube{ cube.x, cube.y, cube.z + 1 });
+    flood_fill_exteriors(Cube{ cube.x - 1, cube.y, cube.z });
+    flood_fill_exteriors(Cube{ cube.x + 1, cube.y, cube.z });
+    flood_fill_exteriors(Cube{ cube.x, cube.y - 1, cube.z });
+    flood_fill_exteriors(Cube{ cube.x, cube.y + 1, cube.z });
+    flood_fill_exteriors(Cube{ cube.x, cube.y, cube.z - 1 });
+    flood_fill_exteriors(Cube{ cube.x, cube.y, cube.z + 1 });
 }
 
 auto process_input(const std::string &filename)
@@ -69,7 +65,7 @@ auto process_input(const std::string &filename)
 
     while (file >> x >> comma >> y >> comma >> z)
     {
-        Cube cube{ x,y,z };
+        Cube cube{ x, y, z };
         cubes.push_back(cube);
         occupied.insert(cube);
 
@@ -81,42 +77,29 @@ auto process_input(const std::string &filename)
         max_z = std::max(max_z, z);
     }
 
-    auto part1 = 0, part2 = 0;
-    for (auto i = 0; i < cubes.size(); i++)
-    {
-        Cube &cube = cubes[i];
+    Cube cube = find_empty_outside_cube();
+    flood_fill_exteriors(cube);
 
-        if (occupied.find(Cube{ cube.x - 1, cube.y, cube.z }) == occupied.end())
-            part1++;
-        if (occupied.find(Cube{ cube.x + 1, cube.y, cube.z }) == occupied.end())
-            part1++;
-        if (occupied.find(Cube{ cube.x, cube.y - 1, cube.z }) == occupied.end())
-            part1++;
-        if (occupied.find(Cube{ cube.x, cube.y + 1, cube.z }) == occupied.end())
-            part1++;
-        if (occupied.find(Cube{ cube.x, cube.y, cube.z - 1 }) == occupied.end())
-            part1++;
-        if (occupied.find(Cube{ cube.x, cube.y, cube.z + 1 }) == occupied.end())
-            part1++;
+    auto part1 = 0;
+    for (const Cube &cube : cubes)
+    {
+        if (occupied.find(Cube{ cube.x - 1, cube.y, cube.z }) == occupied.end()) part1++;
+        if (occupied.find(Cube{ cube.x + 1, cube.y, cube.z }) == occupied.end()) part1++;
+        if (occupied.find(Cube{ cube.x, cube.y - 1, cube.z }) == occupied.end()) part1++;
+        if (occupied.find(Cube{ cube.x, cube.y + 1, cube.z }) == occupied.end()) part1++;
+        if (occupied.find(Cube{ cube.x, cube.y, cube.z - 1 }) == occupied.end()) part1++;
+        if (occupied.find(Cube{ cube.x, cube.y, cube.z + 1 }) == occupied.end()) part1++;
     }
 
-    Cube cube = find_empty_outside_cube();
-    flood_fill(cube);
-
-    for (Cube &cube : cubes)
+    auto part2 = 0;
+    for (const Cube &cube : cubes)
     {
-        if (exterior.find(Cube{ cube.x - 1, cube.y, cube.z }) != exterior.end())
-            part2++;
-        if (exterior.find(Cube{ cube.x + 1, cube.y, cube.z }) != exterior.end())
-            part2++;
-        if (exterior.find(Cube{ cube.x, cube.y - 1, cube.z }) != exterior.end())
-            part2++;
-        if (exterior.find(Cube{ cube.x, cube.y + 1, cube.z }) != exterior.end())
-            part2++;
-        if (exterior.find(Cube{ cube.x, cube.y, cube.z - 1 }) != exterior.end())
-            part2++;
-        if (exterior.find(Cube{ cube.x, cube.y, cube.z + 1 }) != exterior.end())
-            part2++;
+        if (exterior.find(Cube{ cube.x - 1, cube.y, cube.z }) != exterior.end()) part2++;
+        if (exterior.find(Cube{ cube.x + 1, cube.y, cube.z }) != exterior.end()) part2++;
+        if (exterior.find(Cube{ cube.x, cube.y - 1, cube.z }) != exterior.end()) part2++;
+        if (exterior.find(Cube{ cube.x, cube.y + 1, cube.z }) != exterior.end()) part2++;
+        if (exterior.find(Cube{ cube.x, cube.y, cube.z - 1 }) != exterior.end()) part2++;
+        if (exterior.find(Cube{ cube.x, cube.y, cube.z + 1 }) != exterior.end()) part2++;
     }
 
     return std::make_pair(part1, part2);
