@@ -56,15 +56,16 @@ bool purchase(Blueprint &bp, State &state, Material robot)
 }
 
 auto max_geodes = -1;
+auto max_minutes = 24;
 
-bool is_hopeless(const State &state)
+auto is_hopeless(const State &state)
 {
-    int mins_left = 24 - state.minutes;
-    int new_geodes_with_existing_geobots = mins_left * state.robots[Geode];
+    auto mins_left = max_minutes - state.minutes;
+    auto new_geodes_with_existing_geobots = mins_left * state.robots[Geode];
 
-    int n = mins_left - 1;
-    int addl_geodes_if_bought_geobot_every_minute = n * (n + 1) / 2;
-    int total_geodes_at_end = state.material[Geode] + new_geodes_with_existing_geobots + addl_geodes_if_bought_geobot_every_minute;
+    auto n = mins_left - 1;
+    auto addl_geodes_if_bought_geobot_every_minute = n * (n + 1) / 2;
+    auto total_geodes_at_end = state.material[Geode] + new_geodes_with_existing_geobots + addl_geodes_if_bought_geobot_every_minute;
     if (total_geodes_at_end <= max_geodes)
         return true;
 
@@ -73,7 +74,7 @@ bool is_hopeless(const State &state)
 
 void recurse(const State &state, int bp_num)
 {
-    if (state.minutes == 24)
+    if (state.minutes == max_minutes)
     {
         if (state.material[Geode] > max_geodes)
         {
@@ -123,15 +124,26 @@ void recurse(const State &state, int bp_num)
         recurse(new_state, bp_num);
     }
 
-    new_state = state;
-    if (purchase(blueprints[bp_num - 1], new_state, Ore))
+    // OPTIMIZATION: If we produce enough ore already to buy any kind of robot, don't buy any more ore robots
+    bool skip = false;
+    if (state.robots[Ore] >= blueprints[bp_num - 1].cost[Clay][Ore] &&
+        state.robots[Ore] >= blueprints[bp_num - 1].cost[Obsidian][Ore] &&
+        state.robots[Ore] >= blueprints[bp_num - 1].cost[Geode][Ore])
     {
-        for (int i = Ore; i <= Geode; i++)
-            new_state.material[i] += new_state.robots[i];
+        skip = true;
+    }
+    if (!skip)
+    {
+        new_state = state;
+        if (purchase(blueprints[bp_num - 1], new_state, Ore))
+        {
+            for (int i = Ore; i <= Geode; i++)
+                new_state.material[i] += new_state.robots[i];
 
-        new_state.robots[Ore]++;
-        new_state.minutes++;
-        recurse(new_state, bp_num);
+            new_state.robots[Ore]++;
+            new_state.minutes++;
+            recurse(new_state, bp_num);
+        }
     }
 
     // no purchases this time
@@ -197,11 +209,73 @@ auto do_part1(const std::string &filename)
     return retval;
 }
 
+auto do_part2(const std::string &filename)
+{
+    std::ifstream file(filename);
+    std::string word, blueprint, costs, material1, material2, robot;
+    std::string and_str;
+    char colon;
+    int n1, n2;
+
+    file >> blueprint;
+
+    while (file >> n1)
+    {
+        file >> colon;
+
+        Blueprint bp;
+
+        while (file >> word)
+        {
+            if (word == "Blueprint")
+                break;
+            file >> material1 >> robot >> costs;
+
+            while (file >> n2 >> material2)
+            {
+                if (material2.back() == '.')
+                {
+                    material2 = material2.substr(0, material2.length() - 1);
+                    bp.cost[parse_material(material1)][parse_material(material2)] = n2;
+                    break;
+                }
+                bp.cost[parse_material(material1)][parse_material(material2)] = n2;
+                file >> and_str;
+            }
+        }
+
+        blueprints.push_back(bp);
+        if (blueprints.size() == 3)
+            break;
+    }
+
+    max_minutes = 32;
+
+    State state;
+    state.robots[Ore] = 1;
+
+    auto retval = 0;
+
+    for (auto i = 1; i <= blueprints.size(); i++)
+    {
+        std::cout << "BLUEPRINT " << i << std::endl;
+        max_geodes = 0;
+        recurse(state, i);
+        retval += i * max_geodes;
+    }
+
+    return retval;
+}
+
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
+    //auto part1 = do_part1("input.txt");
+    //std::cout << "Part One: " << part1 << std::endl;
 
-    assert(part1 == 1653);
+    auto part2 = do_part2("input.txt");
+    std::cout << "Part Two: " << part2 << std::endl;
+
+    //assert(part1 == 1653);
+    //assert(part2 == 4212);
     return 0;
 }
