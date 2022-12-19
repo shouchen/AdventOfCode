@@ -125,14 +125,11 @@ void recurse(const State &state, int bp_num)
     }
 
     // OPTIMIZATION: If we produce enough ore already to buy any kind of robot, don't buy any more ore robots
-    bool skip = false;
-    if (state.robots[Ore] >= blueprints[bp_num - 1].cost[Clay][Ore] &&
+    bool produce_enough_ore_to_buy_any_robot =
+        state.robots[Ore] >= blueprints[bp_num - 1].cost[Clay][Ore] &&
         state.robots[Ore] >= blueprints[bp_num - 1].cost[Obsidian][Ore] &&
-        state.robots[Ore] >= blueprints[bp_num - 1].cost[Geode][Ore])
-    {
-        skip = true;
-    }
-    if (!skip)
+        state.robots[Ore] >= blueprints[bp_num - 1].cost[Geode][Ore];
+    if (!produce_enough_ore_to_buy_any_robot)
     {
         new_state = state;
         if (purchase(blueprints[bp_num - 1], new_state, Ore))
@@ -254,14 +251,14 @@ auto do_part2(const std::string &filename)
     State state;
     state.robots[Ore] = 1;
 
-    auto retval = 0;
+    auto retval = 1;
 
     for (auto i = 1; i <= blueprints.size(); i++)
     {
         std::cout << "BLUEPRINT " << i << std::endl;
         max_geodes = 0;
         recurse(state, i);
-        retval += i * max_geodes;
+        retval *= max_geodes;
     }
 
     return retval;
