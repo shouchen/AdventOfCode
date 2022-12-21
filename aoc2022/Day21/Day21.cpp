@@ -131,24 +131,24 @@ auto do_part2(const std::string &filename)
     for (auto i = path.size() - 1; i > 0; i--)
     {
         auto &m = path[i];
-        auto &m1 = monkeys[path[i].m1];
-        auto &m2 = monkeys[path[i].m2];
+        auto &left = monkeys[path[i].m1];
+        auto &right = monkeys[path[i].m2];
 
-        if (m1.has_value)
+        if (left.has_value)
         {
-            if (m.name == "root") value = m1.value;
-            else if (m.op == '+') value -= m1.value;
-            else if (m.op == '-') value = m1.value - value;
-            else if (m.op == '*') value /= m1.value;
-            else if (m.op == '/') value = m1.value / value;
+            if (m.name == "root") value = left.value;
+            else if (m.op == '+') value -= left.value;
+            else if (m.op == '-') value = left.value - value;
+            else if (m.op == '*') value /= left.value;
+            else if (m.op == '/') value = left.value / value;
         }
-        else if (m2.has_value)
+        else if (right.has_value)
         {
-            if (m.name == "root") value = m2.value;
-            else if (m.op == '+') value -= m2.value;
-            else if (m.op == '-') value += m2.value;
-            else if (m.op == '*') value /= m2.value;
-            else if (m.op == '/') value *= m2.value;
+            if (m.name == "root") value = right.value;
+            else if (m.op == '+') value -= right.value;
+            else if (m.op == '-') value += right.value;
+            else if (m.op == '*') value /= right.value;
+            else if (m.op == '/') value *= right.value;
         }
     }
 
