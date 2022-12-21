@@ -19,6 +19,7 @@ std::map<std::string, Monkey> monkeys;
 
 void read_input(const std::string &filename)
 {
+    monkeys.clear();
     std::ifstream file(filename);
     std::string line, word;
 
@@ -47,112 +48,100 @@ void read_input(const std::string &filename)
     }
 }
 
-void evaluate()
+void evaluate(const std::string &name)
 {
-    for (;;)
+    auto &m = monkeys[name];
+    if (m.has_value)
+        return;
+
+    // Part2 exception: This one has no children, nor known value
+    if (name == "humn")
+        return;
+
+    auto &left_monkey = monkeys[m.m1], &right_monkey = monkeys[m.m2];
+    evaluate(m.m1); evaluate(m.m2);
+
+    if (!left_monkey.has_value || !right_monkey.has_value)
+        return;
+
+    switch (m.op)
     {
-        auto found_something = false;
-        for (auto &i : monkeys)
-        {
-            auto &m = i.second;
-            if (!m.has_value)
-            {
-                if (monkeys[m.m1].has_value && monkeys[m.m2].has_value)
-                {
-                    switch (m.op)
-                    {
-                    case '+': m.value = monkeys[m.m1].value + monkeys[m.m2].value; m.has_value = true; break;
-                    case '-': m.value = monkeys[m.m1].value - monkeys[m.m2].value; m.has_value = true; break;
-                    case '*': m.value = monkeys[m.m1].value * monkeys[m.m2].value; m.has_value = true; break;
-                    case '/': m.value = monkeys[m.m1].value / monkeys[m.m2].value; m.has_value = true; break;
-                    }
-
-                    found_something = true;
-                }
-            }
-        }
-
-        if (!found_something)
-            break;
+    case '+': m.value = left_monkey.value + right_monkey.value; break;
+    case '-': m.value = left_monkey.value - right_monkey.value; break;
+    case '*': m.value = left_monkey.value * right_monkey.value; break;
+    case '/': m.value = left_monkey.value / right_monkey.value; break;
     }
+    m.has_value = true;
 }
 
 auto do_part1(const std::string &filename)
 {
-    monkeys.clear();
     read_input(filename);
-
-    // TODO: This could be simpler as a recursive evaluation
-    evaluate();
-
+    evaluate("root");
     return monkeys["root"].value;
 }
 
-bool recur(const std::string &name, std::vector<Monkey> &path)
+void complete(const std::string &name, long long value)
 {
+    auto &m = monkeys[name];
+
     if (name == "humn")
-        return true;
-
-    auto m = monkeys[name];
-    if (!m.m1.empty())
-        if (recur(m.m1, path))
-        {
-            path.push_back(monkeys[m.m1]);
-            return true;
-        }
-    if (!m.m2.empty())
-        if (recur(m.m2, path))
-        {
-            path.push_back(monkeys[m.m2]);
-            return true;
-        }
-
-    return false;
-}
-
-auto do_part2(const std::string &filename)
-{
-    monkeys.clear();
-    read_input(filename);
-
-    auto &humn = monkeys["humn"];
-    humn.has_value = false;
-    humn.m1 = "xqrt"; // unused name to ensure doesn't resolve
-    humn.m2 = "trwz"; // unused name to ensure doesn't resolve
-
-    evaluate();
-
-    // find a path from root to humn; walk back up tree. At each node, one will be a consequence of "humn" and the other will be a known quantity.
-    std::vector<Monkey> path;
-    recur("root", path);
-    path.push_back(monkeys["root"]);
-    auto value = 0LL;
-
-    for (auto i = path.size() - 1; i > 0; i--)
     {
-        auto &m = path[i];
-        auto &left = monkeys[path[i].m1];
-        auto &right = monkeys[path[i].m2];
+        m.value = value;
+        m.has_value = true;
+        return;
+    }
+
+    auto &left = monkeys[m.m1], &right = monkeys[m.m2];
+    if (name != "root")
+    {
+        m.value = value;
+        m.has_value = true;
 
         if (left.has_value)
         {
-            if (m.name == "root") value = left.value;
-            else if (m.op == '+') value -= left.value;
+            if (m.op == '+') value -= left.value;
             else if (m.op == '-') value = left.value - value;
             else if (m.op == '*') value /= left.value;
             else if (m.op == '/') value = left.value / value;
         }
         else if (right.has_value)
         {
-            if (m.name == "root") value = right.value;
-            else if (m.op == '+') value -= right.value;
+            if (m.op == '+') value -= right.value;
             else if (m.op == '-') value += right.value;
             else if (m.op == '*') value /= right.value;
             else if (m.op == '/') value *= right.value;
         }
     }
 
-    return value;
+    if (!left.has_value) complete(m.m1, value);
+    if (!right.has_value) complete(m.m2, value);
+
+    switch (m.op)
+    {
+    case '+': m.value = left.value + right.value; break;
+    case '-': m.value = left.value - right.value; break;
+    case '*': m.value = left.value * right.value; break;
+    case '/': m.value = left.value / right.value; break;
+    }
+    m.has_value = true;
+}
+
+
+auto do_part2(const std::string &filename)
+{
+    read_input(filename);
+
+    // Alter the input
+    auto &humn = monkeys["humn"];
+    humn.has_value = false;
+    evaluate("root");
+
+    auto &root = monkeys["root"];
+    auto value = monkeys[root.m1].has_value ? monkeys[root.m1].value : monkeys[root.m2].value;
+    complete("root", value);
+
+    return monkeys["humn"].value;
 }
 
 int main()
