@@ -7,11 +7,46 @@
 #include <cassert>
 
 using RowCol = std::pair<int, int>;
+using Proposals = std::map<RowCol, std::vector<RowCol>>;
 
-auto get_dot_count(const std::set<RowCol> &grid)
+enum { NW = 0x01, N = 0x02, NE = 0x04, W = 0x08, E = 0x10, SW = 0x20, S= 0x40, SE = 0x80 };
+
+struct
+{
+    int check, row_dir, col_dir;
+}
+const rules[] =
+{
+    { NE | E | SE,  0,  1},
+    { NW | N | NE, -1,  0},
+    { SW | S | SE,  1,  0},
+    { NW | W | SW,  0, -1}
+};
+
+std::set<RowCol> elves;
+
+auto get_neighbor_bitmap(const RowCol &elf)
+{
+    auto neighbors = 0, bit = 0x1;
+
+    for (auto i = -1; i <= 1; i++)
+        for (auto j = -1; j <= 1; j++)
+            if (i || j)
+            {
+                if (elves.find(std::make_pair(elf.first + i, elf.second + j)) != elves.end())
+                    neighbors |= bit;
+
+                bit <<= 1;
+            }
+
+    return neighbors;
+}
+
+auto get_dot_count()
 {
     auto min_row = INT_MAX, max_row = INT_MIN, min_col = INT_MAX, max_col = INT_MIN;
-    for (auto &i : grid)
+
+    for (auto &i : elves)
     {
         min_row = std::min(i.first, min_row);
         max_row = std::max(i.first, max_row);
@@ -19,139 +54,54 @@ auto get_dot_count(const std::set<RowCol> &grid)
         max_col = std::max(i.second, max_col);
     }
 
-    return (max_row - min_row + 1) * (max_col - min_col + 1) - grid.size();
-}
-
-auto check_north_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
-{
-    if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-        grid.find(std::make_pair(row - 1, col)) == grid.end() &&
-        grid.find(std::make_pair(row - 1, col + 1)) == grid.end())
-    {
-        proposals[std::make_pair(row - 1, col)].push_back(std::make_pair(row, col));
-        return true;
-    }
-
-    return false;
-}
-
-auto check_south_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
-{
-    if (grid.find(std::make_pair(row + 1, col - 1)) == grid.end() &&
-        grid.find(std::make_pair(row + 1, col)) == grid.end() &&
-        grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-    {
-        proposals[std::make_pair(row + 1, col)].push_back(std::make_pair(row, col));
-        return true;
-    }
-
-    return false;
-}
-
-auto check_west_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
-{
-    if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-        grid.find(std::make_pair(row, col - 1)) == grid.end() &&
-        grid.find(std::make_pair(row + 1, col - 1)) == grid.end())
-    {
-        proposals[std::make_pair(row, col - 1)].push_back(std::make_pair(row, col));
-        return true;
-    }
-
-    return false;
-}
-
-auto check_east_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
-{
-    if (grid.find(std::make_pair(row - 1, col + 1)) == grid.end() &&
-        grid.find(std::make_pair(row, col + 1)) == grid.end() &&
-        grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-    {
-        proposals[std::make_pair(row, col + 1)].push_back(std::make_pair(row, col));
-        return true;
-    }
-
-    return false;
-}
-
-auto count_neighbors(const std::set<RowCol> &grid, int row, int col)
-{
-    auto num_neighbors = 0;
-
-    for (auto i = -1; i <= 1; i++)
-        for (auto j = -1; j <= 1; j++)
-            if ((i != 0 || j != 0) && grid.find(std::make_pair(row + i, col + j)) != grid.end())
-                num_neighbors++;
-
-    return num_neighbors;
+    return (max_row - min_row + 1) * (max_col - min_col + 1) - elves.size();
 }
 
 auto process_input(const std::string &filename)
 {
-    std::set<RowCol> grid;
-    auto retval = std::make_pair(0, 0);
-
     std::ifstream file(filename);
     std::string line;
     auto row = 0;
+    auto retval = std::make_pair(0, 0);
 
     while (getline(file, line))
     {
         for (auto col = 0; col < line.length(); col++)
             if (line[col] == '#')
-                grid.insert(std::make_pair(row, col));
+                elves.insert(std::make_pair(row, col));
         row++;
     }
 
     for (auto round = 1; ; round++)
     {
-        std::map<RowCol, std::vector<RowCol>> proposals; // maps "to" to potential "froms"
+        Proposals proposals;
 
-        for (auto &pos : grid)
+        for (auto &from : elves)
         {
-            auto row = pos.first, col = pos.second;
+            auto neighbors = get_neighbor_bitmap(from);
 
-            if (count_neighbors(grid, row, col) == 0)
+            if (!neighbors)
                 continue;
 
-            if (round % 4 == 1)
+            for (auto i = 0; i < sizeof(rules)/sizeof(rules[0]); i++)
             {
-                check_north_proposal(grid, row, col, proposals) ||
-                check_south_proposal(grid, row, col, proposals) ||
-                check_west_proposal(grid, row, col, proposals) ||
-                check_east_proposal(grid, row, col, proposals);
-            }
-            else if (round % 4 == 2)
-            {
-                check_south_proposal(grid, row, col, proposals) ||
-                check_west_proposal(grid, row, col, proposals) ||
-                check_east_proposal(grid, row, col, proposals) ||
-                check_north_proposal(grid, row, col, proposals);
-            }
-            else if (round % 4 == 3)
-            {
-                check_west_proposal(grid, row, col, proposals) ||
-                check_east_proposal(grid, row, col, proposals) ||
-                check_north_proposal(grid, row, col, proposals) ||
-                check_south_proposal(grid, row, col, proposals);
-            }
-            else if (round % 4 == 0)
-            {
-                check_east_proposal(grid, row, col, proposals) ||
-                check_north_proposal(grid, row, col, proposals) ||
-                check_south_proposal(grid, row, col, proposals) ||
-                check_west_proposal(grid, row, col, proposals);
+                auto &r = rules[(round + i) % 4];
+                if ((neighbors & r.check) == 0)
+                {
+                    auto to = std::make_pair(from.first + r.row_dir, from.second + r.col_dir);
+                    proposals[to].push_back(from);
+                    break;
+                }
             }
         }
 
-        // second half of round
         auto elf_moved = false;
         for (auto &p : proposals)
         {
             if (p.second.size() == 1)
             {
-                grid.insert(p.first);
-                grid.erase(grid.find(p.second[0]));
+                elves.insert(p.first);
+                elves.erase(elves.find(p.second[0]));
                 elf_moved = true;
             }
         }
@@ -163,7 +113,7 @@ auto process_input(const std::string &filename)
         }
 
         if (round == 10)
-            retval.first = get_dot_count(grid);
+            retval.first = int(get_dot_count());
     }
 }
 
