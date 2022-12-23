@@ -19,21 +19,77 @@ auto get_dot_count(const std::set<RowCol> &grid)
         max_col = std::max(i.second, max_col);
     }
 
-    // TODO: Num elves is constant, so below shouldn't be necessary
-    auto dot_count = 0;
-    for (auto i = min_row; i <= max_row; i++)
-        for (auto j = min_col; j <= max_col; j++)
-            if (grid.find(std::make_pair(i, j)) == grid.end())
-                dot_count++;
+    return (max_row - min_row + 1) * (max_col - min_col + 1) - grid.size();
+}
 
-    return dot_count;
+auto check_north_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
+{
+    if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
+        grid.find(std::make_pair(row - 1, col)) == grid.end() &&
+        grid.find(std::make_pair(row - 1, col + 1)) == grid.end())
+    {
+        proposals[std::make_pair(row - 1, col)].push_back(std::make_pair(row, col));
+        return true;
+    }
+
+    return false;
+}
+
+auto check_south_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
+{
+    if (grid.find(std::make_pair(row + 1, col - 1)) == grid.end() &&
+        grid.find(std::make_pair(row + 1, col)) == grid.end() &&
+        grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
+    {
+        proposals[std::make_pair(row + 1, col)].push_back(std::make_pair(row, col));
+        return true;
+    }
+
+    return false;
+}
+
+auto check_west_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
+{
+    if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
+        grid.find(std::make_pair(row, col - 1)) == grid.end() &&
+        grid.find(std::make_pair(row + 1, col - 1)) == grid.end())
+    {
+        proposals[std::make_pair(row, col - 1)].push_back(std::make_pair(row, col));
+        return true;
+    }
+
+    return false;
+}
+
+auto check_east_proposal(const std::set<RowCol> &grid, int row, int col, std::map<RowCol, std::vector<RowCol>> &proposals)
+{
+    if (grid.find(std::make_pair(row - 1, col + 1)) == grid.end() &&
+        grid.find(std::make_pair(row, col + 1)) == grid.end() &&
+        grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
+    {
+        proposals[std::make_pair(row, col + 1)].push_back(std::make_pair(row, col));
+        return true;
+    }
+
+    return false;
+}
+
+auto count_neighbors(const std::set<RowCol> &grid, int row, int col)
+{
+    auto num_neighbors = 0;
+
+    for (auto i = -1; i <= 1; i++)
+        for (auto j = -1; j <= 1; j++)
+            if ((i != 0 || j != 0) && grid.find(std::make_pair(row + i, col + j)) != grid.end())
+                num_neighbors++;
+
+    return num_neighbors;
 }
 
 auto process_input(const std::string &filename)
 {
-    auto retval = std::make_pair(0, 0);
-
     std::set<RowCol> grid;
+    auto retval = std::make_pair(0, 0);
 
     std::ifstream file(filename);
     std::string line;
@@ -47,8 +103,6 @@ auto process_input(const std::string &filename)
         row++;
     }
 
-    auto dir_order = 0;
-
     for (auto round = 1; ; round++)
     {
         std::map<RowCol, std::vector<RowCol>> proposals; // maps "to" to potential "froms"
@@ -56,131 +110,41 @@ auto process_input(const std::string &filename)
         for (auto &pos : grid)
         {
             auto row = pos.first, col = pos.second;
-            auto num_neighbors = 0;
 
-            for (auto i = -1; i <= 1; i++)
-                for (auto j = -1; j <= 1; j++)
-                {
-                    if (i == 0 && j == 0) continue;
-                    if (grid.find(std::make_pair(row + i, col + j)) != grid.end())
-                        num_neighbors++;
-                }
-
-            if (num_neighbors == 0)
+            if (count_neighbors(grid, row, col) == 0)
                 continue;
 
-            // NSWE
-            if (dir_order == 0)
+            if (round % 4 == 1)
             {
-                if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row - 1, col)].push_back(pos); // N
-                }
-                else if (grid.find(std::make_pair(row + 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row + 1, col)].push_back(pos); // S
-                }
-                else if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col - 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col - 1)].push_back(pos); // W
-                }
-                else if (grid.find(std::make_pair(row - 1, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col + 1)].push_back(pos); // E
-                }
+                check_north_proposal(grid, row, col, proposals) ||
+                check_south_proposal(grid, row, col, proposals) ||
+                check_west_proposal(grid, row, col, proposals) ||
+                check_east_proposal(grid, row, col, proposals);
             }
-            else if (dir_order == 1) // SWEN
+            else if (round % 4 == 2)
             {
-                if (grid.find(std::make_pair(row + 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row + 1, col)].push_back(pos); // S
-                }
-                else if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col - 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col - 1)].push_back(pos); // W
-                }
-                else if (grid.find(std::make_pair(row - 1, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col + 1)].push_back(pos); // E
-                }
-                else if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row - 1, col)].push_back(pos); // N
-                }
+                check_south_proposal(grid, row, col, proposals) ||
+                check_west_proposal(grid, row, col, proposals) ||
+                check_east_proposal(grid, row, col, proposals) ||
+                check_north_proposal(grid, row, col, proposals);
             }
-            else if (dir_order == 2) // WENS
+            else if (round % 4 == 3)
             {
-                if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col - 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col - 1)].push_back(pos); // W
-                }
-                else if (grid.find(std::make_pair(row - 1, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col + 1)].push_back(pos); // E
-                }
-                else if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row - 1, col)].push_back(pos); // N
-                }
-                else if (grid.find(std::make_pair(row + 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row + 1, col)].push_back(pos); // S
-                }
+                check_west_proposal(grid, row, col, proposals) ||
+                check_east_proposal(grid, row, col, proposals) ||
+                check_north_proposal(grid, row, col, proposals) ||
+                check_south_proposal(grid, row, col, proposals);
             }
-            else if (dir_order == 3) // ENSW
+            else if (round % 4 == 0)
             {
-                if (grid.find(std::make_pair(row - 1, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col + 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col + 1)].push_back(pos); // E
-                }
-                else if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row - 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row - 1, col)].push_back(pos); // N
-                }
-                else if (grid.find(std::make_pair(row + 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col + 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row + 1, col)].push_back(pos); // S
-                }
-                else if (grid.find(std::make_pair(row - 1, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row, col - 1)) == grid.end() &&
-                    grid.find(std::make_pair(row + 1, col - 1)) == grid.end())
-                {
-                    proposals[std::make_pair(row, col - 1)].push_back(pos); // W
-                }
+                check_east_proposal(grid, row, col, proposals) ||
+                check_north_proposal(grid, row, col, proposals) ||
+                check_south_proposal(grid, row, col, proposals) ||
+                check_west_proposal(grid, row, col, proposals);
             }
         }
 
-        // part 2 of round
+        // second half of round
         auto elf_moved = false;
         for (auto &p : proposals)
         {
@@ -197,8 +161,6 @@ auto process_input(const std::string &filename)
             retval.second = round;
             return retval;
         }
-
-        if (++dir_order > 3) dir_order = 0;
 
         if (round == 10)
             retval.first = get_dot_count(grid);
