@@ -57,9 +57,9 @@ void read_input(const std::string &filename)
             switch (b.dir)
             {
             case '^': if (--row == 0)        row = rows - 2; break;
-            case 'v': if (++row == rows - 1) row = 1;               break;
-            case '<': if (--col == 0)        col = cols - 2;        break;
-            case '>': if (++col == cols - 1) col = 1;               break;
+            case 'v': if (++row == rows - 1) row = 1;        break;
+            case '<': if (--col == 0)        col = cols - 2; break;
+            case '>': if (++col == cols - 1) col = 1;        break;
             }
         }
     }
