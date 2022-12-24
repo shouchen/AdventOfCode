@@ -10,7 +10,8 @@
 using RowCol = std::pair<int, int>;
 using Grid = std::vector<std::string>;
 
-std::vector<Grid> timegrid;
+std::vector<Grid> grids;
+auto rows = 0, cols = 0;
 
 void read_input(const std::string &filename)
 {
@@ -25,7 +26,7 @@ void read_input(const std::string &filename)
     std::vector<Blizzard> blizzards;
     Grid grid;
 
-    while (getline(file, line))
+    while (file >> line)
     {
         for (auto i = 0; i < line.length(); i++)
             if (line[i] != '#' && line[i] != '.')
@@ -37,7 +38,7 @@ void read_input(const std::string &filename)
         grid.push_back(line);
     }
 
-    const auto rows = grid.size(), cols = grid[0].size();
+    rows = grid.size(), cols = grid[0].size();
     auto blizzard_period = std::lcm(rows - 2, cols - 2);
 
     for (auto i = 0; i < blizzard_period; i++)
@@ -45,19 +46,9 @@ void read_input(const std::string &filename)
         auto grid_now = grid;
 
         for (auto &b : blizzards)
-        {
-            auto row = b.pos.first, col = b.pos.second;
-            auto &c = grid_now[row][col];
+            grid_now[b.pos.first][b.pos.second] = '#';
 
-            if (c == '.')
-                c = b.dir;
-            else if (isdigit(c))
-                c++;
-            else
-                c = '2';
-        }
-
-        timegrid.push_back(grid_now);
+        grids.push_back(grid_now);
 
         for (auto &b : blizzards)
         {
@@ -65,22 +56,10 @@ void read_input(const std::string &filename)
 
             switch (b.dir)
             {
-            case '^':
-                if (--row == 0 && grid[row][col] == '#')
-                    row = grid.size() - 2;
-                break;
-            case 'v':
-                if (++row == rows - 1 && grid[row][col] == '#')
-                    row = 1;
-                break;
-            case '<':
-                if (--col == 0)
-                    col = cols - 2;
-                break;
-            case '>':
-                if (++col == cols - 1)
-                    col = 1;
-                break;
+            case '^': if (--row == 0)        row = grid.size() - 2; break;
+            case 'v': if (++row == rows - 1) row = 1;               break;
+            case '<': if (--col == 0)        col = cols - 2;        break;
+            case '>': if (++col == cols - 1) col = 1;               break;
             }
         }
     }
@@ -94,15 +73,12 @@ auto get_fastest_time(RowCol start, RowCol end, int start_minute)
         int minutes;
     };
 
-    const auto blizzard_period = timegrid.size();
-    const auto rows = timegrid[0].size(), cols = timegrid[0][0].size();
-
+    const auto blizzard_period = grids.size();
     auto fastest = INT_MAX;
-
     std::queue<State> q;
-    q.push(State{ start, start_minute });
-
     std::set<std::pair<RowCol, int>> seen;
+
+    q.push(State{ start, start_minute });
 
     while (!q.empty())
     {
@@ -124,7 +100,7 @@ auto get_fastest_time(RowCol start, RowCol end, int start_minute)
 
         seen.insert(key);
 
-        Grid &grid = timegrid[(state.minutes + 1) % blizzard_period];
+        Grid &grid = grids[(state.minutes + 1) % blizzard_period];
 
         State s = { { state.pos.first + 1, state.pos.second }, state.minutes + 1};
         if ((start.first == 0 || state.pos.first < rows - 1) && grid[s.pos.first][s.pos.second] == '.')
@@ -153,7 +129,7 @@ auto get_fastest_time(RowCol start, RowCol end, int start_minute)
 auto get_output()
 {
     const auto top_left = RowCol{ 0,1 };
-    const auto bottom_right = RowCol{ timegrid[0].size() - 1, timegrid[0][0].size() - 2 };
+    const auto bottom_right = RowCol{ rows - 1, cols - 2 };
     auto retval = std::make_pair(0, 0);
 
     retval.first = get_fastest_time(top_left, bottom_right, 0);
