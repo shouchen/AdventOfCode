@@ -31,14 +31,14 @@ void read_input(const std::string &filename)
         for (auto i = 0; i < line.length(); i++)
             if (line[i] != '#' && line[i] != '.')
             {
-                blizzards.push_back({ { grid.size(), i }, line[i] });
+                blizzards.push_back({ { int(grid.size()), i }, line[i] });
                 line[i] = '.';
             }
 
         grid.push_back(line);
     }
 
-    rows = grid.size(), cols = grid[0].size();
+    rows = int(grid.size()), cols = int(grid[0].size());
     auto blizzard_period = std::lcm(rows - 2, cols - 2);
 
     for (auto i = 0; i < blizzard_period; i++)
@@ -56,7 +56,7 @@ void read_input(const std::string &filename)
 
             switch (b.dir)
             {
-            case '^': if (--row == 0)        row = grid.size() - 2; break;
+            case '^': if (--row == 0)        row = rows - 2; break;
             case 'v': if (++row == rows - 1) row = 1;               break;
             case '<': if (--col == 0)        col = cols - 2;        break;
             case '>': if (++col == cols - 1) col = 1;               break;
@@ -94,7 +94,7 @@ auto get_fastest_time(RowCol start, RowCol end, int start_minute)
             continue;
         }
 
-        auto key = make_pair(state.pos, state.minutes % blizzard_period);
+        auto key = make_pair(state.pos, state.minutes); 
         if (seen.find(key) != seen.end())
             continue;
 
@@ -103,7 +103,7 @@ auto get_fastest_time(RowCol start, RowCol end, int start_minute)
         Grid &grid = grids[(state.minutes + 1) % blizzard_period];
 
         State s = { { state.pos.first + 1, state.pos.second }, state.minutes + 1};
-        if ((start.first == 0 || state.pos.first < rows - 1) && grid[s.pos.first][s.pos.second] == '.')
+        if (s.pos.first <= rows - 1 && grid[s.pos.first][s.pos.second] == '.')
             q.push(s);
 
         s = { { state.pos.first, state.pos.second + 1 }, state.minutes + 1};
@@ -111,7 +111,7 @@ auto get_fastest_time(RowCol start, RowCol end, int start_minute)
             q.push(s);
 
         s = { { state.pos.first - 1, state.pos.second }, state.minutes + 1};
-        if ((start.first != 0 || state.pos.first > 1) && grid[s.pos.first][s.pos.second] == '.')
+        if (s.pos.first >= 0 && grid[s.pos.first][s.pos.second] == '.')
             q.push(s);
 
         s = { { state.pos.first, state.pos.second - 1 }, state.minutes + 1};
