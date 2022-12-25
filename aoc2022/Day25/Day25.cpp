@@ -6,13 +6,9 @@ const std::string digits = "=-012";
 
 auto snafu_to_decimal(const std::string &snafu)
 {
-    auto place = 1LL, decimal = 0LL;
-    for (auto d = snafu.rbegin(); d != snafu.rend(); d++)
-    {
-        auto n = digits.find(*d) - 2;
-        decimal += n * place;
-        place *= 5;
-    }
+    auto decimal = 0LL;
+    for (auto d = snafu.begin(); d != snafu.end(); d++)
+        decimal = 5 * decimal + digits.find(*d) - 2;
 
     return decimal;
 }
@@ -35,11 +31,11 @@ auto decimal_to_snafu(long long decimal)
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
-    std::string line;
+    std::string snafu;
     auto sum = 0LL;
 
-    while (file >> line)
-        sum += snafu_to_decimal(line);
+    while (file >> snafu)
+        sum += snafu_to_decimal(snafu);
 
     return decimal_to_snafu(sum);
 }
