@@ -128,7 +128,7 @@ auto get_fastest_time(RowCol start, RowCol end, int start_minute)
 
 auto get_output()
 {
-    const auto top_left = RowCol{ 0,1 };
+    const auto top_left = RowCol{ 0, 1 };
     const auto bottom_right = RowCol{ rows - 1, cols - 2 };
     auto retval = std::make_pair(0, 0);
 
