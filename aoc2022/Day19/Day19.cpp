@@ -27,15 +27,15 @@ struct Blueprint
     int cost[4][4];
     Blueprint()
     {
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
+        for (auto i = 0; i < 4; i++)
+            for (auto j = 0; j < 4; j++)
                 cost[i][j] = 0;
     }
 };
 
 std::vector<Blueprint> blueprints;
 
-Material parse_material(const std::string &material)
+auto parse_material(const std::string &material)
 {
     if (material == "ore") return Ore;
     if (material == "clay") return Clay;
@@ -43,7 +43,7 @@ Material parse_material(const std::string &material)
     return Geode;
 }
 
-bool purchase(const Blueprint &bp, State &state, Material robot)
+auto purchase(const Blueprint &bp, State &state, Material robot)
 {
     for (int i = Ore; i <= Geode; i++)
         if (state.material[i] < bp.cost[robot][i]) return false;
@@ -64,6 +64,7 @@ auto is_hopeless(const State &state)
     auto n = mins_left - 1;
     auto addl_geodes_if_bought_geobot_every_minute = n * (n + 1) / 2;
     auto total_geodes_at_end = state.material[Geode] + new_geodes_with_existing_geobots + addl_geodes_if_bought_geobot_every_minute;
+
     if (total_geodes_at_end <= max_geodes)
         return true;
 
@@ -75,10 +76,8 @@ void recurse(const State &state, const Blueprint &bp)
     if (state.minutes == max_minutes)
     {
         if (state.material[Geode] > max_geodes)
-        {
-            std::cout << "geodes = " << state.material[Geode] << std::endl;
             max_geodes = state.material[Geode];
-        }
+
         return;
     }
 
@@ -157,7 +156,7 @@ void read_input(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string blueprint, number_colon, each, costs, material, robot, and_str;
-    int n2;
+    auto n2 = 0;
 
     file >> blueprint;
 
@@ -197,7 +196,6 @@ auto do_part1()
 
     for (auto i = 1; i <= blueprints.size(); i++)
     {
-        std::cout << "BLUEPRINT " << i << std::endl;
         max_geodes = 0;
         recurse(state, blueprints[i - 1]);
         retval += i * max_geodes;
@@ -216,7 +214,6 @@ auto do_part2()
 
     for (auto i = 1; i <= 3; i++)
     {
-        std::cout << "BLUEPRINT " << i << std::endl;
         max_geodes = 0;
         recurse(state, blueprints[i - 1]);
         retval *= max_geodes;
