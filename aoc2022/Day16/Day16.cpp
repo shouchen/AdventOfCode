@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include <map>
 #include <cassert>
 
@@ -11,21 +12,19 @@ struct Valve
     bool is_open;
 };
 
-struct Valve valves[64];
-size_t nvalves;
-int dists[64][64];	/* min. distances between valves */
-
+std::vector<Valve> valves;
 std::map<std::string, int> name_to_valve_index;
+int dists[64][64];	// min. distances between valves
 
 auto find_or_create_valve_index(const std::string &name)
 {
     size_t i;
 
-    for (i = 0; i < nvalves; i++)
+    for (i = 0; i < valves.size(); i++)
         if (name == valves[i].name)
             return int(i);
 
-    valves[nvalves++].name = name;
+    valves.push_back(Valve{ name, 0, false });
     return int(i);
 }
 
@@ -35,12 +34,12 @@ void compute_dists(void)
 	{
         auto something_changed = false;
 
-        for (auto i = 0; i < nvalves; i++)
-            for (auto step1 = 0; step1 < nvalves; step1++)
+        for (auto i = 0; i < valves.size(); i++)
+            for (auto step1 = 0; step1 < valves.size(); step1++)
             {
                 if (!dists[i][step1]) continue;
 
-                for (auto step2 = 0; step2 < nvalves; step2++)
+                for (auto step2 = 0; step2 < valves.size(); step2++)
                 {
                     if (i == step2 || !dists[step1][step2]) continue;
 
@@ -60,15 +59,15 @@ void compute_dists(void)
 }
 
 int max_val(
-    size_t pos1, int time1,	/* actor 1 pos and time left */
-    size_t pos2, int time2)	/* actor 2 */
+    size_t pos1, int time1,	// actor 1 pos and time left
+    size_t pos2, int time2)	// actor 2
 {
     auto best = 0, rest = 0, val = 0;
 
     if (time1 <= 1 && time2 <= 1)
         return 0;
 
-    for (auto i = 0; i < nvalves; i++) {
+    for (auto i = 0; i < valves.size(); i++) {
         if (!valves[i].rate) continue;
         if (valves[i].is_open) continue;
 
@@ -81,7 +80,7 @@ int max_val(
             best = std::max(best, val);
         }
 
-        /* extra check to prevent identical work */
+        // extra check to prevent identical work
         if (time2 > time1 || (time1 == time2 && pos1 != pos2))
         {
             rest = time2 - dists[pos2][i] - 1;
