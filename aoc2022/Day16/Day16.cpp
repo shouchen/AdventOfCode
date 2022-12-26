@@ -1,8 +1,8 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <map>
 #include <cassert>
 
 struct Valve
@@ -13,19 +13,16 @@ struct Valve
 };
 
 std::vector<Valve> valves;
-std::map<std::string, int> name_to_valve_index;
-int dists[64][64];	// min. distances between valves
+int dists[51][51];
 
 auto find_or_create_valve_index(const std::string &name)
 {
-    size_t i;
-
-    for (i = 0; i < valves.size(); i++)
+    for (auto i = 0; i < valves.size(); i++)
         if (name == valves[i].name)
-            return int(i);
+            return i;
 
-    valves.push_back(Valve{ name, 0, false });
-    return int(i);
+    valves.push_back({ name, 0, false });
+    return int(valves.size() - 1);
 }
 
 void compute_dists(void)
@@ -58,33 +55,31 @@ void compute_dists(void)
     }
 }
 
-int max_val(
-    size_t pos1, int time1,	// actor 1 pos and time left
-    size_t pos2, int time2)	// actor 2
+int max_val(size_t pos1, int time1, size_t pos2, int time2)
 {
-    auto best = 0, rest = 0, val = 0;
-
     if (time1 <= 1 && time2 <= 1)
         return 0;
 
-    for (auto i = 0; i < valves.size(); i++) {
-        if (!valves[i].rate) continue;
-        if (valves[i].is_open) continue;
+    auto best = 0;
+
+    for (auto i = 0; i < valves.size(); i++)
+    {
+        if (!valves[i].rate || valves[i].is_open)
+            continue;
 
         valves[i].is_open = true;
 
         if (time1 >= time2)
 		{
-            rest = time1 - dists[pos1][i] - 1;
-            val = valves[i].rate * rest + max_val(i, rest, pos2, time2);
+            auto rest = time1 - dists[pos1][i] - 1;
+            auto val = valves[i].rate * rest + max_val(i, rest, pos2, time2);
             best = std::max(best, val);
         }
 
-        // extra check to prevent identical work
         if (time2 > time1 || (time1 == time2 && pos1 != pos2))
         {
-            rest = time2 - dists[pos2][i] - 1;
-            val = valves[i].rate * rest + max_val(pos1, time1, i, rest);
+            auto rest = time2 - dists[pos2][i] - 1;
+            auto val = valves[i].rate * rest + max_val(pos1, time1, i, rest);
             best = std::max(best, val);
 		}
 
@@ -99,8 +94,7 @@ auto process_input(const std::string &filename, bool part2)
 	std::ifstream file(filename);
 	std::string line, valve, name, has, flow, tunnels, lead, to;
 	auto c = ' ', semicolon = ';';
-    auto rate = 0;
-    std::map<std::string, int> name_to_valve_index;
+    auto rate = 0, index_aa = find_or_create_valve_index("AA");
 
 	while (std::getline(file, line))
 	{
@@ -114,23 +108,27 @@ auto process_input(const std::string &filename, bool part2)
 
         while (ss >> name)
         {
-            if (name.length() == 3) name.pop_back();
+            if (name.back() == ',') name.pop_back();
             dists[index][find_or_create_valve_index(name)] = 1;
         }
     }
 
     compute_dists();
+}
 
-    auto index_aa = find_or_create_valve_index("AA");
-    return part2 ? max_val(index_aa, 26, index_aa, 26) : max_val(index_aa, 30, 0, 0);
+auto do_part(int minutes, bool two_elephants)
+{
+    return max_val(0, minutes, 0, two_elephants ? minutes : 0 );
 }
 
 int main()
 {
-    auto part1 = process_input("input.txt", false);
+    process_input("input.txt", false);
+
+    auto part1 = do_part(30, false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = process_input("input.txt", true);
+    auto part2 = do_part(26, true);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 1474);
