@@ -14,33 +14,17 @@ struct Valve
 std::vector<Valve> valves;
 std::vector<std::vector<int>> dists;
 
-auto find_or_create_valve_index(const std::string &name)
+auto find_valve_index(const std::string &name)
 {
-    for (auto i = 0; i < valves.size(); i++)
+    for (auto i = 0; ; i++)
         if (name == valves[i].name)
             return i;
-
-    valves.push_back({ name, 0, false });
-    return int(valves.size() - 1);
 }
 
-void initialize_dists(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    auto num_valves = 0;
-    while (std::getline(file, line))
-        num_valves++;
-
-    for (auto i = 0; i < num_valves; i++)
-        dists.push_back(std::vector<int>(num_valves, 0));
-}
-
-void compute_dists(void)
+void compute_dists()
 {
     for (;;)
-	{
+    {
         auto something_changed = false;
 
         for (auto i = 0; i < valves.size(); i++)
@@ -67,6 +51,60 @@ void compute_dists(void)
     }
 }
 
+auto process_input_pass1(const std::string &filename)
+{
+	std::ifstream file(filename);
+	std::string line, valve, name, has, flow;
+	auto c = ' ';
+    auto rate = 0;
+        
+    valves.push_back({ "AA", 0, false });
+
+    while (std::getline(file, line))
+	{
+		std::stringstream ss(line);
+        ss >> valve >> name >> has >> flow >> c >> c >> c >> c >> c >> rate;
+
+        if (name == "AA")
+            valves[0].rate = rate;
+        else
+            valves.push_back({ name, rate, false });
+    }
+
+    for (auto i = 0; i < valves.size(); i++)
+        dists.push_back(std::vector<int>(valves.size(), 0));
+}
+
+auto process_input_pass2(const std::string &filename)
+{
+    std::ifstream file(filename);
+    std::string line, valve, name;
+
+    while (std::getline(file, line))
+    {
+        std::stringstream ss1(line.substr(6));
+        ss1 >> name;
+        auto index = find_valve_index(name);
+
+        std::stringstream ss(line.substr(line.find("to ") + 3));
+        ss >> valve;
+
+        while (ss >> name)
+        {
+            if (name.back() == ',') name.pop_back();
+            auto other_index = find_valve_index(name);
+            dists[index][other_index] = 1;
+        }
+    }
+}
+
+void process_input(const std::string &filename)
+{
+    process_input_pass1(filename);
+    process_input_pass2(filename);
+    compute_dists();
+}
+
 int max_val(size_t pos1, int time1, size_t pos2, int time2)
 {
     if (time1 <= 1 && time2 <= 1)
@@ -82,7 +120,7 @@ int max_val(size_t pos1, int time1, size_t pos2, int time2)
         valves[i].is_open = true;
 
         if (time1 >= time2)
-		{
+        {
             auto rest = time1 - dists[pos1][i] - 1;
             auto val = valves[i].rate * rest + max_val(i, rest, pos2, time2);
             best = std::max(best, val);
@@ -93,42 +131,12 @@ int max_val(size_t pos1, int time1, size_t pos2, int time2)
             auto rest = time2 - dists[pos2][i] - 1;
             auto val = valves[i].rate * rest + max_val(pos1, time1, i, rest);
             best = std::max(best, val);
-		}
+        }
 
         valves[i].is_open = false;
     }
 
     return best;
-}
-
-auto process_input(const std::string &filename)
-{
-	std::ifstream file(filename);
-	std::string line, valve, name, has, flow, tunnels, lead, to;
-	auto c = ' ', semicolon = ';';
-    auto rate = 0, index_aa = find_or_create_valve_index("AA");
-
-    initialize_dists(filename);
-
-    while (std::getline(file, line))
-	{
-		std::stringstream ss(line);
-
-        ss >> valve >> name >> has >> flow >> c >> c >> c >> c >> c;
-        ss >> rate >> semicolon >> tunnels >> lead >> to >> valve;
-
-        auto index = find_or_create_valve_index(name);
-        valves[index].rate = rate;
-
-        while (ss >> name)
-        {
-            if (name.back() == ',') name.pop_back();
-            auto other_index = find_or_create_valve_index(name);
-            dists[index][other_index] = 1;
-        }
-    }
-
-    compute_dists();
 }
 
 auto do_part(int minutes, bool two_elephants)
