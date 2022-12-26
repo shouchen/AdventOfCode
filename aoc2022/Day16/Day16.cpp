@@ -1,5 +1,4 @@
 #include <iostream>
-#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -13,7 +12,7 @@ struct Valve
 };
 
 std::vector<Valve> valves;
-int dists[51][51];
+std::vector<std::vector<int>> dists;
 
 auto find_or_create_valve_index(const std::string &name)
 {
@@ -23,6 +22,19 @@ auto find_or_create_valve_index(const std::string &name)
 
     valves.push_back({ name, 0, false });
     return int(valves.size() - 1);
+}
+
+void initialize_dists(const std::string &filename)
+{
+    std::ifstream file(filename);
+    std::string line;
+
+    auto num_valves = 0;
+    while (std::getline(file, line))
+        num_valves++;
+
+    for (auto i = 0; i < num_valves; i++)
+        dists.push_back(std::vector<int>(num_valves, 0));
 }
 
 void compute_dists(void)
@@ -89,14 +101,16 @@ int max_val(size_t pos1, int time1, size_t pos2, int time2)
     return best;
 }
 
-auto process_input(const std::string &filename, bool part2)
+auto process_input(const std::string &filename)
 {
 	std::ifstream file(filename);
 	std::string line, valve, name, has, flow, tunnels, lead, to;
 	auto c = ' ', semicolon = ';';
     auto rate = 0, index_aa = find_or_create_valve_index("AA");
 
-	while (std::getline(file, line))
+    initialize_dists(filename);
+
+    while (std::getline(file, line))
 	{
 		std::stringstream ss(line);
 
@@ -109,7 +123,8 @@ auto process_input(const std::string &filename, bool part2)
         while (ss >> name)
         {
             if (name.back() == ',') name.pop_back();
-            dists[index][find_or_create_valve_index(name)] = 1;
+            auto other_index = find_or_create_valve_index(name);
+            dists[index][other_index] = 1;
         }
     }
 
@@ -123,7 +138,7 @@ auto do_part(int minutes, bool two_elephants)
 
 int main()
 {
-    process_input("input.txt", false);
+    process_input("input.txt");
 
     auto part1 = do_part(30, false);
     std::cout << "Part One: " << part1 << std::endl;
