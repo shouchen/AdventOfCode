@@ -10,13 +10,13 @@ std::vector<std::string> grid;
 
 void move1(int &row, int &col, int &dr, int &dc, int count)
 {
-    auto next_row = row, next_col = col;
+    auto next_row = row, next_col = col, next_dr = dr, next_dc = dc;
 
     while (count--)
     {
         next_row += dr, next_col += dc;
 
-        // part1 wrapping
+        // part1 wrapping rules
         if (next_row < 0)
             next_row = int(grid.size()) - 1;
         else if (next_row == grid.size())
@@ -27,18 +27,17 @@ void move1(int &row, int &col, int &dr, int &dc, int count)
         else if (next_col == grid[0].size())
             next_col = 0;
 
-        switch (grid[next_row][next_col])
+        if (grid[next_row][next_col] == ' ')
         {
-        case '#':
-            return;
-        case '.':
-            row = next_row;
-            col = next_col;
-            break;
-        case ' ':
             count++;
-            break;
+            continue;
         }
+
+        if (grid[next_row][next_col] == '#')
+            break;
+
+        row = next_row, col = next_col;
+        dr = next_dr, dc = next_dc;
     }
 }
 
@@ -50,7 +49,7 @@ void move2(int &row, int &col, int &dr, int &dc, int count)
     {
         next_row += dr, next_col += dc;
 
-        // part2 wrapping
+        // part2 wrapping rules
         if (next_row == -1 && next_col >= 50 && next_col < 100)
             next_row = next_col + 100, next_col = 0, next_dr = 0, next_dc = 1; // 1 out top
         else if (next_col == 49 && next_row >= 0 && next_row < 50)
@@ -149,8 +148,7 @@ auto do_part(const std::string &filename, MoveFunc move)
         }
     }
 
-    if (number > 0)
-        move(curr_row, curr_col, dr, dc, number);
+    move(curr_row, curr_col, dr, dc, number);
 
     return compute_passcode(curr_row, curr_col, dr, dc);
 }
