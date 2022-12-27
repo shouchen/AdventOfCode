@@ -9,18 +9,29 @@ using WrapFunc = void(*)(int &, int &, int &, int &);
 std::vector<std::string> grid;
 std::string path;
 
+void read_input(const std::string &filename)
+{
+    std::ifstream file(filename);
+    std::string line;
+
+    while (getline(file, line) && !line.empty())
+        grid.push_back(line);
+
+    file >> path;
+}
+
 void wrap1(int &row, int &col, int &dr, int &dc)
 {
     for (;;)
     {
         if (row < 0)
-            row = int(grid.size()) - 1;  // out top
+            row = int(grid.size()) - 1;
         else if (row == grid.size())
-            row = 0; // out bottom
+            row = 0;
         else if (col < 0)
-            col = int(grid[row].size()) - 1; // out left
+            col = int(grid[row].size()) - 1;
         else if (col == grid[row].size())
-            col = 0; // out right
+            col = 0;
 
         if (col < grid[row].size() && grid[row][col] != ' ')
             break;
@@ -29,36 +40,37 @@ void wrap1(int &row, int &col, int &dr, int &dc)
     }
 }
 
+// Seams are hard-coded to the observed puzzle input's shape
 void wrap2(int &row, int &col, int &dr, int &dc)
 {
     if (row == -1 && col >= 50 && col < 100)
-        row = col + 100, col = 0, dr = 0, dc = 1; // 1 out top
+        row = col + 100, col = 0, dr = 0, dc = 1;
     else if (col == 49 && row >= 0 && row < 50)
-        row = 149 - row, col = 0, dr = 0, dc = 1; // 1 out left
+        row = 149 - row, col = 0, dr = 0, dc = 1;
     else if (row == -1 && col >= 100 && col < 150)
-        col -= 100, row = 199; // 2 out top
+        col -= 100, row = 199;
     else if (col == 150)
-        row = 149 - row, col = 99, dr = 0, dc = -1; // 2 out right
+        row = 149 - row, col = 99, dr = 0, dc = -1;
     else if (row == 50 && col >= 100)
-        row = col - 50, col = 99, dr = 0, dc = -1; // 2 out down
+        row = col - 50, col = 99, dr = 0, dc = -1;
     else if (col == 49 && row >= 50 && row < 100)
-        col = row - 50, row = 100, dr = 1, dc = 0; // 3 out left
+        col = row - 50, row = 100, dr = 1, dc = 0;
     else if (col == 100 && row >= 50 && row < 100)
-        col = row + 50, row = 49, dr = -1, dc = 0; // 3 out right
+        col = row + 50, row = 49, dr = -1, dc = 0;
     else if (col == 100 && row >= 100 && row < 150)
-        row = 149 - row, col = 149, dr = 0, dc = -1; // 4 out right
+        row = 149 - row, col = 149, dr = 0, dc = -1;
     else if (row == 150 && col >= 50 && col < 100)
-        row = col + 100, col = 49, dr = 0, dc = -1; // 4 out bottom
+        row = col + 100, col = 49, dr = 0, dc = -1;
     else if (row == 99 && col >= 0 && col < 50)
-        row = col + 50, col = 50, dr = 0, dc = 1; // 5 out top
+        row = col + 50, col = 50, dr = 0, dc = 1;
     else if (col == -1 && row >= 100 && row < 150)
-        row = 149 - row, col = 50, dr = 0, dc = 1; // 5 out left
+        row = 149 - row, col = 50, dr = 0, dc = 1;
     else if (col == -1 && row >= 150 && row < 200)
-        col = row - 100, row = 0, dr = 1, dc = 0; // 6 out left
+        col = row - 100, row = 0, dr = 1, dc = 0;
     else if (col == 50 && row >= 150 && row < 200)
-        col = row - 100, row = 149, dr = -1, dc = 0; // 6 out right
+        col = row - 100, row = 149, dr = -1, dc = 0;
     else if (row == 200)
-        col += 100, row = 0; // 6 out bottom
+        col += 100, row = 0;
 }
 
 void move(int &row, int &col, int &dr, int &dc, int count, WrapFunc wrap)
@@ -66,7 +78,6 @@ void move(int &row, int &col, int &dr, int &dc, int count, WrapFunc wrap)
     while (count--)
     {
         auto next_row = row + dr, next_col = col + dc, next_dr = dr, next_dc = dc;
-
         wrap(next_row, next_col, next_dr, next_dc);
 
         if (next_row < grid.size() && next_col < grid[next_row].size() && grid[next_row][next_col] == '#')
@@ -114,25 +125,11 @@ auto do_part(WrapFunc wrap)
 
     auto retval = 1000 * (row + 1) + 4 * (col + 1);
 
-    if (dr == 1)
-        retval += 1;
-    else if (dc == -1)
-        retval += 2;
-    else if (dr == -1)
-        retval += 3;
+    if (dr == 1) retval += 1;
+    else if (dc == -1) retval += 2;
+    else if (dr == -1) retval += 3;
 
     return retval;
-}
-
-void read_input(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    while (getline(file, line) && !line.empty())
-        grid.push_back(line);
-
-    file >> path;
 }
 
 int main()
