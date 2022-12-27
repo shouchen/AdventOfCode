@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <sstream>
 #include <vector>
 #include <cassert>
 
 using WrapFunc = void(*)(int &, int &, int &, int &);
 
 std::vector<std::string> grid;
+std::string path;
 
 void wrap1(int &row, int &col, int &dr, int &dc)
 {
@@ -24,7 +25,7 @@ void wrap1(int &row, int &col, int &dr, int &dc)
         if (col < grid[row].size() && grid[row][col] != ' ')
             break;
 
-        row += dr, col += dc;
+        row += 50 * dr, col += 50 * dc;
     }
 }
 
@@ -62,11 +63,9 @@ void wrap2(int &row, int &col, int &dr, int &dc)
 
 void move(int &row, int &col, int &dr, int &dc, int count, WrapFunc wrap)
 {
-    auto next_row = row, next_col = col, next_dr = dr, next_dc = dc;
-
     while (count--)
     {
-        next_row += dr, next_col += dc;
+        auto next_row = row + dr, next_col = col + dc, next_dr = dr, next_dc = dc;
 
         wrap(next_row, next_col, next_dr, next_dc);
 
@@ -86,36 +85,17 @@ void turn(int &dr, int &dc, char dir)
         dr = (dir == 'L') ? -dc : dc, dc = 0;
 }
 
-auto compute_passcode(int curr_row, int curr_col, int dr, int dc)
+auto do_part(WrapFunc wrap)
 {
-    auto retval = 1000 * (curr_row + 1) + 4 * (curr_col + 1);
-
-    if (dr == -1 && dc == 0)
-        retval += 3;
-    else if (dr == 1 && dc == 0)
-        retval += 1;
-    else if (dr == 0 && dc == -1)
-        retval += 2;
-
-    return retval;
-}
-
-auto do_part(const std::string &filename, WrapFunc wrap)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    while (getline(file, line) && !line.empty())
-        grid.push_back(line);
-
-    auto curr_row = 0, curr_col = 0, dr = 0, dc = 1;
-    while (grid[curr_row][curr_col] != '.')
-        curr_col++;
+    auto row = 0, col = 0, dr = 0, dc = 1;
+    while (grid[row][col] != '.')
+        col += 50;
 
     auto c = ' ';
     auto number = 0;
+    std::stringstream ss(path);
 
-    while (file >> c)
+    while (ss >> c)
     {
         if (isdigit(c))
         {
@@ -123,24 +103,46 @@ auto do_part(const std::string &filename, WrapFunc wrap)
         }
         else
         {
-            move(curr_row, curr_col, dr, dc, number, wrap);
+            move(row, col, dr, dc, number, wrap);
             turn(dr, dc, c);
 
             number = 0;
         }
     }
 
-    move(curr_row, curr_col, dr, dc, number, wrap);
+    move(row, col, dr, dc, number, wrap);
 
-    return compute_passcode(curr_row, curr_col, dr, dc);
+    auto retval = 1000 * (row + 1) + 4 * (col + 1);
+
+    if (dr == 1)
+        retval += 1;
+    else if (dc == -1)
+        retval += 2;
+    else if (dr == -1)
+        retval += 3;
+
+    return retval;
+}
+
+void read_input(const std::string &filename)
+{
+    std::ifstream file(filename);
+    std::string line;
+
+    while (getline(file, line) && !line.empty())
+        grid.push_back(line);
+
+    file >> path;
 }
 
 int main()
 {
-    auto part1 = do_part("input.txt", wrap1);
+    read_input("input.txt");
+
+    auto part1 = do_part(wrap1);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part("input.txt", wrap2);
+    auto part2 = do_part(wrap2);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 131052);
