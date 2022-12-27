@@ -4,44 +4,63 @@
 #include <vector>
 #include <cassert>
 
-using MoveFunc = void(*)(int &, int &, int &, int &, int);
+using WrapFunc = void(*)(int &, int &, int &, int &);
 
 std::vector<std::string> grid;
 
-void move1(int &row, int &col, int &dr, int &dc, int count)
+void wrap1(int &row, int &col, int &dr, int &dc)
 {
-    auto next_row = row, next_col = col, next_dr = dr, next_dc = dc;
-
-    while (count--)
+    for (;;)
     {
-        next_row += dr, next_col += dc;
+        if (row < 0)
+            row = int(grid.size()) - 1;  // out top
+        else if (row == grid.size())
+            row = 0; // out bottom
+        else if (col < 0)
+            col = int(grid[row].size()) - 1; // out left
+        else if (col == grid[row].size())
+            col = 0; // out right
 
-        // part1 wrapping rules
-        if (next_row < 0)
-            next_row = int(grid.size()) - 1;
-        else if (next_row == grid.size())
-            next_row = 0;
-
-        if (next_col < 0)
-            next_col = int(grid[0].size()) - 1;
-        else if (next_col == grid[0].size())
-            next_col = 0;
-
-        if (grid[next_row][next_col] == ' ')
-        {
-            count++;
-            continue;
-        }
-
-        if (grid[next_row][next_col] == '#')
+        if (col < grid[row].size() && grid[row][col] != ' ')
             break;
 
-        row = next_row, col = next_col;
-        dr = next_dr, dc = next_dc;
+        row += dr, col += dc;
     }
 }
 
-void move2(int &row, int &col, int &dr, int &dc, int count)
+void wrap2(int &row, int &col, int &dr, int &dc)
+{
+    if (row == -1 && col >= 50 && col < 100)
+        row = col + 100, col = 0, dr = 0, dc = 1; // 1 out top
+    else if (col == 49 && row >= 0 && row < 50)
+        row = 149 - row, col = 0, dr = 0, dc = 1; // 1 out left
+    else if (row == -1 && col >= 100 && col < 150)
+        col -= 100, row = 199; // 2 out top
+    else if (col == 150)
+        row = 149 - row, col = 99, dr = 0, dc = -1; // 2 out right
+    else if (row == 50 && col >= 100)
+        row = col - 50, col = 99, dr = 0, dc = -1; // 2 out down
+    else if (col == 49 && row >= 50 && row < 100)
+        col = row - 50, row = 100, dr = 1, dc = 0; // 3 out left
+    else if (col == 100 && row >= 50 && row < 100)
+        col = row + 50, row = 49, dr = -1, dc = 0; // 3 out right
+    else if (col == 100 && row >= 100 && row < 150)
+        row = 149 - row, col = 149, dr = 0, dc = -1; // 4 out right
+    else if (row == 150 && col >= 50 && col < 100)
+        row = col + 100, col = 49, dr = 0, dc = -1; // 4 out bottom
+    else if (row == 99 && col >= 0 && col < 50)
+        row = col + 50, col = 50, dr = 0, dc = 1; // 5 out top
+    else if (col == -1 && row >= 100 && row < 150)
+        row = 149 - row, col = 50, dr = 0, dc = 1; // 5 out left
+    else if (col == -1 && row >= 150 && row < 200)
+        col = row - 100, row = 0, dr = 1, dc = 0; // 6 out left
+    else if (col == 50 && row >= 150 && row < 200)
+        col = row - 100, row = 149, dr = -1, dc = 0; // 6 out right
+    else if (row == 200)
+        col += 100, row = 0; // 6 out bottom
+}
+
+void move(int &row, int &col, int &dr, int &dc, int count, WrapFunc wrap)
 {
     auto next_row = row, next_col = col, next_dr = dr, next_dc = dc;
 
@@ -49,37 +68,9 @@ void move2(int &row, int &col, int &dr, int &dc, int count)
     {
         next_row += dr, next_col += dc;
 
-        // part2 wrapping rules
-        if (next_row == -1 && next_col >= 50 && next_col < 100)
-            next_row = next_col + 100, next_col = 0, next_dr = 0, next_dc = 1; // 1 out top
-        else if (next_col == 49 && next_row >= 0 && next_row < 50)
-            next_row = 149 - next_row, next_col = 0, next_dr = 0, next_dc = 1; // 1 out left
-        else if (next_row == -1 && next_col >= 100 && next_col < 150)
-            next_col -= 100, next_row = 199; // 2 out top
-        else if (next_col == 150)
-            next_row = 149 - next_row, next_col = 99, next_dr = 0, next_dc = -1; // 2 out right
-        else if (next_row == 50 && next_col >= 100)
-            next_row = next_col - 50, next_col = 99, next_dr = 0, next_dc = -1; // 2 out down
-        else if (next_col == 49 && next_row >= 50 && next_row < 100)
-            next_col = next_row - 50, next_row = 100, next_dr = 1, next_dc = 0; // 3 out left
-        else if (next_col == 100 && next_row >= 50 && next_row < 100)
-            next_col = next_row + 50, next_row = 49, next_dr = -1, next_dc = 0; // 3 out right
-        else if (next_col == 100 && next_row >= 100 && next_row < 150)
-            next_row = 149 - next_row, next_col = 149, next_dr = 0, next_dc = -1; // 4 out right
-        else if (next_row == 150 && next_col >= 50 && next_col < 100)
-            next_row = next_col + 100, next_col = 49, next_dr = 0, next_dc = -1; // 4 out bottom
-        else if (next_row == 99 && next_col >= 0 && next_col < 50)
-            next_row = next_col + 50, next_col = 50, next_dr = 0, next_dc = 1; // 5 out top
-        else if (next_col == -1 && next_row >= 100 && next_row < 150)
-            next_row = 149 - next_row, next_col = 50, next_dr = 0, next_dc = 1; // 5 out left
-        else if (next_col == -1 && next_row >= 150 && next_row < 200)
-            next_col = next_row - 100, next_row = 0, next_dr = 1, next_dc = 0; // 6 out left
-        else if (next_col == 50 && next_row >= 150 && next_row < 200)
-            next_col = next_row - 100, next_row = 149, next_dr = -1, next_dc = 0; // 6 out right
-        else if (next_row == 200)
-            next_col += 100, next_row = 0; // 6 out bottom
+        wrap(next_row, next_col, next_dr, next_dc);
 
-        if (grid[next_row][next_col] == '#')
+        if (next_row < grid.size() && next_col < grid[next_row].size() && grid[next_row][next_col] == '#')
             break;
 
         row = next_row, col = next_col;
@@ -109,22 +100,13 @@ auto compute_passcode(int curr_row, int curr_col, int dr, int dc)
     return retval;
 }
 
-auto do_part(const std::string &filename, MoveFunc move)
+auto do_part(const std::string &filename, WrapFunc wrap)
 {
     std::ifstream file(filename);
     std::string line;
-    auto max_line = 0;
 
     while (getline(file, line) && !line.empty())
-    {
         grid.push_back(line);
-        if (line.length() > max_line)
-            max_line = int(line.length());
-    }
-
-    for (auto &i : grid)
-        while (i.length() < max_line)
-            i.push_back(' ');
 
     auto curr_row = 0, curr_col = 0, dr = 0, dc = 1;
     while (grid[curr_row][curr_col] != '.')
@@ -141,24 +123,24 @@ auto do_part(const std::string &filename, MoveFunc move)
         }
         else
         {
-            move(curr_row, curr_col, dr, dc, number);
+            move(curr_row, curr_col, dr, dc, number, wrap);
             turn(dr, dc, c);
 
             number = 0;
         }
     }
 
-    move(curr_row, curr_col, dr, dc, number);
+    move(curr_row, curr_col, dr, dc, number, wrap);
 
     return compute_passcode(curr_row, curr_col, dr, dc);
 }
 
 int main()
 {
-    auto part1 = do_part("input.txt", move1);
+    auto part1 = do_part("input.txt", wrap1);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part("input.txt", move2);
+    auto part2 = do_part("input.txt", wrap2);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 131052);
