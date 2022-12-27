@@ -80,7 +80,7 @@ void move(int &row, int &col, int &dr, int &dc, int count, WrapFunc wrap)
         auto next_row = row + dr, next_col = col + dc, next_dr = dr, next_dc = dc;
         wrap(next_row, next_col, next_dr, next_dc);
 
-        if (next_row < grid.size() && next_col < grid[next_row].size() && grid[next_row][next_col] == '#')
+        if (grid[next_row][next_col] == '#')
             break;
 
         row = next_row, col = next_col;
