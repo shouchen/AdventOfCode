@@ -1,10 +1,10 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vector>
 #include <cassert>
-#include <string>
 
-const std::vector<std::vector<std::string>> table =
+const std::vector<std::vector<std::string>> numbers =
 {
     { "0" },         { "1", "one"},  { "2", "two"},    { "3", "three"},  { "4", "four" },
     { "5", "five" }, { "6", "six" }, { "7", "seven" }, { "8", "eight" }, { "9", "nine" }
@@ -12,17 +12,16 @@ const std::vector<std::vector<std::string>> table =
 
 auto find_number(const std::string &line, int dir, bool allow_spelling)
 {
-    auto start = (dir == 1) ? 0 : line.length() - 1;
-    for (auto i = start; ; i += dir)
-        for (auto j = 0; j < table.size(); j++)
-            for (auto& k : table[j])
+    for (auto i = (dir == 1) ? 0 : line.length() - 1; ; i += dir)
+        for (auto j = 0; j < numbers.size(); j++)
+            for (auto &k : numbers[j])
                 if (line.substr(i, k.length()) == k)
                     return j;
                 else if (!allow_spelling)
                     break;
 }
 
-auto solve_puzzle(const std::string &filename)
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
@@ -39,7 +38,7 @@ auto solve_puzzle(const std::string &filename)
 
 int main()
 {
-    auto answer = solve_puzzle("input.txt");
+    auto answer = solve("input.txt");
     std::cout << "Part One: " << answer.first << std::endl;
     std::cout << "Part Two: " << answer.second << std::endl;
 
