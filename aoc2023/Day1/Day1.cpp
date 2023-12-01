@@ -10,7 +10,7 @@ const std::vector<std::vector<std::string>> table =
     { "5", "five" }, { "6", "six" }, { "7", "seven" }, { "8", "eight" }, { "9", "nine" }
 };
 
-auto find_number(const std::string& line, int dir, bool allow_spelling)
+auto find_number(const std::string &line, int dir, bool allow_spelling)
 {
     auto start = (dir == 1) ? 0 : line.length() - 1;
     for (auto i = start; ; i += dir)
@@ -22,7 +22,7 @@ auto find_number(const std::string& line, int dir, bool allow_spelling)
                     break;
 }
 
-auto solve_puzzle(const std::string& filename)
+auto solve_puzzle(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
