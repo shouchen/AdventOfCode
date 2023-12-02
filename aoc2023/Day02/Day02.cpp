@@ -21,8 +21,7 @@ auto solve(const std::string &filename)
 
         while (is >> n >> color)
         {
-            auto last = color[color.length() - 1];
-            if (last == ',' || last == ';')
+            if (color.back() == ',' || color.back() == ';')
                 color.pop_back();
 
             if (color == "red")
@@ -50,7 +49,6 @@ auto solve(const std::string &filename)
 
     return retval;
 }
-
 
 int main()
 {
