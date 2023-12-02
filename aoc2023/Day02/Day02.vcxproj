@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{4355efbe-8ffc-40a7-8284-e6a186ce1680}</ProjectGuid>
-    <RootNamespace>Day1</RootNamespace>
+    <ProjectGuid>{2fb48a23-2158-4582-846d-5688b39b5940}</ProjectGuid>
+    <RootNamespace>Day02</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -127,11 +127,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Day1.cpp" />
+    <ClCompile Include="Day02.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="input.txt" />
-    <Text Include="readme.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
