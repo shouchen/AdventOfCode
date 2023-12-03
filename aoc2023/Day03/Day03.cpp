@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <regex>
 #include <cassert>
 
 struct Number { int num, row, start, end; };
@@ -17,27 +18,19 @@ void read_input(const std::string &filename)
 
     for (auto row = 0; std::getline(file, line); row++)
     {
-        for (auto i = 0; i < line.length(); i++)
-        {
-            if (isdigit(line[i]))
-            {
-                Number n{ 0, row, i, 0 };
+        std::regex number("\\d+"), symbol("([^\\d\\.])");
 
-                while (isdigit(line[i]))
-                    n.num = 10 * n.num + line[i++] - '0';
+        for (auto i = std::sregex_iterator(line.begin(), line.end(), number); i != std::sregex_iterator(); i++)
+            numbers.push_back(
+                Number{ std::stoi(i->str()), row, int(i->position()), int(i->position() + i->length() - 1) });
 
-                n.end = --i;
-                numbers.push_back(n);
-            }
-            else if (line[i] != '.')
-            {
-                symbols.push_back(Symbol{ line[i], row, i });
-            }
-        }
+        for (auto i = std::sregex_iterator(line.begin(), line.end(), symbol); i != std::sregex_iterator(); i++)
+            symbols.push_back(
+                Symbol{ i->str()[0], row, int(i->position()) });
     }
 }
 
-bool are_adjacent(Number &n, Symbol &s)
+auto are_adjacent(Number &n, Symbol &s)
 {
     return
         (n.row == s.row - 1 && s.col >= n.start - 1 && s.col <= n.end + 1) || // above
@@ -66,7 +59,6 @@ auto do_part2()
     auto total = 0;
 
     for (auto &s : symbols)
-    {
         if (s.type == '*')
         {
             std::vector<Number> adj;
@@ -77,7 +69,6 @@ auto do_part2()
             if (adj.size() == 2)
                 total += adj[0].num * adj[1].num;
         }
-    }
 
     return total;
 }
