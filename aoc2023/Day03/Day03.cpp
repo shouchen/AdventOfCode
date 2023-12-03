@@ -7,7 +7,6 @@
 struct Number { int num, row, start, end; };
 struct Symbol { char type; int row, col; };
 
-std::vector<std::string> grid;
 std::vector<Number> numbers;
 std::vector<Symbol> symbols;
 
@@ -16,45 +15,23 @@ void read_input(const std::string &filename)
     std::ifstream file(filename);
     std::string line;
 
-    while (std::getline(file, line))
-        grid.push_back(line);
-}
-
-void transform__input() // from grid, makes lists of numbers and symbols
-{
-    for (auto i = 0; i < grid.size(); i++)
+    for (auto row = 0; std::getline(file, line); row++)
     {
-        auto &row = grid[i];
-        for (auto j = 0; j < row.size(); j++)
+        for (auto i = 0; i < line.length(); i++)
         {
-            if (row[j] == '.')
-                continue;
-
-            if (!isdigit(row[j]))
+            if (isdigit(line[i]))
             {
-                symbols.push_back(Symbol{ row[j], i, j });
-                continue;
+                Number n{ 0, row, i, 0 };
+
+                while (isdigit(line[i]))
+                    n.num = 10 * n.num + line[i++] - '0';
+
+                n.end = --i;
+                numbers.push_back(n);
             }
-
-            auto start_row = i;
-            auto start_col = j;
-
-            int n = 0;
-            while (j < row.size() && isdigit(row[j]))
+            else if (line[i] != '.')
             {
-                n = 10 * n + row[j] - '0';
-                j++;
-            }
-
-            auto end_col = j - 1;
-
-            auto number = Number{ n, start_row, start_col, end_col };
-            numbers.push_back(number);
-
-            if (j < row.size() && !isdigit(row[j]) && row[j] != '.')
-            {
-                symbols.push_back(Symbol{ row[j], i, j });
-                continue;
+                symbols.push_back(Symbol{ line[i], row, i });
             }
         }
     }
@@ -108,7 +85,6 @@ auto do_part2()
 int main()
 {
     read_input("input.txt");
-    transform__input();
 
     auto part1 = do_part1();
     std::cout << "Part One: " << part1 << std::endl;
