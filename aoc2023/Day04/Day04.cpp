@@ -3,14 +3,14 @@
 #include <sstream>
 #include <vector>
 #include <set>
+#include <numeric>
 #include <cassert>
 
 struct Scratchcard { int wins = 0, copies = 1; };
 
-std::vector<Scratchcard> cards;
-
-void read_data(const std::string &filename)
+auto solve(const std::string &filename)
 {
+    std::vector<Scratchcard> cards;
     std::ifstream file(filename);
     std::string line;
 
@@ -31,44 +31,29 @@ void read_data(const std::string &filename)
             if (winning.find(n) != winning.end())
                 cards.back().wins++;
     }
-}
 
-auto do_part1()
-{
-    auto total = 0;
-
-    for (auto &c : cards)
-        if (c.wins)
-            total += 1 << (c.wins - 1);
-
-    return total;
-}
-
-auto do_part2()
-{
     for (auto i = 0; i < cards.size(); i++)
         for (auto j = 1; j <= cards[i].wins; j++)
             cards[i + j].copies += cards[i].copies;
 
-    auto total = 0;
-
-    for (auto &sc : cards)
-        total += sc.copies;
-
-    return total;
+    return std::make_pair(
+        std::accumulate(
+            cards.begin(), cards.end(), 0, [](int a, const Scratchcard &sc) {
+                return a + (sc.wins ? (1 << (sc.wins - 1)) : 0);
+            }),
+        std::accumulate(
+            cards.begin(), cards.end(), 0, [](int a, const Scratchcard &sc) {
+                return a + sc.copies;
+            }));
 }
 
 int main()
 {
-    read_data("input.txt");
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part1 = do_part1();
-    std::cout << "Part One: " << part1 << std::endl;
-
-    auto part2 = do_part2();
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    assert(part1 == 24160);
-    assert(part2 == 5659035);
+    assert(answer.first == 24160);
+    assert(answer.second == 5659035);
     return 0;
 }
