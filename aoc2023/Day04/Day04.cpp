@@ -4,7 +4,7 @@
 #include <vector>
 #include <cassert>
 
-struct Scratchcard { std::vector<int> v1, v2; int wins = 0, copies = 1; };
+struct Scratchcard { int wins = 0, copies = 1; };
 
 std::vector<Scratchcard> cards;
 
@@ -16,22 +16,19 @@ void read_data(const std::string &filename)
     while (std::getline(file, line))
     {
         cards.push_back(Scratchcard());
-        auto &sc = cards.back();
 
         auto colon = line.find(':'), bar = line.find('|');
         auto n = 0;
+        std::vector<int> winning;
 
-        std::istringstream is(line.substr(colon + 1, bar - colon - 1));
+        auto is = std::istringstream(line.substr(colon + 1, bar - colon - 1));
         while (is >> n)
-            sc.v1.push_back(n);
+            winning.push_back(n);
 
         is = std::istringstream(line.substr(bar + 1));
         while (is>> n)
-        {
-            sc.v2.push_back(n);
-            if (find(sc.v1.begin(), sc.v1.end(), n) != sc.v1.end())
-                sc.wins++;
-        }
+            if (find(winning.begin(), winning.end(), n) != winning.end())
+                cards.back().wins++;
     }
 }
 
