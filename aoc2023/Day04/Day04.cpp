@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <set>
 #include <cassert>
 
 struct Scratchcard { int wins = 0, copies = 1; };
@@ -19,15 +20,15 @@ void read_data(const std::string &filename)
 
         auto colon = line.find(':'), bar = line.find('|');
         auto n = 0;
-        std::vector<int> winning;
+        std::set<int> winning;
 
         auto is = std::istringstream(line.substr(colon + 1, bar - colon - 1));
         while (is >> n)
-            winning.push_back(n);
+            winning.insert(n);
 
         is = std::istringstream(line.substr(bar + 1));
         while (is>> n)
-            if (find(winning.begin(), winning.end(), n) != winning.end())
+            if (winning.find(n) != winning.end())
                 cards.back().wins++;
     }
 }
