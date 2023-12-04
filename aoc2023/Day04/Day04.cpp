@@ -5,6 +5,7 @@
 #include <cassert>
 
 struct Scratchcard { std::vector<int> v1, v2; int wins = 0, copies = 1; };
+
 std::vector<Scratchcard> cards;
 
 void read_data(const std::string &filename)
@@ -54,8 +55,8 @@ auto do_part2()
 
     auto total = 0;
 
-    for (auto &mmm : cards)
-        total += mmm.copies;
+    for (auto &sc : cards)
+        total += sc.copies;
 
     return total;
 }
