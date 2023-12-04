@@ -3,7 +3,6 @@
 #include <sstream>
 #include <vector>
 #include <set>
-#include <numeric>
 #include <cassert>
 
 struct Scratchcard { int wins = 0, copies = 1; };
@@ -13,6 +12,8 @@ auto solve(const std::string &filename)
     std::vector<Scratchcard> cards;
     std::ifstream file(filename);
     std::string line;
+
+    auto retval = std::make_pair(0, 0);
 
     while (std::getline(file, line))
     {
@@ -27,24 +28,22 @@ auto solve(const std::string &filename)
             winning.insert(n);
 
         is = std::istringstream(line.substr(bar + 1));
-        while (is>> n)
+        while (is >> n)
             if (winning.find(n) != winning.end())
                 cards.back().wins++;
+
+        if (cards.back().wins)
+            retval.first += 1 << (cards.back().wins - 1);
     }
 
     for (auto i = 0; i < cards.size(); i++)
+    {
+        retval.second += cards[i].copies;
         for (auto j = 1; j <= cards[i].wins; j++)
             cards[i + j].copies += cards[i].copies;
+    }
 
-    return std::make_pair(
-        std::accumulate(
-            cards.begin(), cards.end(), 0, [](int a, const Scratchcard &sc) {
-                return a + (sc.wins ? (1 << (sc.wins - 1)) : 0);
-            }),
-        std::accumulate(
-            cards.begin(), cards.end(), 0, [](int a, const Scratchcard &sc) {
-                return a + sc.copies;
-            }));
+    return retval;
 }
 
 int main()
