@@ -18,21 +18,20 @@ void read_data(const std::string &filename)
         cards.push_back(Scratchcard());
         auto &sc = cards.back();
 
-        auto p1 = line.find(':'), p2 = line.find('|');
-        auto s1 = line.substr(p1 + 1, p2 - p1 - 1), s2 = line.substr(p2 + 1);
+        auto colon = line.find(':'), bar = line.find('|');
         auto n = 0;
 
-        std::istringstream is1(s1);
-        while (is1 >> n)
+        std::istringstream is(line.substr(colon + 1, bar - colon - 1));
+        while (is >> n)
             sc.v1.push_back(n);
 
-        std::istringstream is2(s2);
-        while (is2 >> n)
+        is = std::istringstream(line.substr(bar + 1));
+        while (is>> n)
+        {
             sc.v2.push_back(n);
-
-        for (auto i : sc.v2)
-            if (find(sc.v1.begin(), sc.v1.end(), i) != sc.v1.end())
+            if (find(sc.v1.begin(), sc.v1.end(), n) != sc.v1.end())
                 sc.wins++;
+        }
     }
 }
 
