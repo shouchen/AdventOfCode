@@ -4,7 +4,7 @@
 #include <vector>
 #include <cassert>
 
-struct Scratchcard { std::vector<int> v1; std::vector<int> v2; int wins = 0, copies = 1; };
+struct Scratchcard { std::vector<int> v1, v2; int wins = 0, copies = 1; };
 std::vector<Scratchcard> cards;
 
 void read_data(const std::string &filename)
@@ -35,7 +35,7 @@ void read_data(const std::string &filename)
     }
 }
 
-auto do_part1(const std::string &filename)
+auto do_part1()
 {
     auto total = 0;
 
@@ -64,7 +64,7 @@ int main()
 {
     read_data("input.txt");
 
-    auto part1 = do_part1("input.txt");
+    auto part1 = do_part1();
     std::cout << "Part One: " << part1 << std::endl;
 
     auto part2 = do_part2();
