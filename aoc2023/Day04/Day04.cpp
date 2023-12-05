@@ -5,11 +5,11 @@
 #include <set>
 #include <cassert>
 
-struct Scratchcard { int wins = 0, copies = 1; };
+struct Card { int wins = 0, copies = 1; };
 
 auto solve(const std::string &filename)
 {
-    std::vector<Scratchcard> cards;
+    std::vector<Card> cards;
     std::ifstream file(filename);
     std::string line;
 
@@ -17,7 +17,7 @@ auto solve(const std::string &filename)
 
     while (std::getline(file, line))
     {
-        cards.push_back(Scratchcard());
+        cards.push_back(Card());
 
         auto colon = line.find(':'), bar = line.find('|');
         auto n = 0;
