@@ -1,137 +1,64 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <string>
-#include <array>
 #include <vector>
-#include <stack>
-#include <queue>
-#include <map>
-#include <set>
-#include <ctype.h>
-#include <algorithm>
-#include <numeric>
-#include <regex>
 #include <cassert>
-
-using namespace std;
 
 struct Mapping
 {
-    long long dest_start, source_start, len;
+    long long dest, source, len;
 };
 
-vector<Mapping> mapping[7];
+std::vector<Mapping> mapping[7];
 
-auto follow_map(long long map, long long value)
+auto follow_map(int map, long long value)
 {
-    for (long long i = 0; i < mapping[map].size(); i++)
-        if (value>= mapping[map][i].source_start && value < mapping[map][i].source_start + mapping[map][i].len)
-        {
-            return value - mapping[map][i].source_start + mapping[map][i].dest_start;
-        }
+    for (auto i = 0; i < mapping[map].size(); i++)
+        if (value>= mapping[map][i].source && value < mapping[map][i].source + mapping[map][i].len)
+            return value - mapping[map][i].source + mapping[map][i].dest;
 
     return value;
 }
 
-auto do_part1(const std::string &filename)
+auto do_part(const std::string &filename, bool part2)
 {
     std::ifstream file(filename);
-    std::string line, seeds_colon, dummy, word;
-    long long n;
-    vector<long long> seeds;
+    std::string seeds_line, line;
 
-    // seeds:
-    while (std::getline(file, line))
+    std::getline(file, seeds_line);
+    std::getline(file, line); // blank line after seeds
+
+    for (int i = 0; i < 7; i++)
     {
-        std::istringstream is(line);
-        is >> seeds_colon;
-        while (is >> n)
-            seeds.push_back(n);
-
-        std::getline(file, line);
-
-        for (int i = 0; i < 7; i++)
+        std::getline(file, line); // discard map heading
+        while (std::getline(file, line) && !line.empty())
         {
-            std::getline(file, line);
-            while (std::getline(file, line) && !line.empty())
-            {
-                std::istringstream is(line);
-                Mapping m;
-                is >> m.dest_start >> m.source_start >> m.len;
-                mapping[i].push_back(m);
-            }
-        }
-    }   
+            std::istringstream is(line);
+            Mapping m;
 
-    long long min = 5000000000;
-
-    for (auto i : seeds)
-    {
-        long long curr = i;
-        for (int j = 0; j < 7; j++)
-        {
-            curr = follow_map(j, curr);
-        }
-
-        cout << i << " " << curr << endl;
-
-        if (curr < min)
-        {
-            min = curr;
+            is >> m.dest >> m.source >> m.len;
+            mapping[i].push_back(m);
         }
     }
 
-    return min;
-}
+    auto n = 0LL, len = 1LL, min = LLONG_MAX;
+    std::string seeds_colon;
+    std::istringstream is(seeds_line);
 
-auto do_part2(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line, seeds_colon, dummy, word;
-    long long n;
-    vector<long long> seeds;
-
-    // seeds:
-    while (std::getline(file, line))
+    is >> seeds_colon;
+    while (is >> n)
     {
-        std::istringstream is(line);
-        is >> seeds_colon;
-        while (is >> n)
-            seeds.push_back(n);
+        if (part2)
+            is >> len;
 
-        std::getline(file, line);
-
-        for (int i = 0; i < 7; i++)
+        std::cout << n << std::endl; // debug progress
+        for (auto j = 0; j < len; j++)
         {
-            std::getline(file, line);
-            while (std::getline(file, line) && !line.empty())
-            {
-                std::istringstream is(line);
-                Mapping m;
-                is >> m.dest_start >> m.source_start >> m.len;
-                mapping[i].push_back(m);
-            }
-        }
-    }
+            auto curr = n + j;
+            for (auto level = 0; level < 7; level++)
+                curr = follow_map(level, curr);
 
-    long long min = 5000000000;
-
-    for (int i = 0; i < seeds.size(); i += 2)
-    {
-        cout << i << endl;
-        for (int j = 0; j < seeds[i + 1]; j++)
-        {
-            long long curr = seeds[i] + j;
-            for (int k = 0; k < 7; k++)
-            {
-                curr = follow_map(k, curr);
-            }
-
-            if (curr < min)
-            {
-                min = curr;
-            }
+            min = std::min(min, curr);
         }
     }
 
@@ -140,35 +67,12 @@ auto do_part2(const std::string &filename)
 
 int main()
 {
-    //auto part1 = do_part1("input.txt");
-    //std::cout << "Part One: " << part1 << std::endl;
+    auto part1 = do_part("input.txt", false);
+    std::cout << "Part One: " << part1 << std::endl;
+    assert(part1 == 484023871);
 
-    auto part2 = do_part2("input.txt");
+    auto part2 = do_part("input.txt", true);
     std::cout << "Part Two: " << part2 << std::endl;
-
-    //assert(part1 == 484023871);
-    //assert(part2 == 46294175);
+    assert(part2 == 46294175);
     return 0;
 }
-
-
-//2276375722 2276375722
-// 160148132 1438450556
-//3424292843 3424292843
-//  82110297 2085838405
-//1692203766 2177445129
-// 342813967  973298328
-//3289792522 3289792522
-// 103516087 2107244195
-//2590548294 2590548294
-// 590357761 2364016362
-//1365412380 1532253501
-//  80084180 2083812288
-//3574751516 3574751516
-// 584781136 1567398367
-//4207087048 4207087048
-//  36194356 2039922464
-//1515742281 2200282983
-// 174009980 1452312404
-//   6434225 2010162333
-// 291842774 1622623383
