@@ -10,12 +10,10 @@ struct Mapping { Range range; long long dest; };
 std::vector<Mapping> mapping[7];
 std::string seeds_line;
 
-long long recur(int level, Range input)
+auto recur(int level, const Range &input)
 {
     if (level == 7)
         return input.start;
-
-    auto min = LLONG_MAX;
 
     for (auto &test : mapping[level])
     {
@@ -28,33 +26,27 @@ long long recur(int level, Range input)
             auto overlap = Range{ overlap_start, overlap_end - overlap_start + 1 };
             overlap.start += test.dest - test.range.start;
 
-            auto temp = recur(level + 1, overlap);
-            min = std::min(min, temp);
+            auto min = recur(level + 1, overlap);
 
             if (input.start < overlap_start)
             {
                 auto preoverlap = Range{ input.start, test.range.start - input.start };
                 auto preoverlap_end = std::min(input_end, test_end);
-
-                auto temp = recur(level, preoverlap);
-                min = std::min(min, temp);
+                min = std::min(min, recur(level, preoverlap));
             }
 
             if (input_end > overlap_end)
             {
                 auto postoverlap = Range{ test_end + 1, input_end - test_end };
                 auto postoverlap_end = std::min(input_end, test_end);
-
-                auto temp = recur(level, postoverlap);
-                min = std::min(min, temp);
+                min = std::min(min, recur(level, postoverlap));
             }
 
             return min;
         }
     }
 
-    auto temp = recur(level + 1, input);
-    return std::min(min, temp);
+    return recur(level + 1, input);
 }
 
 auto do_part(const std::string &filename, bool part2)
@@ -79,8 +71,8 @@ auto do_part(const std::string &filename, bool part2)
     }
 
     auto n = 0LL, len = 1LL, min = LLONG_MAX;
-    std::string seeds_colon;
     std::istringstream is(seeds_line);
+    std::string seeds_colon;
 
     is >> seeds_colon;
 
@@ -89,8 +81,7 @@ auto do_part(const std::string &filename, bool part2)
         if (part2)
             is >> len;
 
-        auto temp = recur(0, Range{ n, len });
-        min = std::min(min, temp);
+        min = std::min(min, recur(0, Range{ n, len }));
     }
 
     return min;
