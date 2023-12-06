@@ -8,7 +8,6 @@ struct Range { long long start, len; };
 struct Mapping { Range range; long long dest; };
 
 std::vector<std::vector<Mapping>> mapping;
-std::string seeds_line;
 
 auto recur(int level, const Range &input)
 {
@@ -17,33 +16,32 @@ auto recur(int level, const Range &input)
 
     for (auto &test : mapping[level])
     {
-        auto input_end = input.start + input.len - 1, test_end = test.range.start + test.range.len - 1;
+        auto input_end = input.start + input.len;
+        auto test_end = test.range.start + test.range.len;
+
         auto overlap_start = std::max(input.start, test.range.start);
         auto overlap_end = std::min(input_end, test_end);
+        auto overlap_len = overlap_end - overlap_start;
 
-        if (overlap_start <= overlap_end)
+        if (overlap_len <= 0)
+            continue;
+
+        auto overlap = Range{ overlap_start - test.range.start + test.dest, overlap_len };
+        auto min = recur(level + 1, overlap);
+
+        if (input.start < overlap_start)
         {
-            auto overlap = Range{ overlap_start, overlap_end - overlap_start + 1 };
-            overlap.start += test.dest - test.range.start;
-
-            auto min = recur(level + 1, overlap);
-
-            if (input.start < overlap_start)
-            {
-                auto preoverlap = Range{ input.start, test.range.start - input.start };
-                auto preoverlap_end = std::min(input_end, test_end);
-                min = std::min(min, recur(level, preoverlap));
-            }
-
-            if (input_end > overlap_end)
-            {
-                auto postoverlap = Range{ test_end + 1, input_end - test_end };
-                auto postoverlap_end = std::min(input_end, test_end);
-                min = std::min(min, recur(level, postoverlap));
-            }
-
-            return min;
+            auto preoverlap = Range{input.start, test.range.start - input.start };
+            min = std::min(min, recur(level, preoverlap));
         }
+
+        if (input_end > overlap_end)
+        {
+            auto postoverlap = Range{ test_end, input_end - test_end };
+            min = std::min(min, recur(level, postoverlap));
+        }
+
+        return min;
     }
 
     return recur(level + 1, input);
@@ -52,7 +50,7 @@ auto recur(int level, const Range &input)
 auto do_part(const std::string &filename, bool part2)
 {
     std::ifstream file(filename);
-    std::string line;
+    std::string line, seeds_line;
 
     std::getline(file, seeds_line);
     std::getline(file, line);
