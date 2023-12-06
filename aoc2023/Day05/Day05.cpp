@@ -7,12 +7,12 @@
 struct Range { long long start, len; };
 struct Mapping { Range range; long long dest; };
 
-std::vector<Mapping> mapping[7];
+std::vector<std::vector<Mapping>> mapping;
 std::string seeds_line;
 
 auto recur(int level, const Range &input)
 {
-    if (level == 7)
+    if (level == mapping.size())
         return input.start;
 
     for (auto &test : mapping[level])
@@ -57,16 +57,17 @@ auto do_part(const std::string &filename, bool part2)
     std::getline(file, seeds_line);
     std::getline(file, line);
 
-    for (int i = 0; i < 7; i++)
+    while (std::getline(file, line) && !line.empty())
     {
-        std::getline(file, line);
+        mapping.push_back(std::vector<Mapping>());
+
         while (std::getline(file, line) && !line.empty())
         {
             std::istringstream is(line);
             Mapping m;
 
             is >> m.dest >> m.range.start >> m.range.len;
-            mapping[i].push_back(m);
+            mapping.back().push_back(m);
         }
     }
 
