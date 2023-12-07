@@ -1,59 +1,54 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <string>
-#include <array>
 #include <vector>
-#include <stack>
-#include <queue>
 #include <map>
-#include <set>
-#include <ctype.h>
 #include <algorithm>
-#include <numeric>
-#include <regex>
 #include <cassert>
-
-std::string order1 = "AKQJT98765432";
-std::string order2 = "AKQT98765432J";
 
 enum Type
 {
-    Fiveofakind, // where all five cards have the same label : AAAAA
-    Fourofakind, // where four cards have the same label and one card has a different label : AA8AA
-    Fullhouse, // where three cards have the same label, and the remaining two cards share a different label : 23332
-    Threeofakind, // where three cards have the same label, and the remaining two cards are each different from any other card in the hand : TTT98
-    Twopair, // where two cards share one label, two other cards share a second label, and the remaining card has a third label : 23432
-    Onepair, // where two cards share one label, and the other three cards have a different label from the pair and each other : A23A4    
-    Highcard // where all cards' labels are distinct: 23456
+    FiveOfAKind,
+    FourOfAKind,
+    FullHouse,
+    ThreeOfAKind,
+    TwoPair,
+    OnePair,
+    HighCard
 };
 
-Type get_best_type_with_jokers(std::string hand);
+struct HandBid
+{
+    std::string hand;
+    Type type = HighCard;
+    int bid = 0;
+};
 
-Type get_type(const std::string &hand)
+std::string order1 = "AKQJT98765432", order2 = "AKQT98765432J";
+
+Type get_type(std::string hand)
 {
     std::map<char, int> m;
-    for (int i = 0; i < 5; i++)
-        m[hand[i]]++;
+    for (auto c : hand)
+        m[c]++;
 
     std::map<int, int> s2;
     for (auto &mm : m)
         s2[mm.second]++;
 
     if (s2.find(5) != s2.end())
-        return Fiveofakind;
+        return FiveOfAKind;
     if (s2.find(4) != s2.end())
-        return Fourofakind;
+        return FourOfAKind;
     if (s2.find(3) != s2.end() && s2.find(2) != s2.end())
-        return Fullhouse;
+        return FullHouse;
     if (s2.find(3) != s2.end())
-        return Threeofakind;
+        return ThreeOfAKind;
     if (s2[2] == 2 && s2[1] == 1)
-        return Twopair;
+        return TwoPair;
     if (s2[2] == 1)
-        return Onepair;
+        return OnePair;
 
-    return Highcard;
+    return HighCard;
 }
 
 Type get_best_type_with_jokers(std::string hand)
@@ -74,125 +69,66 @@ Type get_best_type_with_jokers(std::string hand)
     return best;
 }
 
-struct HandBid
-{
-    std::string hand;
-    int bid;
-};
-
-bool compare_hands1(const HandBid &hb1, const HandBid &hb2)
+bool compare_hands(const HandBid &hb1, const HandBid &hb2, const std::string &order)
 {
     auto h1 = hb1.hand, h2 = hb2.hand;
 
-    // PART1 Type t1 = get_type(h1), t2 = get_type(h2);
-    Type t1 = get_best_type_with_jokers(h1), t2 = get_best_type_with_jokers(h2);
-
-    if (t1 < t2) return true;
-    if (t2 < t1) return false;
+    if (hb1.type < hb2.type) return true;
+    if (hb2.type < hb1.type) return false;
 
     for (int i = 0; i < 5; i++)
     {
-        auto pos1 = order1.find(h1[i]), pos2 = order1.find(h2[i]);
-        if (pos1 < pos2)
-            return true;
-        if (pos2 < pos1)
-            return false;
+        auto pos1 = order.find(h1[i]), pos2 = order.find(h2[i]);
+        if (pos1 < pos2) return true;
+        if (pos2 < pos1) return false;
     }
 
     return false;
+}
+
+bool compare_hands1(const HandBid &hb1, const HandBid &hb2)
+{
+    return compare_hands(hb1, hb2, order1);
 }
 
 bool compare_hands2(const HandBid &hb1, const HandBid &hb2)
 {
-    auto h1 = hb1.hand, h2 = hb2.hand;
-
-    // PART1 Type t1 = get_type(h1), t2 = get_type(h2);
-    Type t1 = get_best_type_with_jokers(h1), t2 = get_best_type_with_jokers(h2);
-
-    if (t1 < t2) return true;
-    if (t2 < t1) return false;
-
-    for (int i = 0; i < 5; i++)
-    {
-        auto pos1 = order2.find(h1[i]), pos2 = order2.find(h2[i]);
-        if (pos1 < pos2)
-            return true;
-        if (pos2 < pos1)
-            return false;
-    }
-
-    return false;
+    return compare_hands(hb1, hb2, order2);
 }
 
-auto do_part1(const std::string &filename)
+auto do_part(const std::string &filename, bool part2)
 {
     std::ifstream file(filename);
-    std::string hand, word;
-
     std::vector<HandBid> hbv;
-
     HandBid hb;
+    auto retval = 0LL;
+
     while (file >> hb.hand >> hb.bid)
     {
+        hb.type = part2 ? get_best_type_with_jokers(hb.hand) : get_type(hb.hand);
         hbv.push_back(hb);
-
-        auto t = get_best_type_with_jokers(hb.hand);
-        std::cout << t << std::endl;
     }
 
+    sort(hbv.begin(), hbv.end(), part2 ? compare_hands2 : compare_hands1);
 
-    sort(hbv.begin(), hbv.end(), compare_hands1);
-
-    long long total = 0;
-    for (int i = 0; i < hbv.size(); i++)
+    for (auto i = 0; i < hbv.size(); i++)
     {
         auto rank = hbv.size() - i;
-
-        total += hbv[i].bid * rank;
+        retval += hbv[i].bid * rank;
     }
 
-    return total;
-}
-
-auto do_part2(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string hand, word;
-
-    std::vector<HandBid> hbv;
-
-    HandBid hb;
-    while (file >> hb.hand >> hb.bid)
-    {
-        hbv.push_back(hb);
-
-        auto t = get_best_type_with_jokers(hb.hand);
-        std::cout << t << std::endl;
-    }
-
-
-    sort(hbv.begin(), hbv.end(), compare_hands2);
-
-    long long total = 0;
-    for (int i = 0; i < hbv.size(); i++)
-    {
-        auto rank = hbv.size() - i;
-
-        total += hbv[i].bid * rank;
-    }
-
-    return total;
+    return retval;
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
+    auto part1 = do_part("input.txt", false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl; // wrong 249477083 // wrong 249723387
+    auto part2 = do_part("input.txt", true);
+    std::cout << "Part Two: " << part2 << std::endl;
 
-    //assert(part1 == 251058093 );
-    //assert(part2 == 249781879);
+    assert(part1 == 251058093);
+    assert(part2 == 249781879);
     return 0;
 }
