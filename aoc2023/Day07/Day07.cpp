@@ -84,28 +84,25 @@ auto read_data(const std::string &filename)
 auto do_part(bool part2)
 {
     auto type = part2 ? &HandBid::type2 : &HandBid::type1;
-    std::string order = part2 ? "AKQT98765432J" : "AKQJT98765432";
+    auto order = std::string(part2 ? "AKQT98765432J" : "AKQJT98765432");
 
-    sort(hbv.begin(), hbv.end(), [type, order](const auto &hb1, const auto &hb2) {
-        if (hb1.*type < hb2.*type) return true;
-        if (hb2.*type < hb1.*type) return false;
+    std::sort(hbv.begin(), hbv.end(), [type, order](const auto &hb1, const auto &hb2) {
+        if (hb1.*type < hb2.*type) return false;
+        if (hb2.*type < hb1.*type) return true;
 
         for (auto i = 0; i < hb1.hand.length(); i++)
         {
             auto pos1 = order.find(hb1.hand[i]), pos2 = order.find(hb2.hand[i]);
-            if (pos1 < pos2) return true;
-            if (pos2 < pos1) return false;
+            if (pos1 < pos2) return false;
+            if (pos2 < pos1) return true;
         }
 
-        return false;
+        return true;
     });
 
     auto retval = 0LL;
     for (auto i = 0; i < hbv.size(); i++)
-    {
-        auto rank = hbv.size() - i;
-        retval += hbv[i].bid * rank;
-    }
+        retval += hbv[i].bid * (i + 1);
 
     return retval;
 }
