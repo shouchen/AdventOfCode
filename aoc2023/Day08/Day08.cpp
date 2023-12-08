@@ -25,12 +25,13 @@ auto find_cycle_len(std::string curr, bool part2)
 auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
-    std::string a, equals, b, c;
+    std::string line;
 
-    file >> dirs;
+    getline(file, dirs);
+    getline(file, line);
 
-    while (file >> a >> equals >> b >> c)
-        m[a] = std::make_pair(b.substr(1, 3), c.substr(0, 3));
+    while (getline(file, line))
+        m[line.substr(0, 3)] = std::make_pair(line.substr(7, 3), line.substr(12, 3));
 
     auto retval = std::make_pair(find_cycle_len("AAA", false), 1LL);
 
