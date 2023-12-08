@@ -12,14 +12,14 @@ enum Type
 
 struct HandBid
 {
-    HandBid(const std::string &hand, int bid);
+    HandBid(const std::string &hand, int bid, bool part2);
 
     std::string hand;
-    Type type1, type2;
+    Type type;
     int bid;
 };
 
-HandBid::HandBid(const std::string &hand, int bid) : hand(hand), bid(bid)
+HandBid::HandBid(const std::string &hand, int bid, bool part2) : hand(hand), bid(bid)
 {
     std::map<char, int> card_to_count;
     for (auto c : hand)
@@ -30,65 +30,60 @@ HandBid::HandBid(const std::string &hand, int bid) : hand(hand), bid(bid)
         count_of_counts[mm.second]++;
 
     if (count_of_counts[5] == 1)
-        type1 = FiveOfAKind;
+        type = FiveOfAKind;
     else if (count_of_counts[4] == 1)
-        type1 = FourOfAKind;
+        type = FourOfAKind;
     else if (count_of_counts[3] == 1 && count_of_counts[2] == 1)
-        type1 = FullHouse;
+        type = FullHouse;
     else if (count_of_counts[3] == 1)
-        type1 = ThreeOfAKind;
+        type = ThreeOfAKind;
     else if (count_of_counts[2] == 2)
-        type1 = TwoPair;
+        type = TwoPair;
     else if (count_of_counts[2] == 1)
-        type1 = OnePair;
+        type = OnePair;
     else
-        type1 = HighCard;
+        type = HighCard;
 
-    type2 = type1;
-    auto jokers = card_to_count['J'];
-
-    switch (type2)
+    if (part2)
     {
-    case FourOfAKind:
-    case FullHouse:
-        if (jokers) type2 = FiveOfAKind;
-        break;
-    case ThreeOfAKind:
-        if (jokers) type2 = FourOfAKind;
-        break;
-    case TwoPair:
-        if (jokers == 2) type2 = FourOfAKind;
-        else if (jokers == 1) type2 = FullHouse;
-        break;
-    case OnePair:
-        if (jokers) type2 = ThreeOfAKind;
-        break;
-    case HighCard:
-        if (jokers) type2 = OnePair;
-        break;
+        auto jokers = card_to_count['J'];
+
+        switch (type)
+        {
+        case FourOfAKind:
+        case FullHouse:
+            if (jokers) type = FiveOfAKind;
+            break;
+        case ThreeOfAKind:
+            if (jokers) type = FourOfAKind;
+            break;
+        case TwoPair:
+            if (jokers == 2) type = FourOfAKind;
+            else if (jokers == 1) type = FullHouse;
+            break;
+        case OnePair:
+            if (jokers) type = ThreeOfAKind;
+            break;
+        case HighCard:
+            if (jokers) type = OnePair;
+            break;
+        }
     }
 }
 
-std::vector<HandBid> hbv;
-
-auto read_data(const std::string &filename)
+auto do_part(const std::string &filename, bool part2)
 {
     std::ifstream file(filename);
-    std::string hand;
+    std::vector<HandBid> hbv;
+    std::string hand, order = part2 ? "AKQT98765432J" : "AKQJT98765432";
     auto bid = 0;
 
     while (file >> hand >> bid)
-        hbv.push_back(HandBid(hand, bid));
-}
+        hbv.push_back(HandBid(hand, bid, part2));
 
-auto do_part(bool part2)
-{
-    auto type = part2 ? &HandBid::type2 : &HandBid::type1;
-    auto order = std::string(part2 ? "AKQT98765432J" : "AKQJT98765432");
-
-    std::sort(hbv.begin(), hbv.end(), [type, order](const auto &hb1, const auto &hb2) {
-        if (hb1.*type < hb2.*type) return false;
-        if (hb2.*type < hb1.*type) return true;
+    std::sort(hbv.begin(), hbv.end(), [order](const auto &hb1, const auto &hb2) {
+        if (hb1.type < hb2.type) return false;
+        if (hb2.type < hb1.type) return true;
 
         for (auto i = 0; i < hb1.hand.length(); i++)
         {
@@ -109,12 +104,10 @@ auto do_part(bool part2)
 
 int main()
 {
-    read_data("input.txt");
-
-    auto part1 = do_part(false);
+    auto part1 = do_part("input.txt", false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part(true);
+    auto part2 = do_part("input.txt", true);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 251058093);

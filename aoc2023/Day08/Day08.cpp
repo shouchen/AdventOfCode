@@ -17,7 +17,7 @@ auto find_cycle_len(std::string curr, bool part2)
         {
             steps++;
             curr = (d == 'L') ? m[curr].first : m[curr].second;
-            if (part2 ? curr.back() == 'Z' : curr == "ZZZ")
+            if (curr == "ZZZ" || (part2 && curr.back() == 'Z'))
                 return steps;
         }
 }
