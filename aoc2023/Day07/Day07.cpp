@@ -7,13 +7,7 @@
 
 enum Type
 {
-    FiveOfAKind,
-    FourOfAKind,
-    FullHouse,
-    ThreeOfAKind,
-    TwoPair,
-    OnePair,
-    HighCard
+    FiveOfAKind, FourOfAKind, FullHouse, ThreeOfAKind, TwoPair, OnePair, HighCard
 };
 
 struct HandBid
@@ -75,20 +69,6 @@ HandBid::HandBid(const std::string &hand, int bid) : hand(hand), bid(bid)
     }
 }
 
-using HandBidComparator = bool (*)(const HandBid &hb1, const HandBid &hb2);
-
-std::vector<HandBid> hbv;
-
-auto read_data(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string hand;
-    auto bid = 0;
-
-    while (file >> hand >> bid)
-        hbv.push_back(HandBid(hand, bid));
-}
-
 bool compare_hands(const HandBid &hb1, const HandBid &hb2, Type HandBid:: *type, std::string order)
 {
     if (hb1.*type < hb2.*type) return true;
@@ -104,21 +84,25 @@ bool compare_hands(const HandBid &hb1, const HandBid &hb2, Type HandBid:: *type,
     return false;
 }
 
-bool compare_hands1(const HandBid &hb1, const HandBid &hb2)
+std::vector<HandBid> hbv;
+
+auto read_data(const std::string &filename)
 {
-    return compare_hands(hb1, hb2, &HandBid::type1, "AKQJT98765432");
+    std::ifstream file(filename);
+    std::string hand;
+    auto bid = 0;
+
+    while (file >> hand >> bid)
+        hbv.push_back(HandBid(hand, bid));
 }
 
-bool compare_hands2(const HandBid &hb1, const HandBid &hb2)
-{
-    return compare_hands(hb1, hb2, &HandBid::type2, "AKQT98765432J");
-}
-
-auto do_part(HandBidComparator cmp)
+auto do_part(bool part2)
 {
     auto retval = 0LL;
 
-    sort(hbv.begin(), hbv.end(), cmp);
+    sort(hbv.begin(), hbv.end(), part2
+        ? [](const HandBid &hb1, const HandBid &hb2) { return compare_hands(hb1, hb2, &HandBid::type2, "AKQT98765432J"); }
+        : [](const HandBid &hb1, const HandBid &hb2) { return compare_hands(hb1, hb2, &HandBid::type1, "AKQJT98765432"); });
 
     for (auto i = 0; i < hbv.size(); i++)
     {
@@ -133,10 +117,10 @@ int main()
 {
     read_data("input.txt");
 
-    auto part1 = do_part(compare_hands1);
+    auto part1 = do_part(false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part(compare_hands2);
+    auto part2 = do_part(true);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 251058093);
