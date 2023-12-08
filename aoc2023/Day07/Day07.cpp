@@ -69,21 +69,6 @@ HandBid::HandBid(const std::string &hand, int bid) : hand(hand), bid(bid)
     }
 }
 
-bool compare_hands(const HandBid &hb1, const HandBid &hb2, Type HandBid:: *type, std::string order)
-{
-    if (hb1.*type < hb2.*type) return true;
-    if (hb2.*type < hb1.*type) return false;
-
-    for (auto i = 0; i < hb1.hand.length(); i++)
-    {
-        auto pos1 = order.find(hb1.hand[i]), pos2 = order.find(hb2.hand[i]);
-        if (pos1 < pos2) return true;
-        if (pos2 < pos1) return false;
-    }
-
-    return false;
-}
-
 std::vector<HandBid> hbv;
 
 auto read_data(const std::string &filename)
@@ -98,12 +83,24 @@ auto read_data(const std::string &filename)
 
 auto do_part(bool part2)
 {
+    auto type = part2 ? &HandBid::type2 : &HandBid::type1;
+    std::string order = part2 ? "AKQT98765432J" : "AKQJT98765432";
+
+    sort(hbv.begin(), hbv.end(), [type, order](const auto &hb1, const auto &hb2) {
+        if (hb1.*type < hb2.*type) return true;
+        if (hb2.*type < hb1.*type) return false;
+
+        for (auto i = 0; i < hb1.hand.length(); i++)
+        {
+            auto pos1 = order.find(hb1.hand[i]), pos2 = order.find(hb2.hand[i]);
+            if (pos1 < pos2) return true;
+            if (pos2 < pos1) return false;
+        }
+
+        return false;
+    });
+
     auto retval = 0LL;
-
-    sort(hbv.begin(), hbv.end(), part2
-        ? [](const HandBid &hb1, const HandBid &hb2) { return compare_hands(hb1, hb2, &HandBid::type2, "AKQT98765432J"); }
-        : [](const HandBid &hb1, const HandBid &hb2) { return compare_hands(hb1, hb2, &HandBid::type1, "AKQJT98765432"); });
-
     for (auto i = 0; i < hbv.size(); i++)
     {
         auto rank = hbv.size() - i;
