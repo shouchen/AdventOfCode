@@ -5,32 +5,16 @@
 #include <algorithm>
 #include <cassert>
 
-std::vector<std::vector<int>> datas;
+using Series = std::vector<int>;
 
-void read_input_lines(const std::string &filename)
+auto predict(const std::vector<int> &v)
 {
-    std::ifstream file(filename);
-    std::string line, word;
-
-    while (std::getline(file, line))
-    {
-        std::istringstream is(line);
-
-        datas.push_back(std::vector<int>());
-        int n = 0;
-        while (is >> n)
-            datas.back().push_back(n);
-    }
-}
-
-int predict(std::vector<int> &v)
-{
-    std::vector<std::vector<int>> pyr;
+    std::vector<Series> pyr;
     pyr.push_back(v);
 
     for (int j = 1; j < 1000; j++)
     {
-        std::vector<int> next;
+        Series next;
         for (int i = 0; i < pyr[j-1].size() - 1; i++)
             next.push_back(pyr[j-1][i + 1] - pyr[j-1][i]);
 
@@ -41,48 +25,44 @@ int predict(std::vector<int> &v)
 
     pyr.back().push_back(pyr.back().front());
 
-    for (int i = pyr.size() - 2; i >= 0; --i)
-    {
+    for (auto i = int(pyr.size()) - 2; i >= 0; --i)
         pyr[i].push_back(pyr[i].back() + pyr[i + 1].back());
-    }
-        
 
     return pyr[0].back();
 }
 
-auto do_part1()
+auto do_part1(const std::string &filename)
 {
-    auto total = 0LL;
-    for (auto &i : datas)
-        total += predict(i);
+    std::ifstream file(filename);
+    std::string line;
+    auto retval = std::make_pair(0, 0);
 
-    return total;
-}
-
-auto do_part2()
-{
-    auto total = 0LL;
-    for (auto &i : datas)
+    while (std::getline(file, line))
     {
-        std::reverse(i.begin(), i.end());
-        total += predict(i);
+        std::istringstream is(line);
+        auto n = 0;
+        Series series;
+
+        while (is >> n)
+            series.push_back(n);
+
+        retval.first += predict(series);
+
+        std::reverse(series.begin(), series.end());
+        retval.second += predict(series);
     }
 
-    return total;
+    return retval;
 }
 
 int main()
 {
-    read_input_lines("input.txt");
+    auto answer = do_part1("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part1 = do_part1();
-    std::cout << "Part One: " << part1 << std::endl;
-
-    auto part2 = do_part2();
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    assert(part1 == 1819125966);
-    assert(part2 == 1140);
+    assert(answer.first == 1819125966);
+    assert(answer.second == 1140);
     return 0;
 }
 
