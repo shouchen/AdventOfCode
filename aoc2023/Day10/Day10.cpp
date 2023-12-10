@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <set>
 #include <cassert>
 
 using namespace std;
@@ -97,6 +98,7 @@ void infer_s_pipe(int &row, int &col)
 }
 
 vector<vector<int>> dist;
+set<pair<int, int>> loop;
 
 auto fill_next_dist(int curr)
 {
@@ -113,6 +115,7 @@ auto fill_next_dist(int curr)
                 if (dist[row - 1][col] > curr + 1)
                 {
                     dist[row - 1][col] = curr + 1;
+                    loop.insert(make_pair(row - 1, col));
                     updated = true;
                 }
             }
@@ -121,6 +124,7 @@ auto fill_next_dist(int curr)
                 if (dist[row + 1][col] > curr + 1)
                 {
                     dist[row + 1][col] = curr + 1;
+                    loop.insert(make_pair(row + 1, col));
                     updated = true;
                 }
             }
@@ -129,6 +133,7 @@ auto fill_next_dist(int curr)
                 if (dist[row][col + 1] > curr + 1)
                 {
                     dist[row][col + 1] = curr + 1;
+                    loop.insert(make_pair(row, col + 1));
                     updated = true;
                 }
             }
@@ -137,6 +142,8 @@ auto fill_next_dist(int curr)
                 if (dist[row][col - 1] > curr + 1)
                 {
                     dist[row][col - 1] = curr + 1;
+                    loop.insert(make_pair(row, col - 1));
+
                     updated = true;
                 }
             }
@@ -150,6 +157,8 @@ void recur(int row, int col, int dist_so_far)
     if (dist[row][col] > dist_so_far)
     {
         dist[row][col] = dist_so_far;
+        loop.insert(make_pair(row, col));
+
         auto dirns = pipe_to_dirn(grid[row][col]);
 
         if (dirns & North) recur(row - 1, col, dist_so_far + 1);
@@ -161,9 +170,10 @@ void recur(int row, int col, int dist_so_far)
 
 int s_row, s_col;
 
-auto do_part1()
+void find_loop()
 {
     int row = 0, col = 0;
+
     infer_s_pipe(row, col);
     s_row = row, s_col = col;
 
@@ -175,19 +185,16 @@ auto do_part1()
     }
 
     dist[row][col] = 0;
-    int i = 0;
-    for (i = 0; ; i++)
-    {
+    loop.insert(make_pair(row, col));
+
+    for (auto i = 0; ; i++)
         if (!fill_next_dist(i))
             break;
-    }
-
-    return i;
 }
 
-auto do_part2()
+auto solve()
 {
-    auto total = 0;
+    auto retval = std::make_pair(0, 0);
 
     for (auto row = 0; row < grid.size(); row++)
     {
@@ -195,29 +202,32 @@ auto do_part2()
 
         for (auto col = 0; col < grid[row].size(); col++)
         {
-            auto is_part_of_loop = dist[row][col] < INT_MAX;
+            auto is_part_of_loop = loop.find(make_pair(row, col)) != loop.end();
+
+            if (is_part_of_loop)
+                retval.first++;
 
             if (is_part_of_loop && (pipe_to_dirn(grid[row][col]) & North))
                 inside = !inside;
             else if (!is_part_of_loop && inside)
-                total++;
+                retval.second++;
         }
     }
 
-    return total;
+    retval.first >>= 1; // just need halfway point
+    return retval;
 }
 
 int main()
 {
     read_grid("input.txt");
+    find_loop();
 
-    auto part1 = do_part1();
-    std::cout << "Part One: " << part1 << std::endl;
+    auto answer = solve();
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part2 = do_part2();
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    assert(part1 == 7030);
-    assert(part2 == 285);
+    assert(answer.first == 7030);
+    assert(answer.second == 285);
     return 0;
 }
