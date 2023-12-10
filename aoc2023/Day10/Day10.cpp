@@ -185,28 +185,22 @@ auto do_part1()
     return i;
 }
 
-int another_part2()
+auto do_part2()
 {
-    int total = 0;
+    auto total = 0;
 
     for (auto row = 0; row < grid.size(); row++)
     {
-        bool inside = false;
+        auto inside = false;
 
         for (auto col = 0; col < grid[row].size(); col++)
         {
-            bool is_part_of_loop = dist[row][col] < INT_MAX;
-            bool is_junk_pipe = pipe_to_dirn(grid[row][col]) && !is_part_of_loop;
-            bool is_special_pipe = grid[row][col] == '|' || grid[row][col] == 'J' || grid[row][col] == 'L';
+            auto is_part_of_loop = dist[row][col] < INT_MAX;
 
-            if (!is_junk_pipe && is_special_pipe)
-            {
+            if (is_part_of_loop && (pipe_to_dirn(grid[row][col]) & North))
                 inside = !inside;
-            }
             else if (!is_part_of_loop && inside)
-            {
                 total++;
-            }
         }
     }
 
@@ -220,7 +214,7 @@ int main()
     auto part1 = do_part1();
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = another_part2();
+    auto part2 = do_part2();
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 7030);
