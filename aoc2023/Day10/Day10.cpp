@@ -4,9 +4,6 @@
 #include <vector>
 #include <cassert>
 
-#define INPUT_FILE "test.txt"
-#define INPUT_FILE "input.txt"
-
 using namespace std;
 
 std::vector<std::string> grid;
@@ -17,12 +14,6 @@ void read_grid(const std::string &filename)
 
     while (std::getline(file, line))
         grid.push_back(line);
-}
-void dump_grid()
-{
-    for (auto &row : grid)
-        std::cout << row << std::endl;
-    cout << endl;
 }
 
 enum Dir
@@ -44,8 +35,6 @@ int pipe_to_dirn(char p)
     case '7': return South | West;
     case 'F': return South | East;
     case '.': return 0;
-    case 'O': return 0;
-    case 'I': return 0;
     default: assert(false); return 0;
     }
 }
@@ -109,22 +98,6 @@ void infer_s_pipe(int &row, int &col)
 
 vector<vector<int>> dist;
 
-int dump_dists()
-{
-    int max = 0;
-    for (int i = 0; i < dist.size(); i++)
-    {
-        for (int j = 0; j < dist[i].size(); j++)
-        {
-//            cout << dist[i][j] << " ";
-            if (dist[i][j] != INT_MAX && dist[i][j] > max) max = dist[i][j];
-        }
-  //      cout << endl;
-    }
-    //cout << endl;
-    return max;
-}
-
 auto fill_next_dist(int curr)
 {
     bool updated = false;
@@ -177,9 +150,6 @@ void recur(int row, int col, int dist_so_far)
     if (dist[row][col] > dist_so_far)
     {
         dist[row][col] = dist_so_far;
-        //dump_dists();
-
-
         auto dirns = pipe_to_dirn(grid[row][col]);
 
         if (dirns & North) recur(row - 1, col, dist_so_far + 1);
@@ -215,447 +185,9 @@ auto do_part1()
     return i;
 }
 
-pair<int, int> find_border_tile()
-{
-    for (int row = 0; row < grid.size(); row++)
-    {
-        if (grid[row][0] == '.')
-        {
-            return make_pair(row, 0);
-        }
-        if (grid[row][grid[row].size() - 1] == '.')
-        {
-            return make_pair(row, grid[row].size() - 1);
-        }
-    }
-
-    for (int col = 0; col < grid[0].size(); col++)
-    {
-        if (grid[0][col] == '.')
-        {
-            return make_pair(0, col);
-        }
-        if (grid[grid.size() - 1][col] == '.')
-        {
-            return make_pair(grid.size() - 1, col);
-        }
-    }
-
-    return make_pair(-1, -1);
-}
-
-void recur(int row, int col)
-{
-    if (row < 0 || row >= grid.size() || col < 0 || col >= grid[row].size())
-        return;
-
-    if (grid[row][col] != '.')
-        return;
-
-    grid[row][col] = 'O';
-
-    recur(row - 1, col);
-    recur(row + 1, col);
-    recur(row, col - 1);
-    recur(row, col + 1);
-
-    if (row == grid.size() - 1 && col == 4)
-        cout << endl;
-
-    // cracks
-    // up
-    auto rr = row, cc = col;
-    bool found = false;
-    for (rr = row - 1; rr >= 0; rr--)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & East))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-
-    rr = row, cc = col;
-    found = false;
-    for (rr = row - 1; rr >= 0; rr--)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & West))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-
-    // down
-    rr = row, cc = col;
-    found = false;
-    for (rr = row + 1; rr < grid.size(); rr++)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & East))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-
-    rr = row, cc = col;
-     found = false;
-    for (rr = row + 1; rr < grid.size(); rr++)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & West))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-
-    // right
-    rr = row, cc = col;
-     found = false;
-    for (cc = col + 1; cc < grid[row].size(); cc++)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & North))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-
-    rr = row, cc = col;
-     found = false;
-    for (cc = col + 1; cc < grid[row].size(); cc++)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & South))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-
-    // left
-    rr = row, cc = col;
-    found = false;
-    for (cc = col - 1; cc >= 0; cc--)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & North))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-
-    rr = row, cc = col;
-    found = false;
-    for (cc = col - 1; cc >= 0; cc--)
-    {
-        auto dirns = pipe_to_dirn(grid[rr][cc]);
-        if (grid[rr][cc] == '.')
-        {
-            found = true;
-            break;
-        }
-        if (!(dirns & South))
-        {
-        }
-        else
-            break;
-    }
-    if (found)
-        recur(rr, cc);
-}
-
-int count_inside_tiles() // also marks them with 'I' for debugging
-{
-    int total = 0;
-    for (int i = 0; i < grid.size(); i++)
-        for (int j = 0; j < grid[i].size(); j++)
-        {
-            if (grid[i][j] == '.')
-            {
-                grid[i][j] = 'I';
-                total++;
-            }
-        }
-    return total;
-}
-
-void convert_tiles_not_in_loop_to_empty()
-{
-    for (int i = 0; i < grid.size(); i++)
-        for (int j = 0; j < grid[i].size(); j++)
-        {
-            if (pipe_to_dirn(grid[i][j]) && dist[i][j] == INT_MAX)
-            {
-                grid[i][j] = '.';
-            }
-        }
-}
-
-auto do_part2()
-{
-    dump_grid();
-    auto row = 0, col = 0;
-
-    // pipe tiles not part of main loop should revert to '.'
-    convert_tiles_not_in_loop_to_empty();
-    dump_grid();
-
-    for (;;)
-    {
-        auto a = find_border_tile();
-        if (a.first == -1 && a.second == -1)
-            break;
-
-        row = a.first, col = a.second;
-        recur(row, col);
-
-        dump_grid();
-    }
-
-    // find outside cracks from above (not border)
-    for (int col = 0; col < grid[0].size(); col++)
-    {
-        // down
-        auto rr = row, cc = col;
-        auto found = false;
-        for (rr = 0; rr < grid.size(); rr++)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & East))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-
-        rr = row, cc = col;
-        found = false;
-        for (rr = 0; rr < grid.size(); rr++)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & West))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-
-        // up
-        rr = row, cc = col;
-        found = false;
-        for (rr = grid.size() - 1; rr >=0 ; --rr)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & East))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-
-        rr = row, cc = col;
-        found = false;
-        for (rr = grid.size() - 1; rr >= 0; --rr)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & West))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-    }
-
-    for (int row = 0; row < grid.size(); row++)
-    {
-        // right
-        auto rr = row, cc = col;
-        auto found = false;
-        for (cc = 0; cc < grid.size(); cc++)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & North))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-
-        rr = row, cc = col;
-        found = false;
-        for (cc = 0; cc < grid.size(); cc++)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & South))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-
-        // left
-        rr = row, cc = col;
-        found = false;
-        for (cc = grid[row].size() - 1; cc >= 0; --cc)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & North))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-
-        rr = row, cc = col;
-        found = false;
-        for (cc = grid[row].size() - 1; cc >= 0; --cc)
-        {
-            auto dirns = pipe_to_dirn(grid[rr][cc]);
-            if (grid[rr][cc] == '.')
-            {
-                found = true;
-                break;
-            }
-            if (!(dirns & South))
-            {
-            }
-            else
-                break;
-        }
-        if (found)
-            recur(rr, cc);
-    }
-
-    auto total = count_inside_tiles();
-
-    dump_grid();
-
-    return total;
-}
-
-int count_them(int row, int col)
-{
-    int total = 0;
-    for (int i = 0; i < col; i++)
-    {
-        auto curr = grid[row][i];
-        if (curr == '|' || curr == 'J' || curr == 'L')
-            total++;
-    }
-    return total;
-}
-
-
 int another_part2()
 {
     int total = 0;
-
-    convert_tiles_not_in_loop_to_empty(); // optimize later to not do this
 
     for (auto row = 0; row < grid.size(); row++)
     {
@@ -663,26 +195,27 @@ int another_part2()
 
         for (auto col = 0; col < grid[row].size(); col++)
         {
-            if (grid[row][col] == '|' || grid[row][col] == 'J' || grid[row][col] == 'L')
+            bool is_part_of_loop = dist[row][col] < INT_MAX;
+            bool is_junk_pipe = pipe_to_dirn(grid[row][col]) && !is_part_of_loop;
+            bool is_special_pipe = grid[row][col] == '|' || grid[row][col] == 'J' || grid[row][col] == 'L';
+
+            if (!is_junk_pipe && is_special_pipe)
             {
                 inside = !inside;
             }
-            else if (grid[row][col] == '.' && inside)
+            else if (!is_part_of_loop && inside)
             {
-                grid[row][col] = 'I';
                 total++;
             }
         }
     }
-
-    dump_grid();
 
     return total;
 }
 
 int main()
 {
-    read_grid(INPUT_FILE);
+    read_grid("input.txt");
 
     auto part1 = do_part1();
     std::cout << "Part One: " << part1 << std::endl;
