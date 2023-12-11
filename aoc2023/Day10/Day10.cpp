@@ -5,28 +5,12 @@
 #include <set>
 #include <cassert>
 
-std::vector<std::vector<int>> exits;
-
 enum Dir
 {
     North = 0x1, South = 0x2, East = 0x4, West = 0x8
 };
 
-auto pipe_to_dirn(char p)
-{
-    switch (p)
-    {
-    case '|': return North | South;
-    case '-': return East | West;
-    case 'L': return North | East;
-    case 'J': return North | West;
-    case '7': return South | West;
-    case 'F': return South | East;
-    default: return 0;
-    }
-}
-
-auto find_loop(int row, int col)
+auto find_loop(std::vector<std::vector<int>> &exits, int row, int col)
 {
     std::set<std::pair<int, int>> loop;
 
@@ -35,13 +19,13 @@ auto find_loop(int row, int col)
         loop.insert(std::make_pair(row, col));
 
         if ((exits[row][col] & North) && loop.find(std::make_pair(row - 1, col)) == loop.end())
-            row -= 1;
+            row--;
         else if ((exits[row][col] & South) && loop.find(std::make_pair(row + 1, col)) == loop.end())
-            row += 1;
+            row++;
         else if ((exits[row][col] & East) && loop.find(std::make_pair(row, col + 1)) == loop.end())
-            col += 1;
+            col++;
         else if ((exits[row][col] & West) && loop.find(std::make_pair(row, col - 1)) == loop.end())
-            col -= 1;
+            col--;
         else
             return loop;
     }
@@ -49,9 +33,10 @@ auto find_loop(int row, int col)
 
 auto solve(const std::string &filename)
 {
+    std::vector<std::vector<int>> exits;
+    auto s_row = 0, s_col = 0;
     std::ifstream file(filename);
     std::string line;
-    auto s_row = 0, s_col = 0;
 
     while (std::getline(file, line))
     {
@@ -59,9 +44,17 @@ auto solve(const std::string &filename)
 
         for (auto c : line)
         {
-            exits.back().push_back(pipe_to_dirn(c));
-            if (c == 'S')
-                s_row = exits.size() - 1, s_col = exits.back().size() - 1;
+            switch (c)
+            {
+            case '|': exits.back().push_back(North | South); break;
+            case '-': exits.back().push_back(East | West); break;
+            case 'L': exits.back().push_back(North | East); break;
+            case 'J': exits.back().push_back(North | West); break;
+            case '7': exits.back().push_back(South | West); break;
+            case 'F': exits.back().push_back(South | East); break;
+            case 'S': s_row = exits.size() - 1, s_col = exits.back().size();
+            default: exits.back().push_back(0);
+            }
         }
     }
 
@@ -74,7 +67,7 @@ auto solve(const std::string &filename)
     if (s_col < exits[s_row].size() - 1 && exits[s_row][s_col + 1] & West)
         exits[s_row][s_col] |= East;
 
-    auto loop = find_loop(s_row, s_col);
+    auto loop = find_loop(exits, s_row, s_col);
     auto total_inside = 0;
 
     for (auto row = 0; row < exits.size(); row++)
