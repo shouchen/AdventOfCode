@@ -7,27 +7,6 @@
 std::vector<std::pair<int, int>> galaxies;
 std::vector<bool> row_has_galaxies, col_has_galaxies;
 
-void read_grid(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-    
-    for (auto row = 0; std::getline(file, line); row++)
-    {
-        row_has_galaxies.push_back(false);
-        while (col_has_galaxies.size() < line.length())
-            col_has_galaxies.push_back(false);
-
-        for (auto col = 0; col < line.length(); col++)
-            if (line[col] == '#')
-            {
-                galaxies.push_back(std::make_pair(row, col));
-                row_has_galaxies[row] = true;
-                col_has_galaxies[col] = true;
-            }
-    }
-}
-
 auto get_dists(std::pair<int, int> &g1, std::pair<int, int> &g2)
 {
     auto dist1 = 0LL, dist2 = 0LL;
@@ -57,15 +36,33 @@ auto get_dists(std::pair<int, int> &g1, std::pair<int, int> &g2)
     return std::make_pair(dist1, dist2);
 }
 
-auto solve(int expansion)
+auto solve(const std::string &filename)
 {
+    std::ifstream file(filename);
+    std::string line;
+
+    for (auto row = 0; std::getline(file, line); row++)
+    {
+        row_has_galaxies.push_back(false);
+        while (col_has_galaxies.size() < line.length())
+            col_has_galaxies.push_back(false);
+
+        for (auto col = 0; col < line.length(); col++)
+            if (line[col] == '#')
+            {
+                galaxies.push_back(std::make_pair(row, col));
+                row_has_galaxies[row] = true;
+                col_has_galaxies[col] = true;
+            }
+    }
+
     auto part1 = 0LL, part2 = 0LL;
 
     auto total = 0LL;
-    for (auto i = 0; i < galaxies.size(); i++)
-        for (auto j = i + 1; j < galaxies.size(); j++)
+    for (auto g1 = galaxies.begin(); g1 != galaxies.end(); g1++)
+        for (auto g2 = g1 + 1; g2 != galaxies.end(); g2++)
         {
-            auto dists = get_dists(galaxies[i], galaxies[j]);
+            auto dists = get_dists(*g1, *g2);
             part1 += dists.first;
             part2 += dists.second;
         }
@@ -75,9 +72,7 @@ auto solve(int expansion)
 
 int main()
 {
-    read_grid("input.txt");
-
-    auto answer = solve(2);
+    auto answer = solve("input.txt");
     std::cout << "Part One: " << answer.first << std::endl;
     std::cout << "Part Two: " << answer.second << std::endl;
 
