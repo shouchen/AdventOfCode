@@ -4,9 +4,6 @@
 #include <vector>
 #include <cassert>
 
-std::vector<std::pair<int, int>> galaxies;
-std::vector<bool> row_has_galaxies, col_has_galaxies;
-
 void add_dist(int from, int to, std::vector<bool> &has_galaxies, std::pair<long long, long long> &dists)
 {
     auto delta = (from < to) ? 1 : -1;
@@ -20,6 +17,8 @@ void add_dist(int from, int to, std::vector<bool> &has_galaxies, std::pair<long 
 
 auto solve(const std::string &filename)
 {
+    std::vector<std::pair<int, int>> galaxies;
+    std::vector<bool> row_has_galaxies, col_has_galaxies;
     std::ifstream file(filename);
     std::string line;
 
