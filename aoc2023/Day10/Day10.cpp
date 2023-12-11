@@ -5,9 +5,7 @@
 #include <set>
 #include <cassert>
 
-std::set<std::pair<int, int>> loop;
 std::vector<std::vector<int>> exits;
-auto s_row = 0, s_col = 0;
 
 enum Dir
 {
@@ -28,10 +26,32 @@ auto pipe_to_dirn(char p)
     }
 }
 
-void read_grid(const std::string &filename)
+auto find_loop(int row, int col)
+{
+    std::set<std::pair<int, int>> loop;
+
+    for (;;)
+    {
+        loop.insert(std::make_pair(row, col));
+
+        if ((exits[row][col] & North) && loop.find(std::make_pair(row - 1, col)) == loop.end())
+            row -= 1;
+        else if ((exits[row][col] & South) && loop.find(std::make_pair(row + 1, col)) == loop.end())
+            row += 1;
+        else if ((exits[row][col] & East) && loop.find(std::make_pair(row, col + 1)) == loop.end())
+            col += 1;
+        else if ((exits[row][col] & West) && loop.find(std::make_pair(row, col - 1)) == loop.end())
+            col -= 1;
+        else
+            return loop;
+    }
+}
+
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
+    auto s_row = 0, s_col = 0;
 
     while (std::getline(file, line))
     {
@@ -44,61 +64,18 @@ void read_grid(const std::string &filename)
                 s_row = exits.size() - 1, s_col = exits.back().size() - 1;
         }
     }
-}
 
-void infer_s_pipe()
-{
-    auto s_dirns = 0;
-    
     if (s_row > 0 && exits[s_row - 1][s_col] & South)
-        s_dirns |= North;
+        exits[s_row][s_col] |= North;
     if (s_row < exits.size() - 1 && exits[s_row + 1][s_col] & North)
-        s_dirns |= South;
+        exits[s_row][s_col] |= South;
     if (s_col > 0 && exits[s_row][s_col - 1] & East)
-        s_dirns |= West;
+        exits[s_row][s_col] |= West;
     if (s_col < exits[s_row].size() - 1 && exits[s_row][s_col + 1] & West)
-        s_dirns |= East;
+        exits[s_row][s_col] |= East;
 
-    if (s_dirns == (North | South))
-        exits[s_row][s_col] = North | South;
-    else if (s_dirns == (East | West))
-        exits[s_row][s_col] = East | West;
-    else if (s_dirns == (North | East))
-        exits[s_row][s_col] = North | East;
-    else if (s_dirns == (North | West))
-        exits[s_row][s_col] = North | West;
-    else if (s_dirns == (South | West))
-        exits[s_row][s_col] = South | West;
-    else if (s_dirns == (South | East))
-        exits[s_row][s_col] = South | East;
-}
-
-void find_loop()
-{
-    auto row = s_row, col = s_col;
-
-    for (;;)
-    {
-        loop.insert(std::make_pair(row, col));
-
-        auto dirns = exits[row][col];
-
-        if ((dirns & North) && loop.find(std::make_pair(row - 1, col)) == loop.end())
-            row -= 1;
-        else if ((dirns & South) && loop.find(std::make_pair(row + 1, col)) == loop.end())
-            row += 1;
-        else if ((dirns & East) && loop.find(std::make_pair(row, col + 1)) == loop.end())
-            col += 1;
-        else if ((dirns & West) && loop.find(std::make_pair(row, col - 1)) == loop.end())
-            col -= 1;
-        else
-            break;
-    }
-}
-
-auto solve()
-{
-    auto count_inside = 0;
+    auto loop = find_loop(s_row, s_col);
+    auto total_inside = 0;
 
     for (auto row = 0; row < exits.size(); row++)
     {
@@ -111,20 +88,16 @@ auto solve()
             if (is_part_of_loop && (exits[row][col] & North))
                 inside = !inside;
             else if (!is_part_of_loop && inside)
-                count_inside++;
+                total_inside++;
         }
     }
 
-    return std::make_pair(loop.size() / 2, count_inside);
+    return std::make_pair(loop.size() / 2, total_inside);
 }
 
 int main()
 {
-    read_grid("input.txt");
-    infer_s_pipe();
-    find_loop();
-
-    auto answer = solve();
+    auto answer = solve("input.txt");
     std::cout << "Part One: " << answer.first << std::endl;
     std::cout << "Part Two: " << answer.second << std::endl;
 
