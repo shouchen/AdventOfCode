@@ -30,24 +30,29 @@ void read_grid(const std::string &filename)
 
 auto get_dists(std::pair<int, int> &g1, std::pair<int, int> &g2)
 {
-    auto d1 = 0, d2 = 0;
-    if (g1.first < g2.first) d1 = 1; else if (g1.first > g2.first) d1 = -1;
-    if (g1.second < g2.second) d2 = 1; else if (g1.second > g2.second) d2 = -1;
-
     auto dist1 = 0LL, dist2 = 0LL;
-    if (d1)
-        for (int row = g1.first; row != g2.first; row += d1)
+
+    if (g1.first != g2.first)
+    {
+        auto delta = (g1.first < g2.first) ? 1 : -1;
+
+        for (auto row = g1.first; row != g2.first; row += delta)
             if (row_has_galaxies[row])
                 dist1++, dist2++;
             else
                 dist1 += 2, dist2 += 1000000;
+    }
 
-    if (d2)
-        for (int col = g1.second; col != g2.second; col += d2)
+    if (g1.second != g2.second)
+    {
+        auto delta = (g1.second < g2.second) ? 1 : -1;
+
+        for (auto col = g1.second; col != g2.second; col += delta)
             if (col_has_galaxies[col])
                 dist1++, dist2++;
             else
                 dist1 += 2, dist2 += 1000000;
+    }
 
     return std::make_pair(dist1, dist2);
 }
