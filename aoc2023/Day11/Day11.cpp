@@ -59,18 +59,18 @@ auto get_dists(std::pair<int, int> &g1, std::pair<int, int> &g2)
 
 auto solve(int expansion)
 {
-    auto retval = std::make_pair(0LL, 0LL);
+    auto part1 = 0LL, part2 = 0LL;
 
     auto total = 0LL;
     for (auto i = 0; i < galaxies.size(); i++)
         for (auto j = i + 1; j < galaxies.size(); j++)
         {
             auto dists = get_dists(galaxies[i], galaxies[j]);
-            retval.first += dists.first;
-            retval.second += dists.second;
+            part1 += dists.first;
+            part2 += dists.second;
         }
 
-    return retval;
+    return std::make_pair(part1, part2);
 }
 
 int main()
