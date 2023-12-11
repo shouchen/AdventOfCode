@@ -5,96 +5,82 @@
 #include <set>
 #include <cassert>
 
-std::vector<std::string> grid;
+std::vector<std::pair<int, int>> galaxies;
+std::set<int> rows_with_galaxies, cols_with_galaxies;
 
 void read_grid(const std::string &filename)
 {
+    std::vector<std::string> grid;
     std::ifstream file(filename);
     std::string line;
 
+    auto row = 0;
+
     while (std::getline(file, line))
+    {
         grid.push_back(line);
+
+        for (auto col = 0; col < line.length(); col++)
+            if (line[col] == '#')
+            {
+                galaxies.push_back(std::make_pair(row, col));
+                rows_with_galaxies.insert(row);
+                cols_with_galaxies.insert(col);
+            }
+
+        row++;
+    }
 }
 
-std::set<int> empty_rows, empty_cols;
-
-long long get_dist(std::pair<int, int> &g1, std::pair<int, int> &g2, int expansion)
+auto get_dists(std::pair<int, int> &g1, std::pair<int, int> &g2)
 {
     auto d1 = 0, d2 = 0;
     if (g1.first < g2.first) d1 = 1; else if (g1.first > g2.first) d1 = -1;
     if (g1.second < g2.second) d2 = 1; else if (g1.second > g2.second) d2 = -1;
 
-    auto dist = 0LL;
+    auto dist1 = 0LL, dist2 = 0LL;
     if (d1)
         for (int row = g1.first; row != g2.first; row += d1)
-            dist += (empty_rows.find(row) == empty_rows.end()) ? 1 : expansion;
+            if (rows_with_galaxies.find(row) != rows_with_galaxies.end())
+                dist1++, dist2++;
+            else
+                dist1 += 2, dist2 += 1000000;
 
     if (d2)
         for (int col = g1.second; col != g2.second; col += d2)
-            dist += (empty_cols.find(col) == empty_cols.end()) ? 1 : expansion;
+            if (cols_with_galaxies.find(col) != cols_with_galaxies.end())
+                dist1++, dist2++;
+            else
+                dist1 += 2, dist2 += 1000000;
 
-    return dist;
+    return std::make_pair(dist1, dist2);
 }
 
 auto solve(int expansion)
 {
-    for (auto row = 0; row < grid.size(); row++)
-    {
-        auto only_periods = true;
-        for (auto col = 0; col < grid[row].size(); col++)
-        {
-            if (grid[row][col] != '.')
-            {
-                only_periods = false;
-                break;
-            }
-        }
-
-        if (only_periods)
-            empty_rows.insert(row);
-    }
-
-    for (auto col = 0; col < grid[0].size(); col++)
-    {
-        auto only_periods = true;
-        for (auto row = 0; row < grid.size(); row++)
-        {
-            if (grid[row][col] != '.')
-            {
-                only_periods = false;
-                break;
-            }
-        }
-
-        if (only_periods)
-            empty_cols.insert(col);
-    }
-
-    std::vector<std::pair<int, int>> galaxies;
-    for (auto i = 0; i < grid.size(); i++)
-        for (auto j = 0; j < grid[i].size(); j++)
-            if (grid[i][j] == '#')
-                galaxies.push_back(std::make_pair(i, j));
+    auto retval = std::make_pair(0LL, 0LL);
 
     auto total = 0LL;
     for (auto i = 0; i < galaxies.size(); i++)
         for (auto j = i + 1; j < galaxies.size(); j++)
-            total += get_dist(galaxies[i], galaxies[j], expansion);
+        {
+            auto dists = get_dists(galaxies[i], galaxies[j]);
+            retval.first += dists.first;
+            retval.second += dists.second;
+        }
 
-    return total;
+    return retval;
 }
 
 int main()
 {
     read_grid("input.txt");
 
-    auto part1 = solve(2);
-    std::cout << "Part One: " << part1 << std::endl;
+    auto answer = solve(2);
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part2 = solve(1000000);
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    assert(part1 == 9536038);
-    assert(part2 == 447744640566);
+    assert(answer.first == 9536038);
+    assert(answer.second == 447744640566);
     return 0;
 }
