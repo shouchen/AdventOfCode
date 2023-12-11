@@ -5,7 +5,6 @@
 #include <set>
 #include <cassert>
 
-std::vector<std::string> grid;
 std::set<std::pair<int, int>> loop;
 std::vector<std::vector<int>> exits;
 auto s_row = 0, s_col = 0;
@@ -15,7 +14,7 @@ enum Dir
     North = 0x1, South = 0x2, East = 0x4, West = 0x8
 };
 
-int pipe_to_dirn(char p)
+auto pipe_to_dirn(char p)
 {
     switch (p)
     {
@@ -37,7 +36,6 @@ void read_grid(const std::string &filename)
     while (std::getline(file, line))
     {
         exits.push_back(std::vector<int>());
-        grid.push_back(line);
 
         for (auto c : line)
         {
@@ -48,70 +46,36 @@ void read_grid(const std::string &filename)
     }
 }
 
-void infer_s_pipe(int &row, int &col)
+void infer_s_pipe()
 {
-    int s_dirns = 0;
+    auto s_dirns = 0;
     
-    auto i = s_row, j = s_col;
-
-    if (i > 0)
-    {
-        char above = grid[i - 1][j];
-        if (pipe_to_dirn(above) & South) s_dirns |= North;
-    }
-    if (i < grid.size() - 1)
-    {
-        char below = grid[i + 1][j];
-        if (pipe_to_dirn(below) & North) s_dirns |= South;
-    }
-    if (j > 0)
-    {
-        char left = grid[i][j - 1];
-        if (pipe_to_dirn(left) & East) s_dirns |= West;
-    }
-    if (j < grid[i].size() - 1)
-    {
-        char right = grid[i][j + 1];
-        if (pipe_to_dirn(right) & West) s_dirns |= East;
-    }
+    if (s_row > 0 && exits[s_row - 1][s_col] & South)
+        s_dirns |= North;
+    if (s_row < exits.size() - 1 && exits[s_row + 1][s_col] & North)
+        s_dirns |= South;
+    if (s_col > 0 && exits[s_row][s_col - 1] & East)
+        s_dirns |= West;
+    if (s_col < exits[s_row].size() - 1 && exits[s_row][s_col + 1] & West)
+        s_dirns |= East;
 
     if (s_dirns == (North | South))
-    {
-        grid[i][j] = '|';
-        exits[i][j] = pipe_to_dirn(grid[i][j]);
-    }
+        exits[s_row][s_col] = North | South;
     else if (s_dirns == (East | West))
-    {
-        grid[i][j] = '-';
-        exits[i][j] = pipe_to_dirn(grid[i][j]);
-    }
+        exits[s_row][s_col] = East | West;
     else if (s_dirns == (North | East))
-    {
-        grid[i][j] = 'L';
-        exits[i][j] = pipe_to_dirn(grid[i][j]);
-    }
+        exits[s_row][s_col] = North | East;
     else if (s_dirns == (North | West))
-    {
-        grid[i][j] = 'J';
-        exits[i][j] = pipe_to_dirn(grid[i][j]);
-    }
+        exits[s_row][s_col] = North | West;
     else if (s_dirns == (South | West))
-    {
-        grid[i][j] = '7';
-        exits[i][j] = pipe_to_dirn(grid[i][j]);
-    }
+        exits[s_row][s_col] = South | West;
     else if (s_dirns == (South | East))
-    {
-        grid[i][j] = 'F';
-        exits[i][j] = pipe_to_dirn(grid[i][j]);
-    }
-    row = i, col = j;
+        exits[s_row][s_col] = South | East;
 }
 
 void find_loop()
 {
-    auto row = 0, col = 0;
-    infer_s_pipe(row, col);
+    auto row = s_row, col = s_col;
 
     for (;;)
     {
@@ -154,10 +118,10 @@ auto solve()
     return std::make_pair(loop.size() / 2, count_inside);
 }
 
-// TODO: Stop using grid at all. But need to fix the S input part.
 int main()
 {
     read_grid("input.txt");
+    infer_s_pipe();
     find_loop();
 
     auto answer = solve();
