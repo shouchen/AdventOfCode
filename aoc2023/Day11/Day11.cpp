@@ -2,33 +2,29 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <set>
 #include <cassert>
 
 std::vector<std::pair<int, int>> galaxies;
-std::set<int> rows_with_galaxies, cols_with_galaxies;
+std::vector<bool> row_has_galaxies, col_has_galaxies;
 
 void read_grid(const std::string &filename)
 {
-    std::vector<std::string> grid;
     std::ifstream file(filename);
     std::string line;
-
-    auto row = 0;
-
-    while (std::getline(file, line))
+    
+    for (auto row = 0; std::getline(file, line); row++)
     {
-        grid.push_back(line);
+        row_has_galaxies.push_back(false);
+        while (col_has_galaxies.size() < line.length())
+            col_has_galaxies.push_back(false);
 
         for (auto col = 0; col < line.length(); col++)
             if (line[col] == '#')
             {
                 galaxies.push_back(std::make_pair(row, col));
-                rows_with_galaxies.insert(row);
-                cols_with_galaxies.insert(col);
+                row_has_galaxies[row] = true;
+                col_has_galaxies[col] = true;
             }
-
-        row++;
     }
 }
 
@@ -41,14 +37,14 @@ auto get_dists(std::pair<int, int> &g1, std::pair<int, int> &g2)
     auto dist1 = 0LL, dist2 = 0LL;
     if (d1)
         for (int row = g1.first; row != g2.first; row += d1)
-            if (rows_with_galaxies.find(row) != rows_with_galaxies.end())
+            if (row_has_galaxies[row])
                 dist1++, dist2++;
             else
                 dist1 += 2, dist2 += 1000000;
 
     if (d2)
         for (int col = g1.second; col != g2.second; col += d2)
-            if (cols_with_galaxies.find(col) != cols_with_galaxies.end())
+            if (col_has_galaxies[col])
                 dist1++, dist2++;
             else
                 dist1 += 2, dist2 += 1000000;
