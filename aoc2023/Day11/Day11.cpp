@@ -58,7 +58,6 @@ auto solve(const std::string &filename)
 
     auto part1 = 0LL, part2 = 0LL;
 
-    auto total = 0LL;
     for (auto g1 = galaxies.begin(); g1 != galaxies.end(); g1++)
         for (auto g2 = g1 + 1; g2 != galaxies.end(); g2++)
         {
