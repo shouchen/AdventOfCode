@@ -16,11 +16,9 @@ long long recur(int s_index, int v_index, int curr_run_len, std::string &s, std:
 
     retval = 0;
 
-    // Place a '.' (reset curr_run_len)
     if ((s[s_index] == '.' || s[s_index] == '?') && curr_run_len == 0)
         retval += recur(s_index + 1, v_index, 0, s, v, memo);
 
-    // Place a '#' (increment cur / increment v_index and reset cur)
     if ((s[s_index] == '#' || s[s_index] == '?') && v_index < v.size())
     {
         if (curr_run_len + 1 < v[v_index])
@@ -34,7 +32,6 @@ long long recur(int s_index, int v_index, int curr_run_len, std::string &s, std:
 
 auto solve(std::string s, std::vector<int> v)
 {
-    // memo space is small! [size of input str][# blocks + 1][max run len + 1]
     auto max_run_len = *max_element(v.begin(), v.end());
     Memo memo(
         s.size(),
@@ -45,7 +42,7 @@ auto solve(std::string s, std::vector<int> v)
     return recur(0, 0, 0, s, v, memo);
 }
 
-auto do_part2(const std::string &filename, bool part2)
+auto do_part(const std::string &filename, bool part2)
 {
     std::ifstream file(filename);
     auto total = 0LL;
@@ -86,10 +83,10 @@ auto do_part2(const std::string &filename, bool part2)
 
 int main()
 {
-    auto part1 = do_part2("input.txt", false);
+    auto part1 = do_part("input.txt", false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part2("input.txt", true);
+    auto part2 = do_part("input.txt", true);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 7032);
