@@ -17,45 +17,23 @@ void read_grid(const std::string &filename)
         grid.push_back(line);
 }
 
-auto find_vref(int skip)
+auto find_reflection(std::vector<int> &rc, int skip)
 {
-    for (auto c = 0; c < grid[0].size() - 1; c++)
+    for (auto i = 0; i < rc.size() - 1; i++)
     {
-        if (c == skip)
+        if (i == skip)
             continue;
 
         auto reflect = true;
-        for (auto a = c, b = c + 1; a >= 0 && b < grid[0].size(); a--, b++)
-            if (col[a] != col[b])
+        for (auto a = i, b = i + 1; a >= 0 && b < rc.size(); a--, b++)
+            if (rc[a] != rc[b])
             {
                 reflect = false;
                 break;
             }
 
         if (reflect)
-            return c;
-    }
-
-    return -1;
-}
-
-auto find_href(int skip)
-{
-    for (auto r = 0; r < grid.size() - 1; r++)
-    {
-        if (r == skip)
-            continue;
-
-        auto reflect = true;
-        for (auto a = r, b = r + 1; a >= 0 && b < grid.size(); a--, b++)
-            if (row[a] != row[b])
-            {
-                reflect = false;
-                break;
-            }
-
-        if (reflect)
-            return r;
+            return i;
     }
 
     return -1;
@@ -79,8 +57,8 @@ auto do_common_part(int vref, int href)
             if (grid[c][r] == '#')
                 row[c] |= (1 << r);
 
-    auto vref2 = find_vref(vref - 1) + 1; // one based
-    auto href2 = find_href(href - 1) + 1; // one based
+    auto vref2 = find_reflection(col, vref - 1) + 1; // one based
+    auto href2 = find_reflection(row, href - 1) + 1; // one based
 
     return std::make_pair(vref2, href2);
 }
@@ -100,8 +78,8 @@ auto do_smudge(int vref, int href)
             flip_cell(srow, scol);
 
             auto temp = do_common_part(vref, href);
-            auto vref2 = find_vref(vref - 1) + 1; // one based
-            auto href2 = find_href(href - 1) + 1; // one based
+            auto vref2 = find_reflection(col, vref - 1) + 1; // one based
+            auto href2 = find_reflection(row, href - 1) + 1; // one based
 
             if (vref2 > 0) return vref2;
             if (href2 > 0) return 100 * href2;
@@ -130,9 +108,7 @@ auto solve(const std::string &filename)
         auto href = temp.second;
 
         retval.first += vref + 100 * href;
-        
-        auto smudge = do_smudge(vref, href);
-        retval.second += smudge;
+        retval.second += do_smudge(vref, href);
     }
 
     return retval;
