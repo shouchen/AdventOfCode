@@ -1,22 +1,12 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
-#include <array>
 #include <vector>
-#include <stack>
-#include <queue>
-#include <map>
-#include <set>
-#include <ctype.h>
-#include <algorithm>
-#include <numeric>
-#include <regex>
 #include <cassert>
 
-using namespace std;
-
 std::vector<std::string> grid;
+std::vector<int> row, col;
+
 void read_grid(const std::string &filename)
 {
     std::ifstream file(filename);
@@ -27,17 +17,15 @@ void read_grid(const std::string &filename)
         grid.push_back(line);
 }
 
-vector<int> row, col;
-
-int find_vref(int skip)
+auto find_vref(int skip)
 {
-    for (int i = 0; i < grid[0].size() - 1; i++)
+    for (auto c = 0; c < grid[0].size() - 1; c++)
     {
-        if (i == skip)
+        if (c == skip)
             continue;
 
-        bool reflect = true;
-        for (int a = i, b = i + 1; a >= 0 && b < grid[0].size(); a--, b++)
+        auto reflect = true;
+        for (auto a = c, b = c + 1; a >= 0 && b < grid[0].size(); a--, b++)
             if (col[a] != col[b])
             {
                 reflect = false;
@@ -45,21 +33,21 @@ int find_vref(int skip)
             }
 
         if (reflect)
-            return i;
+            return c;
     }
 
     return -1;
 }
 
-int find_href(int skip)
+auto find_href(int skip)
 {
-    for (int i = 0; i < grid.size() - 1; i++)
+    for (auto r = 0; r < grid.size() - 1; r++)
     {
-        if (i == skip)
+        if (r == skip)
             continue;
 
-        bool reflect = true;
-        for (int a = i, b = i + 1; a >= 0 && b < grid.size(); a--, b++)
+        auto reflect = true;
+        for (auto a = r, b = r + 1; a >= 0 && b < grid.size(); a--, b++)
             if (row[a] != row[b])
             {
                 reflect = false;
@@ -67,213 +55,96 @@ int find_href(int skip)
             }
 
         if (reflect)
-            return i;
+            return r;
     }
 
     return -1;
 }
 
-auto do_part1(const std::string &filename)
+// returns vref, href (vref and href are from part 1, else -1)
+auto do_common_part(int vref, int href)
 {
-    std::ifstream file(filename);
-    std::string line;
+    row.clear();
+    col.clear();
+    while (row.size() < grid.size()) row.push_back(0);
+    while (col.size() < grid[0].size()) col.push_back(0);
 
-    long long retval = -1;
+    for (auto c = 0; c < grid[0].size(); c++)
+        for (auto r = 0; r < grid.size(); r++)
+            if (grid[r][c] == '#')
+                col[c] |= (1 << r);
 
-    while (!file.eof())
-    {
-        grid.clear();
-        row.clear();
-        col.clear();
-        while (std::getline(file, line) && !line.empty())
-            grid.push_back(line);
+    for (auto c = 0; c < grid.size(); c++)
+        for (auto r = 0; r < grid[c].size(); r++)
+            if (grid[c][r] == '#')
+                row[c] |= (1 << r);
 
-        while (row.size() < grid.size())
-            row.push_back(0);
-        while (col.size() < grid[0].size())
-            col.push_back(0);
+    auto vref2 = find_vref(vref - 1) + 1; // one based
+    auto href2 = find_href(href - 1) + 1; // one based
 
-        // cols
-        for (int i = 0; i < grid[0].size(); i++)
-        {
-            for (int j = 0; j < grid.size(); j++)
-            {
-                if (grid[j][i] == '#')
-                    col[i] |= (1 << j);
-            }
-        }
-
-        // rows
-        for (int i = 0; i < grid.size(); i++)
-        {
-            for (int j = 0; j < grid[i].size(); j++)
-            {
-                if (grid[i][j] == '#')
-                    row[i] |= (1 << j);
-            }
-        }
-
-        // vertical ref
-        auto vref = find_vref(0) + 1; // one based
-        auto href = find_href(0) + 1; // one based
-        auto x = vref + 100 * href;
-        cout << x << endl;
-
-        retval += x;
-        cout << " Total=" << retval << endl;
-    }
-
-    return retval;
+    return std::make_pair(vref2, href2);
 }
 
-int do_smudge(int vref, int href)
+void flip_cell(int row, int col)
+{
+    auto &cell = grid[row][col];
+    cell = (cell == '.') ? '#' : '.';
+}
+
+auto do_smudge(int vref, int href)
 {
     for (auto srow = 0; srow < grid.size(); srow++)
     {
         for (auto scol = 0; scol < grid[srow].size(); scol++)
         {
-            if (grid[srow][scol] == '.')
-                grid[srow][scol] = '#';
-            else if (grid[srow][scol] == '#')
-                grid[srow][scol] = '.';
-            else
-                assert(false);
+            flip_cell(srow, scol);
 
-            row.clear();
-            col.clear();
-            while (row.size() < grid.size())
-                row.push_back(0);
-            while (col.size() < grid[0].size())
-                col.push_back(0);
-
-            // cols
-            for (int i = 0; i < grid[0].size(); i++)
-            {
-                for (int j = 0; j < grid.size(); j++)
-                {
-                    if (grid[j][i] == '#')
-                        col[i] |= (1 << j);
-                }
-            }
-
-            // rows
-            for (int i = 0; i < grid.size(); i++)
-            {
-                for (int j = 0; j < grid[i].size(); j++)
-                {
-                    if (grid[i][j] == '#')
-                        row[i] |= (1 << j);
-                }
-            }
-
-            if (srow == 6 && scol == grid[6].size() - 1)
-                cout << endl;
-
-            // vertical ref
+            auto temp = do_common_part(vref, href);
             auto vref2 = find_vref(vref - 1) + 1; // one based
             auto href2 = find_href(href - 1) + 1; // one based
 
-            if (vref2 > 0)
-            {
-                cout << "vref2 " << vref2 << endl;
-                return vref2;
-            }
-            else if (href2 > 0)
-            {
-                cout << "href2 " << href2 << endl;
-                return 100 * href2;
-            }
+            if (vref2 > 0) return vref2;
+            if (href2 > 0) return 100 * href2;
 
-            if (grid[srow][scol] == '.')
-                grid[srow][scol] = '#';
-            else if (grid[srow][scol] == '#')
-                grid[srow][scol] = '.';
-            else
-                assert(false);
+            flip_cell(srow, scol);
         }
     }
 
-    assert(false);
     return 0; 
 }
 
-auto do_part2(const std::string &filename)
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
-
-    long long retval = 0;
+    auto retval = std::make_pair(0, 0);
 
     while (!file.eof())
     {
-        cout << "---" << endl;
         grid.clear();
         while (std::getline(file, line) && !line.empty())
             grid.push_back(line);
 
-        row.clear();
-        col.clear();
-        while (row.size() < grid.size())
-            row.push_back(0);
-        while (col.size() < grid[0].size())
-            col.push_back(0);
+        auto temp = do_common_part(0, 0);
+        auto vref = temp.first;
+        auto href = temp.second;
 
-        // cols
-        for (int i = 0; i < grid[0].size(); i++)
-        {
-            for (int j = 0; j < grid.size(); j++)
-            {
-                if (grid[j][i] == '#')
-                    col[i] |= (1 << j);
-            }
-        }
-
-        // rows
-        for (int i = 0; i < grid.size(); i++)
-        {
-            for (int j = 0; j < grid[i].size(); j++)
-            {
-                if (grid[i][j] == '#')
-                    row[i] |= (1 << j);
-            }
-        }
-
-        // vertical ref
-        auto vref = find_vref(-1) + 1; // one based
-        auto href = find_href(-1) + 1; // one based
+        retval.first += vref + 100 * href;
         
-        // part2
         auto smudge = do_smudge(vref, href);
-        retval += smudge;
+        retval.second += smudge;
     }
 
     return retval;
 }
 
-#define INPUT_FILE "test.txt"
-#define INPUT_FILE "input.txt"
-
 int main()
 {
-    //auto part1 = do_part1(INPUT_FILE);
-    //std::cout << "Part One: " << part1 << std::endl;
+    auto answer = solve("input.txt");;
+    std::cout << "Part One: " << answer.first<< std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part2 = do_part2(INPUT_FILE);;
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    //assert(part1 == 33975);
-    //assert(part2 == 29083);
+    assert(answer.first == 33975);
+    assert(answer.second == 29083);
     return 0;
 }
-
-/*
-
-1600
-12
-1000
-900
-4
-14
-
- 
-*/
