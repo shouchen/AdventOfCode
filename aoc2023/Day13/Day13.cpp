@@ -88,7 +88,7 @@ auto do_smudge(int vref, int href)
         }
     }
 
-    return 0; 
+    return 0;
 }
 
 auto solve(const std::string &filename)
