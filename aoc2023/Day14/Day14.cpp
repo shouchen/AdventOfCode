@@ -20,24 +20,24 @@ void tilt_v(char c1, char c2)
 {
     for (auto col = 0; col < grid[0].size(); col++)
         for (auto row = 0, save = -1; row < grid.size(); row++)
-            if (grid[row][col] == c1 && save == -1)
+            if (grid[row][col] == '#')
+                save = -1;
+            else if (grid[row][col] == c1 && save == -1)
                 save = row;
             else if (grid[row][col] == c2 && save > -1)
                 std::swap(grid[save++][col], grid[row][col]);
-            else if (grid[row][col] == '#')
-                save = -1;
 }
 
 void tilt_h(char c1, char c2)
 {
     for (auto row = 0; row < grid.size(); row++)
         for (auto col = 0, save = -1; col < grid[row].size(); col++)
-            if (grid[row][col] == c1 && save == -1)
+            if (grid[row][col] == '#')
+                save = -1; 
+            else if (grid[row][col] == c1 && save == -1)
                 save = col;
             else if (grid[row][col] == c2 && save > -1)
                 std::swap(grid[row][save++], grid[row][col]);
-            else if (grid[row][col] == '#')
-                save = -1;
 }
 
 void tilt_N() { tilt_v('.', 'O'); }
@@ -85,15 +85,10 @@ auto do_part2()
     }
 
     auto index = (1000000000 - period_start) % period_len + period_start;
+    auto found = std::find_if(seen.begin(), seen.end(), [&index](auto &x) { return x.second == index; });
 
-    for (auto &i : seen)
-        if (i.second == index)
-        {
-            grid = i.first;
-            break;
-        }
-
-    return compute_load();;
+    grid = found->first;
+    return compute_load();
 }
 
 int main()
