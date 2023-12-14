@@ -16,95 +16,36 @@ void read_grid(const std::string &filename)
         grid.push_back(line);
 }
 
-void tilt_N()
+void tilt_v(char c1, char c2)
 {
     for (auto col = 0; col < grid[0].size(); col++)
-    {
-        for (;;)
-        {
-            auto moved = false;
-            for (int row = 0; row < grid.size() - 1; row++)
-            {
-                if (grid[row][col] == '.' && grid[row + 1][col] == 'O')
-                {
-                    grid[row][col] = 'O', grid[row + 1][col] = '.';
-                    moved = true;
-                }
-            }
-
-            if (!moved)
-                break;
-        }
-    }
+        for (auto row = 0, save = -1; row < grid.size(); row++)
+            if (grid[row][col] == c1 && save == -1)
+                save = row;
+            else if (grid[row][col] == c2 && save > -1)
+                std::swap(grid[save++][col], grid[row][col]);
+            else if (grid[row][col] == '#')
+                save = -1;
 }
 
-void tilt_W()
+void tilt_h(char c1, char c2)
 {
     for (auto row = 0; row < grid.size(); row++)
-    {
-        for (;;)
-        {
-            auto moved = false;
-            for (auto col = 0; col < grid[0].size() - 1; col++)
-            {
-                if (grid[row][col] == '.' && grid[row][col + 1] == 'O')
-                {
-                    grid[row][col] = 'O', grid[row][col + 1] = '.';
-                    moved = true;
-                }
-            }
-
-            if (!moved)
-                break;
-        }
-    }
+        for (auto col = 0, save = -1; col < grid[row].size(); col++)
+            if (grid[row][col] == c1 && save == -1)
+                save = col;
+            else if (grid[row][col] == c2 && save > -1)
+                std::swap(grid[row][save++], grid[row][col]);
+            else if (grid[row][col] == '#')
+                save = -1;
 }
 
-void tilt_S()
-{
-    for (auto col = 0; col < grid[0].size(); col++)
-    {
-        for (;;)
-        {
-            auto moved = false;
-            for (auto row = 0; row < grid.size() - 1; row++)
-            {
-                if (grid[row][col] == 'O' && grid[row + 1][col] == '.')
-                {
-                    grid[row][col] = '.', grid[row + 1][col] = 'O';
-                    moved = true;
-                }
-            }
+void tilt_N() { tilt_v('.', 'O'); }
+void tilt_W() { tilt_h('.', 'O'); }
+void tilt_S() { tilt_v('O', '.'); }
+void tilt_E() { tilt_h('O', '.'); }
 
-            if (!moved)
-                break;
-        }
-    }
-}
-
-void tilt_E()
-{
-    for (auto row = 0; row < grid.size(); row++)
-    {
-        for (;;)
-        {
-            auto moved = false;
-            for (auto col = 0; col < grid[0].size() - 1; col++)
-            {
-                if (grid[row][col] == 'O' && grid[row][col + 1] == '.')
-                {
-                    grid[row][col] = '.', grid[row][col + 1] = 'O';
-                    moved = true;
-                }
-            }
-
-            if (!moved)
-                break;
-        }
-    }
-}
-
-auto get_load()
+auto compute_load()
 {
     auto total = 0LL;
 
@@ -119,20 +60,17 @@ auto get_load()
 auto do_part1()
 {
     tilt_N();
-    return get_load();
+    return compute_load();
 }
-
-std::map<std::vector<std::string>, int> seen;
-int period_start = -1, period_len = -1;
 
 auto do_part2()
 {
+    std::map<std::vector<std::string>, int> seen;
+    auto period_start = -1, period_len = -1;
+
     for (auto cycle = 1; ; cycle++)
     {
-        tilt_N();
-        tilt_W();
-        tilt_S();
-        tilt_E();
+        tilt_N(); tilt_W(); tilt_S(); tilt_E();
 
         if (seen.find(grid) == seen.end())
         {
@@ -155,7 +93,7 @@ auto do_part2()
             break;
         }
 
-    return get_load();;
+    return compute_load();;
 }
 
 int main()
