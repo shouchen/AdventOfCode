@@ -5,7 +5,8 @@
 #include <map>
 #include <cassert>
 
-std::vector<std::string> grid;
+using Grid = std::vector<std::string>;
+Grid grid;
 
 void read_grid(const std::string &filename)
 {
@@ -45,7 +46,7 @@ void tilt_W() { tilt_h('.', 'O'); }
 void tilt_S() { tilt_v('O', '.'); }
 void tilt_E() { tilt_h('O', '.'); }
 
-auto compute_load()
+auto compute_load(const Grid &grid)
 {
     auto total = 0LL;
 
@@ -60,35 +61,30 @@ auto compute_load()
 auto do_part1()
 {
     tilt_N();
-    return compute_load();
+    return compute_load(grid);
 }
 
 auto do_part2()
 {
-    std::map<std::vector<std::string>, int> seen;
-    auto period_start = -1, period_len = -1;
+    std::map<Grid, int> seen;
 
     for (auto cycle = 1; ; cycle++)
     {
         tilt_N(); tilt_W(); tilt_S(); tilt_E();
 
-        if (seen.find(grid) == seen.end())
+        if (seen.find(grid) != seen.end())
         {
-            seen[grid] = cycle;
+            auto period_start = seen[grid];
+            auto period_len = cycle - period_start;
+            auto index = (1'000'000'000 - period_start) % period_len + period_start;
+            auto found = std::find_if(seen.begin(), seen.end(),
+                [&index](auto &x) { return x.second == index; });
+
+            return compute_load(found->first);
         }
-        else
-        {
-            period_start = seen[grid];
-            period_len = cycle - seen[grid];
-            break;
-        }
+
+        seen[grid] = cycle;
     }
-
-    auto index = (1000000000 - period_start) % period_len + period_start;
-    auto found = std::find_if(seen.begin(), seen.end(), [&index](auto &x) { return x.second == index; });
-
-    grid = found->first;
-    return compute_load();
 }
 
 int main()
