@@ -1,56 +1,21 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
-#include <array>
 #include <vector>
-#include <stack>
-#include <queue>
-#include <map>
-#include <set>
-#include <ctype.h>
-#include <algorithm>
-#include <numeric>
-#include <regex>
 #include <cassert>
-
-using namespace std;
 
 struct Lens
 {
-    string label = "";
-    char focus = '0';
+    std::string label = "";
+    int focus = 0;
 };
 
-vector<vector<Lens>> boxes;
-
-void dump()
+auto ahash(const std::string &s)
 {
-    for (int i = 0; i < boxes.size(); i++)
-    {
-        if (boxes[i].size() == 0)
-            continue;
+    auto curr = 0;
 
-        cout << "Box " << i << ": ";
-
-        for (int j = 0; j < boxes[i].size(); j++)
-            cout << " [" << boxes[i][j].label << " " << boxes[i][j].focus << "]";
-        cout << endl;
-    }
-    cout << endl;
-}
-
-int ahash(const std::string &s)
-{
-    int curr = 0;
-
-    for (int i = 0; i < s.length(); i++)
-    {
-        char c = s[i];
-        curr += c;
-        curr *= 17;
-        curr = curr % 256;
-    }
+    for (auto c : s)
+        curr = (curr + c) * 17 % 256;
 
     return curr;
 }
@@ -58,9 +23,9 @@ int ahash(const std::string &s)
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
+    std::string s;
     auto c = ' ';
-    int total = 0;
-    string s;
+    auto total = 0;
 
     while (file >> c)
     {
@@ -80,79 +45,42 @@ auto do_part1(const std::string &filename)
 
 auto do_part2(const std::string &filename)
 {
-    boxes.clear();
-    for (int i = 0; i < 256; i++)
-        boxes.push_back(vector<Lens>());
-
+    std::vector<std::vector<Lens>> boxes(256);
     std::ifstream file(filename);
-    char c = ' ', dash_equal = '-', digit = ' ', comma = ',';
+    auto c = ' ', digit = ' ', comma = ',';
 
     while (file >> c)
     {
-        string label(1, c);
-        for (;;)
-        {
-            file >> c;
-            if (c == '-' || c == '=')
-            {
-                dash_equal = c;
-                break;
-            }
+        std::string label(1, c);
+        while (file >> c && (c != '-' && c != '='))
             label.push_back(c);
-        }
 
         auto &box = boxes[ahash(label)];
+        auto found = std::find_if(box.begin(), box.end(),
+            [&label](auto &x) { return x.label == label; });
 
-        if (dash_equal == '-')
+        if (c == '-')
         {
-            int j = 0;
-            for (; j < box.size(); j++)
-                if (box[j].label == label)
-                    break;
-
-            if (j < box.size())
-            {
-                for (; j < box.size() - 1; j++)
-                    box[j] = box[j + 1];
-
-                box.pop_back();
-            }
+            if (found != box.end())
+                box.erase(found);
         }
-        else if (dash_equal == '=')
+        else if (c == '=')
         {
             file >> digit;
 
-            int j = 0;
-            for (j = 0; j < box.size(); j++)
-            {
-                if (box[j].label == label)
-                    break;
-            }
-
-            if (j < box.size())
-                box[j].focus = digit;
+            if (found != box.end())
+                found->focus = digit - '0';
             else
-                box.push_back(Lens{ label, digit });
+                box.push_back(Lens{ label, digit - '0'});
         }
-        else
-            assert(false);
 
-        //cout << "After \"" << label << dash_equal << digit << "\"" << endl;
-        //dump();
-
-        file >> dash_equal; //comma
+        file >> comma;
     }
 
-    //dump();
-
-    long long total = 0;
-    for (int i = 0; i < boxes.size(); i++)
-    {
-        for (int j = 0; j < boxes[i].size(); j++)
-        {
-            total += (i + 1) * (j + 1) * (boxes[i][j].focus - '0');
-        }
-    }
+    auto total = 0;
+    for (auto i = 0; i < boxes.size(); i++)
+        for (auto j = 0; j < boxes[i].size(); j++)
+            total += (i + 1) * (j + 1) * (boxes[i][j].focus);
 
     return total;
 }
