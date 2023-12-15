@@ -17,26 +17,17 @@ auto hash(const std::string &s)
         [](int a, char b) { return (a + b) * 17 % 256; });
 }
 
-auto do_part1(const std::string &filename)
-{
-    std::ifstream file(filename);
-    auto total = 0;
-
-    std::string s;
-    while (std::getline(file, s, ','))
-        total += hash(s);
-
-    return total;
-}
-
-auto do_part2(const std::string &filename)
+auto solve(const std::string &filename)
 {
     std::vector<std::vector<Lens>> boxes(256);
     std::ifstream file(filename);
     std::string s;
+    auto retval = std::make_pair(0, 0);
 
     while (std::getline(file, s, ','))
     {
+        retval.first += hash(s);
+
         auto focus = 0;
 
         if (isdigit(s.back()))
@@ -53,32 +44,29 @@ auto do_part2(const std::string &filename)
             [&label](auto &x) { return x.label == label; });
 
         if (focus)
-            if (lens != box.end())
-                lens->focus = focus;
-            else
+            if (lens == box.end())
                 box.push_back(Lens{ label, focus });
+            else
+                lens->focus = focus;
         else
             if (lens != box.end())
                 box.erase(lens);
     }
 
-    auto total = 0;
-    for (auto i = 0; i < boxes.size(); i++)
-        for (auto j = 0; j < boxes[i].size(); j++)
-            total += (i + 1) * (j + 1) * (boxes[i][j].focus);
+    for (auto box = 0; box < boxes.size(); box++)
+        for (auto lens = 0; lens < boxes[box].size(); lens++)
+            retval.second += (box + 1) * (lens + 1) * boxes[box][lens].focus;
 
-    return total;
+    return retval;
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl;
-
-    assert(part1 == 511498);
-    assert(part2 == 284674);
+    assert(answer.first == 511498);
+    assert(answer.second == 284674);
     return 0;
 }
