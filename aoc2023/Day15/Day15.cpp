@@ -23,23 +23,18 @@ auto ahash(const std::string &s)
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
-    std::string s;
     auto c = ' ';
     auto total = 0;
 
     while (file >> c)
     {
-        if (c == ',')
-        {
-            total += ahash(s);
-            s.clear();
-            continue;
-        }
+        std::string s(1, c);
+        while (file >> c && (c != ','))
+            s.push_back(c);
 
-        s.push_back(c);
+        total += ahash(s);
     }
 
-    total += ahash(s);
     return total;
 }
 
@@ -64,7 +59,7 @@ auto do_part2(const std::string &filename)
             if (found != box.end())
                 box.erase(found);
         }
-        else if (c == '=')
+        else
         {
             file >> digit;
 
