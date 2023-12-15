@@ -51,20 +51,20 @@ auto do_part2(const std::string &filename)
             label.push_back(c);
 
         auto &box = boxes[ahash(label)];
-        auto found = std::find_if(box.begin(), box.end(),
+        auto lens = std::find_if(box.begin(), box.end(),
             [&label](auto &x) { return x.label == label; });
 
         if (c == '-')
         {
-            if (found != box.end())
-                box.erase(found);
+            if (lens != box.end())
+                box.erase(lens);
         }
         else
         {
             file >> digit;
 
-            if (found != box.end())
-                found->focus = digit - '0';
+            if (lens != box.end())
+                lens->focus = digit - '0';
             else
                 box.push_back(Lens{ label, digit - '0'});
         }
