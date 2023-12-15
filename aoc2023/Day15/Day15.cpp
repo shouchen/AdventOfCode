@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <numeric>
 #include <cassert>
 
 struct Lens
@@ -10,30 +11,20 @@ struct Lens
     int focus = 0;
 };
 
-auto ahash(const std::string &s)
+auto hash(const std::string &s)
 {
-    auto curr = 0;
-
-    for (auto c : s)
-        curr = (curr + c) * 17 % 256;
-
-    return curr;
+    return std::accumulate(s.begin(), s.end(), 0,
+        [](int a, char b) { return (a + b) * 17 % 256; });
 }
 
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
-    auto c = ' ';
     auto total = 0;
 
-    while (file >> c)
-    {
-        std::string s(1, c);
-        while (file >> c && (c != ','))
-            s.push_back(c);
-
-        total += ahash(s);
-    }
+    std::string s;
+    while (std::getline(file, s, ','))
+        total += hash(s);
 
     return total;
 }
@@ -42,34 +33,33 @@ auto do_part2(const std::string &filename)
 {
     std::vector<std::vector<Lens>> boxes(256);
     std::ifstream file(filename);
-    auto c = ' ', digit = ' ', comma = ',';
+    std::string s;
 
-    while (file >> c)
+    while (std::getline(file, s, ','))
     {
-        std::string label(1, c);
-        while (file >> c && (c != '-' && c != '='))
-            label.push_back(c);
+        auto focus = 0;
 
-        auto &box = boxes[ahash(label)];
+        if (isdigit(s.back()))
+        {
+            focus = s.back() - '0';
+            s.pop_back();
+        }
+
+        s.pop_back();
+        std::string label = s;
+
+        auto &box = boxes[hash(label)];
         auto lens = std::find_if(box.begin(), box.end(),
             [&label](auto &x) { return x.label == label; });
 
-        if (c == '-')
-        {
+        if (focus)
+            if (lens != box.end())
+                lens->focus = focus;
+            else
+                box.push_back(Lens{ label, focus });
+        else
             if (lens != box.end())
                 box.erase(lens);
-        }
-        else
-        {
-            file >> digit;
-
-            if (lens != box.end())
-                lens->focus = digit - '0';
-            else
-                box.push_back(Lens{ label, digit - '0'});
-        }
-
-        file >> comma;
     }
 
     auto total = 0;
