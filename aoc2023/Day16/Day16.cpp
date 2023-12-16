@@ -48,8 +48,8 @@ void recur(int row, int col, int rdir, int cdir)
     case '-':
         if (cdir == 0)
         {
-            recur(row, col - 1, 0, -1);
-            recur(row, col + 1, 0, 1);
+            recur(row, col + rdir, 0, rdir);
+            recur(row, col - rdir, 0, -rdir);
             return;
         }
         break;
