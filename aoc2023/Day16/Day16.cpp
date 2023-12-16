@@ -17,7 +17,6 @@ void read_grid(const std::string &filename)
         grid.push_back(line);
 }
 
-// TODO: For efficiency, dirns could be a bitmap instead of a set
 std::map<std::pair<int,int>, std::set<std::pair<int,int>>> visited;
 
 void recur(int row, int col, int rdir, int cdir)
@@ -34,66 +33,38 @@ void recur(int row, int col, int rdir, int cdir)
 
     switch (grid[row][col])
     {
-    case '.':
-        recur(row + rdir, col + cdir, rdir, cdir);
-        break;
-
     case '/':
-        if (rdir == 0 && cdir == 1) // E
-            recur(row - 1, col, -1, 0);
-        else  if (rdir == 0 && cdir == -1) // W
-            recur(row + 1, col, 1, 0);
-        else if (rdir == -1 && cdir == 0) // N
-            recur(row, col + 1, 0, 1);
-        else  if (rdir == 1 && cdir == 0) // S
-            recur(row, col - 1, 0, -1);
+        return (rdir == 0)
+            ? recur(row - cdir, col, -cdir, 0)
+            : recur(row, col - rdir, 0, -rdir);
         break;
 
     case '\\':
-        if (rdir == 0 && cdir == 1) // E
-            recur(row + 1, col, 1, 0);
-        else  if (rdir == 0 && cdir == -1) // W
-            recur(row - 1, col, -1, 0);
-        else if (rdir == -1 && cdir == 0) // N
-            recur(row, col - 1, 0, -1);
-        else if (rdir == 1 && cdir == 0) // S
-            recur(row, col + 1, 0, 1);
+        return (rdir == 0)
+            ? recur(row + cdir, col, cdir, 0)
+            : recur(row, col + rdir, 0, rdir);
         break;
 
     case '-':
-        if (rdir == 0 && cdir == 1) // E
-            recur(row + rdir, col + cdir, rdir, cdir);
-        else  if (rdir == 0 && cdir == -1) // W
-            recur(row + rdir, col + cdir, rdir, cdir);
-        else if (rdir == -1 && cdir == 0) // N
+        if (cdir == 0)
         {
             recur(row, col - 1, 0, -1);
             recur(row, col + 1, 0, 1);
-        }
-        else  if (rdir == 1 && cdir == 0) // S
-        {
-            recur(row, col - 1, 0, -1);
-            recur(row, col + 1, 0, 1);
+            return;
         }
         break;
 
     case '|':
-        if (rdir == 0 && cdir == 1) // E
+        if (rdir == 0)
         {
             recur(row - 1, col, -1, 0);
             recur(row + 1, col, 1, 0);
+            return;
         }
-        else  if (rdir == 0 && cdir == -1) // W
-        {
-            recur(row - 1, col, -1, 0);
-            recur(row + 1, col, 1, 0);
-        }
-        else if (rdir == -1 && cdir == 0) // N
-            recur(row + rdir, col + cdir, rdir, cdir);
-        else  if (rdir == 1 && cdir == 0) // S
-            recur(row + rdir, col + cdir, rdir, cdir);
         break;
     }
+
+    recur(row + rdir, col + cdir, rdir, cdir);
 }
 
 auto count_energized(int row, int col, int rdir, int cdir)
