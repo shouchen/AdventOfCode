@@ -5,6 +5,9 @@
 
 using Polygon = std::vector<std::pair<long long, long long>>;
 
+std::string rdlu = "RDLU";
+std::vector<int> dir_x{ 1, 0 , -1, 0 }, dir_y{ 0, 1, 0,-1 };
+
 auto get_polygon_area(const Polygon &vertices) // shoelace formula
 {
     auto n = vertices.size();
@@ -25,28 +28,18 @@ auto do_part(const std::string &filename, bool part2)
     Polygon vertices;
     std::ifstream file(filename);
     auto dir = ' ';
-    auto len = 0, boundary_count = 0;
+    auto len = 0, boundary_count = 0, dir_index = 0;
     std::string color;
     auto x = 0LL, y = 0LL;
 
     while (file >> dir >> len >> color)
     {
         if (part2)
-        {
             len = strtol(color.substr(2, 5).c_str(), NULL, 16);
 
-            if (color[7] == '0') x += len;
-            else if (color[7] == '1') y += len;
-            else if (color[7] == '2') x -= len;
-            else if (color[7] == '3') y -= len;
-        }
-        else
-        {
-            if (dir == 'R') x += len;
-            else if (dir == 'D') y += len;
-            else if (dir == 'L') x -= len;
-            else if (dir == 'U') y -= len;
-        }
+        dir_index = part2 ? (color[7] - '0') : rdlu.find(dir);
+        x += len * dir_x[dir_index];
+        y += len * dir_y[dir_index];
 
         boundary_count += len;
         vertices.push_back({ x, y });
