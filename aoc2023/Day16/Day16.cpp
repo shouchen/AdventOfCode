@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <set>
 #include <cassert>
 
 std::vector<std::string> grid;
@@ -17,19 +16,22 @@ void read_grid(const std::string &filename)
         grid.push_back(line);
 }
 
-std::map<std::pair<int,int>, std::set<std::pair<int,int>>> visited;
+std::map<std::pair<int,int>, int> visited;
+
+inline auto bitwise_hash(int rdir, int cdir) { return 0x1 << (3 * rdir + cdir + 4); }
 
 void recur(int row, int col, int rdir, int cdir)
 {
     if (row < 0 || row >= grid.size() || col < 0 || col >= grid[row].size())
         return;
 
-    auto rc = std::make_pair(row, col), rcdir = std::make_pair(rdir, cdir);
-    auto vrc = visited.find(rc);
-    if (vrc != visited.end() && vrc->second.find(rcdir) != vrc->second.end())
+    auto rc = std::make_pair(row, col);
+    auto h = bitwise_hash(rdir, cdir);
+
+    if (visited[rc] & h)
         return;
 
-    visited[rc].insert(rcdir);
+    visited[rc] |= h;
 
     switch (grid[row][col])
     {
