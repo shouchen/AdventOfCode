@@ -1,107 +1,70 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <string>
-#include <array>
 #include <vector>
-#include <stack>
-#include <queue>
 #include <map>
-#include <set>
-#include <ctype.h>
-#include <algorithm>
-#include <numeric>
-#include <regex>
 #include <cassert>
 
-using namespace std;
+std::map<std::pair<long long, long long>, int> grid;
 
-std::map<std::pair<std::pair<int, int>, int>, int> grid;  // ((x,y),z) --> int
+auto min_x = LLONG_MAX, min_y = LLONG_MAX;
+auto max_x = LLONG_MIN, max_y = LLONG_MIN;
 
-int min_x = INT_MAX, min_y = INT_MAX, min_z = INT_MAX;
-int max_x = INT_MIN, max_y = INT_MIN, max_z = INT_MIN;
-
-void set_cell(int x, int y, int z)
+void set_cell(long long x, long long y)
 {
-    min_x = min(min_x, x);
-    min_y = min(min_y, y);
-    min_z = min(min_z, z);
-    max_x = max(max_x, x);
-    max_y = max(max_y, y);
-    max_z = max(max_z, z);
-    grid[make_pair(make_pair(x, y), z)] = 1;
+    min_x = std::min(min_x, x);
+    min_y = std::min(min_y, y);
+    max_x = std::max(max_x, x);
+    max_y = std::max(max_y, y);
+    grid[std::make_pair(x, y)] = 1;
 }
 
-void set_cell_dot(int x, int y, int z)
+void set_cell_dot(long long x, long long y)
 {
-    min_x = min(min_x, x);
-    min_y = min(min_y, y);
-    min_z = min(min_z, z);
-    max_x = max(max_x, x);
-    max_y = max(max_y, y);
-    max_z = max(max_z, z);
-    grid[make_pair(make_pair(x, y), z)] = 2;  // 1 == #, 2 == .
+    min_x = std::min(min_x, x);
+    min_y = std::min(min_y, y);
+    max_x = std::max(max_x, x);
+    max_y = std::max(max_y, y);
+    grid[std::make_pair(x, y)] = 2;  // 1 == #, 2 == .
 }
 
-long long dump_grid()
+auto count_interior()
 {
-    long long interior = 0;
-    for (int i = min_y; i <= max_y; i++)
-    {
-        for (int j = min_x; j <= max_x; j++)
-        {
-            if (grid.find(make_pair(make_pair(j, i), -1)) != grid.end())
-            {
-                if (grid[make_pair(make_pair(j, i), -1)] == 1)
-                {
-                    //cout << '#';
-                    interior++;
-                }
-                else
-                {
-                    //cout << '.';
-                }
-            }
-            else
-            {
-                //cout << '.';
+    auto interior = 0LL;
+    for (auto i = min_y; i <= max_y; i++)
+        for (auto j = min_x; j <= max_x; j++)
+            if (grid.find(std::make_pair(j, i)) == grid.end() || grid[std::make_pair(j, i)] == 1)
                 interior++;
-            }
-        }
-        //std::cout << endl;
-    }
-    //std::cout << endl;
+
     return interior;
 }
 
-void recur(int x, int y, int z)
+void recur(int x, int y)
 {
     if (x < min_x || x > max_x || y < min_y || y > max_y)
         return;
         
-    if (grid.find(make_pair(make_pair(x, y), -1)) != grid.end())
+    if (grid.find(std::make_pair(x, y)) != grid.end())
         return;
 
-    set_cell_dot(x, y, z);
-    recur(x - 1, y, z);
-    recur(x + 1, y, z);
-    recur(x, y - 1, z);
-    recur(x, y + 1, z);
+    set_cell_dot(x, y);
+    recur(x - 1, y);
+    recur(x + 1, y);
+    recur(x, y - 1);
+    recur(x, y + 1);
 }
 
 void fill_outside()
 {
-    int z = -1;
-    for (int x = min_x; x <= max_x; x++)
+    for (auto x = min_x; x <= max_x; x++)
     {
-        recur(x, min_y, z);
-        recur(x, max_y, z);
+        recur(x, min_y);
+        recur(x, max_y);
     }
 
-    for (int y = min_y; y <= max_y; y++)
+    for (auto y = min_y; y <= max_y; y++)
     {
-        recur(min_x, y, z);
-        recur(max_x, y, z);
+        recur(min_x, y);
+        recur(max_x, y);
     }
 }
 
@@ -109,61 +72,44 @@ auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
     auto dir = ' ';
-    int len;
-    string colorstr;
+    auto len = 0;
+    std::string color;
 
-    int x = 0, y = 0, z = -1;
-    int xd = 0, yd = -1, zd = 0;
+    auto x = 0, y = 0;
+    auto xd = 0, yd = -1;
 
-    grid[make_pair(make_pair(x, y), z)] = 1;
+    grid[std::make_pair(x, y)] = 1;
 
-
-    while (file >> dir >> len >> colorstr)
+    while (file >> dir >> len >> color)
     {
-        if (dir == 'R')
-        {
-            xd = 1, yd = 0;
-        }
-        else if (dir == 'D')
-        {
-            xd = 0, yd = 1;
-        }
-        else if (dir == 'L')
-        {
-            xd = -1, yd = 0;
-        }
-        else if (dir == 'U')
-        {
-            xd = 0; yd = -1;
-        }
+        if (dir == 'R') xd = 1, yd = 0;
+        else if (dir == 'D') xd = 0, yd = 1;
+        else if (dir == 'L') xd = -1, yd = 0;
+        else if (dir == 'U') xd = 0, yd = -1;
 
         while (len--)
         {
             x += xd, y += yd;
-            set_cell(x, y, z);
+            set_cell(x, y);
         }
-
-//        dump_grid();
     }
 
     fill_outside();
-    return dump_grid();
+    return count_interior();
 }
 
-vector<pair<long long, long long>> vertices;
+std::vector<std::pair<long long, long long>> vertices;
 
-long long polygonArea()
+auto get_polygon_area() // shoelace formula
 {
-    long long n = vertices.size();
+    auto n = vertices.size();
+    auto area = 0LL;
 
-    long long area = 0;
-
-    // Calculate value of shoelace formula
-    int j = n - 1;
-    for (int i = 0; i < n; i++)
+    auto j = n - 1;
+    for (auto i = 0; i < n; i++)
     {
         area += (vertices[j].first + vertices[i].first) * (vertices[j].second - vertices[i].second);
-        j = i;  // j is previous vertex to i
+        j = i;
     }
 
     return abs(area / 2);
@@ -173,71 +119,36 @@ auto do_part2(const std::string &filename)
 {
     std::ifstream file(filename);
     auto dir = ' ';
-    int len;
-    string colorstr;
+    auto len = 0;
+    std::string colorstr;
 
-    long long x = 0, y = 0;
-    long long boundary_count = 0;
+    auto x = 0LL, y = 0LL;
+    auto boundary_count = 0;
 
     while (file >> dir >> len >> colorstr)
     {
         len = strtol(colorstr.substr(2, 5).c_str(), NULL, 16);
-        if (colorstr[7] == '0')
-            dir = 'R';
-        else if (colorstr[7] == '1')
-            dir = 'D';
-        else if (colorstr[7] == '2')
-            dir = 'L';
-        else if (colorstr[7] == '3')
-            dir = 'U';
-
         boundary_count += len;
 
-        if (dir == 'R')
-        {
-            x += len;
-        }
-        else if (dir == 'D')
-        {
-            y += len;
-        }
-        else if (dir == 'L')
-        {
-            x -= len;
-        }
-        else if (dir == 'U')
-        {
-            y -= len;
-        }
+        if (colorstr[7] == '0') x += len;
+        else if (colorstr[7] == '1') y += len;
+        else if (colorstr[7] == '2') x -= len;
+        else if (colorstr[7] == '3') y -= len;
 
         vertices.push_back({ x, y });
     }
 
-    // 1. count boundary points (above)
-    // 2. apply shoelace formula to vertices
-    auto area = polygonArea();
-
-    // 3. pick's theorem --> number of interior point
-    // S = I + B / 2 - 1
-    // where S = Polygon area, I= #points inside, B = boundary points
-    
-    auto interior = area - boundary_count / 2 + 1;
-    
-    // 4. add # boundary points
-    auto answer = interior + boundary_count;
-
-    return answer;
+    auto area = get_polygon_area();
+    auto interior = area - boundary_count / 2 + 1; // Pick's theorem
+    return interior + boundary_count;
 }
-
-#define INPUT_FILE "test.txt"
-#define INPUT_FILE "input.txt"
 
 int main()
 {
-    auto part1 = do_part1(INPUT_FILE);
+    auto part1 = do_part1("input.txt");
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part2(INPUT_FILE);
+    auto part2 = do_part2("input.txt");
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 48652);

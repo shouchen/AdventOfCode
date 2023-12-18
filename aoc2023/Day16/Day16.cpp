@@ -35,15 +35,13 @@ void recur(int row, int col, int rdir, int cdir)
     {
     case '/':
         return (rdir == 0)
-            ? recur(row - cdir, col, -cdir, 0)
+            ? recur(row - cdir, col + rdir, -cdir, 0)
             : recur(row, col - rdir, 0, -rdir);
-        break;
 
     case '\\':
         return (rdir == 0)
-            ? recur(row + cdir, col, cdir, 0)
+            ? recur(row + cdir, col + rdir, cdir, 0)
             : recur(row, col + rdir, 0, rdir);
-        break;
 
     case '-':
         if (cdir == 0)
@@ -57,8 +55,18 @@ void recur(int row, int col, int rdir, int cdir)
     case '|':
         if (rdir == 0)
         {
-            recur(row - 1, col, -1, 0);
-            recur(row + 1, col, 1, 0);
+            //recur(row - 1, col + rdir, -1, 0);
+            //recur(row + 1, col - rdir, 1, 0);
+            if (cdir == 1)
+            {
+                recur(row - cdir, col + rdir, -cdir, 0);
+                recur(row + cdir, col - rdir, cdir, 0);
+            }
+            else // cdir == -1
+            {
+                recur(row - cdir, col - rdir, -cdir, 0);
+                recur(row + cdir, col + rdir, cdir, 0);
+            }
             return;
         }
         break;
