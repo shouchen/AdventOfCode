@@ -10,20 +10,20 @@ std::vector<int> dir_x{ 1, 0 , -1, 0 }, dir_y{ 0, 1, 0,-1 };
 
 auto get_polygon_area(const Polygon &vertices) // shoelace formula
 {
-    auto n = vertices.size();
     auto area = 0LL;
+    auto prev_x = vertices.back().first, prev_y = vertices.back().second;
 
-    auto j = n - 1;
-    for (auto i = 0; i < n; i++)
+    for (auto &v : vertices)
     {
-        area += (vertices[j].first + vertices[i].first) * (vertices[j].second - vertices[i].second);
-        j = i;
+        auto x = v.first, y = v.second;
+        area += (prev_x + x) * (prev_y - y);
+        prev_x = x, prev_y = y;
     }
 
     return abs(area / 2);
 }
 
-auto do_part(const std::string &filename, bool part2)
+auto solve(const std::string &filename, bool part2)
 {
     Polygon vertices;
     std::ifstream file(filename);
@@ -52,10 +52,10 @@ auto do_part(const std::string &filename, bool part2)
 
 int main()
 {
-    auto part1 = do_part("input.txt", false);
+    auto part1 = solve("input.txt", false);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part("input.txt", true);
+    auto part2 = solve("input.txt", true);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 48652);
