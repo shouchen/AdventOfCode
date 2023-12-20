@@ -13,7 +13,7 @@ struct Module
     std::string name;
     std::vector<std::string> next;
     bool ff_on = false;
-    std::map<std::string, int> remember;
+    std::map<std::string, bool> remember;
 };
 
 std::map<std::string, Module> mods;
@@ -55,9 +55,9 @@ void read_input_lines(const std::string &filename)
         auto &from = i.second;
 
         for (auto &j : from.next)
-            mods[j].remember[from.name] = 0;
+            mods[j].remember[from.name] = false;
 
-        if (from.next.size() == 1 && from.next.front() == "rx")
+        if (!from.next.empty() && from.next.front() == "rx")
         {
             assert(rx_pred.empty());
             rx_pred = from.name;
@@ -73,13 +73,13 @@ void press_button()
     struct Elem
     {
         std::string src, dest;
-        int pulse;
+        bool pulse;
     };
 
     presses++;
 
     std::queue<Elem> q;
-    q.push({ "button", "broadcaster", 0 });
+    q.push({ "button", "broadcaster", false });
 
     while (!q.empty())
     {
@@ -100,22 +100,22 @@ void press_button()
             break;
 
         case Module::Type::FlipFlop:
-            if (elem.pulse == 0)
+            if (!elem.pulse)
             {
                 mod.ff_on = !mod.ff_on;
-                auto pulse = mod.ff_on ? 1 : 0;
                 for (auto &a : mod.next)
-                    q.push({ mod.name, a, pulse });
+                    q.push({ mod.name, a, mod.ff_on });
             }
             break;
 
         case Module::Type::Conjunction:
             mod.remember[elem.src] = elem.pulse;
-            auto pulse = 0;
+            auto pulse = false;
+
             for (auto &i : mod.remember)
-                if (i.second != 1)
+                if (!i.second)
                 {
-                    pulse = 1;
+                    pulse = true;
                     break;
                 }
 
