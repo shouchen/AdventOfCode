@@ -37,7 +37,7 @@ auto solve(const std::string &filename, bool part2)
         if (part2)
             len = strtol(color.substr(2, 5).c_str(), NULL, 16);
 
-        dir_index = part2 ? (color[7] - '0') : rdlu.find(dir);
+        dir_index = part2 ? (color[7] - '0') : int(rdlu.find(dir));
         x += len * dir_x[dir_index];
         y += len * dir_y[dir_index];
 

@@ -52,7 +52,7 @@ auto solve(const std::string &filename)
             case 'J': exits.back().push_back(North | West); break;
             case '7': exits.back().push_back(South | West); break;
             case 'F': exits.back().push_back(South | East); break;
-            case 'S': s_row = exits.size() - 1, s_col = exits.back().size();
+            case 'S': s_row = int(exits.size() - 1), s_col = int(exits.back().size());
             default: exits.back().push_back(0);
             }
         }

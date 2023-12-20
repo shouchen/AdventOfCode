@@ -9,7 +9,7 @@
 
 struct Module
 {
-    enum Type { FlipFlop, Conjunction, Broadcaster } type;
+    enum Type { FlipFlop, Conjunction, Broadcaster } type = Broadcaster;
     std::string name;
     std::vector<std::string> next;
     bool ff_on = false;
@@ -18,6 +18,8 @@ struct Module
 
 std::map<std::string, Module> mods;
 std::string rx_pred;
+auto highs = 0, lows = 0, presses = 0;
+std::map<std::string, int> first_high;
 
 void read_input_lines(const std::string &filename)
 {
@@ -65,9 +67,6 @@ void read_input_lines(const std::string &filename)
     }
 }
 
-auto highs = 0, lows = 0, presses = 0;
-std::map<std::string, int> first_high;
-
 void press_button()
 {
     struct Elem
@@ -88,7 +87,7 @@ void press_button()
         elem.pulse ? highs++ : lows++;
         auto &mod = mods[elem.dest];
 
-        if (elem.dest == rx_pred && elem.pulse == 1)
+        if (elem.dest == rx_pred && elem.pulse)
             if (first_high.find(elem.src) == first_high.end())
                 first_high[elem.src] = presses;
 
