@@ -18,18 +18,21 @@ void read_grid(const std::string &filename)
 
 auto do_part(bool part2)
 {
-    static const int dx[] = { 0, 1, 0, -1 }, dy[] = { 1, 0, -1, 0 };
-    int N = int(grid.size()), M = int(grid[0].size());
+    int NumRows = int(grid.size()), NumCols = int(grid[0].size());
 
     auto dijkstra = [&]() -> auto
     {
+        static const int dx[] = { 0, 1, 0, -1 }, dy[] = { 1, 0, -1, 0 };
+
         std::vector<std::vector<std::vector<std::vector<int>>>> dist(
-            N, std::vector<std::vector<std::vector<int>>>(
-                M, std::vector<std::vector<int>>(
-                    4, std::vector<int>(11, INT_MAX))));
+        NumRows, std::vector<std::vector<std::vector<int>>>(
+            NumCols, std::vector<std::vector<int>>(
+                4, std::vector<int>(
+                    11, INT_MAX))));
 
         using T = std::array<int, 4>;
-        std::priority_queue<std::pair<int, T>, std::vector<std::pair<int, T>>, std::greater<std::pair<int, T>>> q;
+        using U = std::pair<int, std::array<int, 4>>;
+        std::priority_queue<U, std::vector<U>, std::greater<U>> q;
 
         for (auto d = 0; d < 4; d++)
         {
@@ -39,10 +42,10 @@ auto do_part(bool part2)
 
         auto valid = [&](int x, int y)
         {
-            return x >= 0 && x < N && y >= 0 && y < M;
+            return x >= 0 && x < NumRows && y >= 0 && y < NumCols;
         };
 
-        auto getAdj1 = [&](int x, int y, int d, int s) -> auto
+        auto get_adj1 = [&](int x, int y, int d, int s) -> auto
         {
             std::vector<T> retval;
 
@@ -58,7 +61,7 @@ auto do_part(bool part2)
             return retval;
         };
 
-        auto getAdj2 = [&](int x, int y, int d, int s) -> auto
+        auto get_adj2 = [&](int x, int y, int d, int s) -> auto
         {
             std::vector<T> retval;
 
@@ -84,7 +87,7 @@ auto do_part(bool part2)
             if (d > dist[x][y][dir][s])
                 continue;
 
-            auto adj = part2 ? getAdj2(x, y, dir, s) : getAdj1(x, y, dir, s);
+            auto adj = part2 ? get_adj2(x, y, dir, s) : get_adj1(x, y, dir, s);
             for (auto [nx, ny, nd, ns] : adj)
             {
                 if (!valid(nx, ny))
@@ -107,7 +110,7 @@ auto do_part(bool part2)
 
     for (auto d = 0; d < 4; d++)
         for (auto s = min_s; s <= max_s; s++)
-            ans = std::min(ans, dist[N - 1][M - 1][d][s]);
+            ans = std::min(ans, dist[NumRows - 1][NumCols - 1][d][s]);
 
     return ans;
 }
