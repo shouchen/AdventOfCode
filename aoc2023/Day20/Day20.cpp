@@ -53,7 +53,8 @@ void read_input_lines(const std::string &filename)
     for (auto &i : mods)
     {
         auto &from = i.second;
-        for (auto &j : i.second.next)
+
+        for (auto &j : from.next)
             mods[j].remember[from.name] = 0;
 
         if (from.next.size() == 1 && from.next.front() == "rx")
@@ -62,11 +63,9 @@ void read_input_lines(const std::string &filename)
             rx_pred = from.name;
         }
     }
-
-    assert(!rx_pred.empty());
 }
 
-auto count_high = 0, count_low = 0, button_presses = 0;
+auto highs = 0, lows = 0, presses = 0;
 std::map<std::string, int> first_high;
 
 void press_button()
@@ -77,27 +76,27 @@ void press_button()
         int pulse;
     };
 
-    button_presses++;
+    presses++;
 
     std::queue<Elem> q;
-    q.push(Elem{ "button", "broadcaster", 0 });
+    q.push({ "button", "broadcaster", 0 });
 
     while (!q.empty())
     {
         auto elem = q.front(); q.pop();
 
-        elem.pulse ? count_high++ : count_low++;
+        elem.pulse ? highs++ : lows++;
         auto &mod = mods[elem.dest];
 
         if (elem.dest == rx_pred && elem.pulse == 1)
             if (first_high.find(elem.src) == first_high.end())
-                first_high[elem.src] = button_presses;
+                first_high[elem.src] = presses;
 
         switch (mod.type)
         {
         case Module::Type::Broadcaster:
             for (auto &a : mod.next)
-                q.push(Elem{ mod.name, a, elem.pulse });
+                q.push({ mod.name, a, elem.pulse });
             break;
 
         case Module::Type::FlipFlop:
@@ -106,22 +105,22 @@ void press_button()
                 mod.ff_on = !mod.ff_on;
                 auto pulse = mod.ff_on ? 1 : 0;
                 for (auto &a : mod.next)
-                    q.push(Elem{ mod.name, a, pulse });
+                    q.push({ mod.name, a, pulse });
             }
             break;
 
         case Module::Type::Conjunction:
             mod.remember[elem.src] = elem.pulse;
-            bool all_high = true;
+            auto pulse = 0;
             for (auto &i : mod.remember)
                 if (i.second != 1)
                 {
-                    all_high = false;
+                    pulse = 1;
                     break;
                 }
 
             for (auto &a : mod.next)
-                q.push(Elem{ mod.name, a, all_high ? 0 : 1 });
+                q.push({ mod.name, a, pulse });
             break;
         }
     }
@@ -132,7 +131,7 @@ auto do_part1()
     for (auto i = 0; i < 1000; i++)
         press_button();
  
-    return count_low * count_high;
+    return lows * highs;
 }
 
 // Observing the configuration of the input data, rx is fed only by ll, which is
