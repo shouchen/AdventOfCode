@@ -5,10 +5,61 @@
 #include <map>
 #include <cassert>
 
-#pragma region types
+#pragma region Generic Ranges
 using Range = std::pair<int, int>;
 using Ranges = std::vector<std::pair<int, int>>;
 
+auto intersect(Range &r1, Range &r2) // returns -1,-1 if no intersection
+{
+    if (r1.first > r2.second || r1.second < r2.first) // no intersection
+        return Range{ -1,-1 };
+    if (r1.first >= r2.first && r1.second <= r2.second) // return full r1
+        return r1;
+    if (r1.first >= r2.first && r1.first < r2.second)  // return left part of r1
+        return Range{ r1.first, r2.second };
+    if (r2.first > r1.first && r2.first <= r1.second && r2.second >= r1.second)  // return right part of r1
+        return Range{ r2.first, r1.second };
+    return r2;
+}
+
+Ranges intersect(Ranges ranges, Range r)
+{
+    Ranges retval;
+    for (auto &i : ranges)
+    {
+        auto inter = intersect(i, r);
+        if (inter.first != -1)
+            retval.push_back(inter);
+    }
+    return retval;
+}
+
+Ranges sub_intersects(Ranges ranges, Range r)
+{
+    Ranges retval;
+    for (auto &i : ranges)
+    {
+        auto inter = intersect(i, r);
+
+        if (inter.first == -1)
+            retval.push_back(inter);
+        else
+        {
+            bool has_left_non_intersect = i.first < inter.first;
+            bool has_right_non_intersect = i.second > inter.second;
+
+            if (has_left_non_intersect)
+                retval.push_back(Range{ i.first, inter.first - 1 });
+
+            if (has_right_non_intersect)
+                retval.push_back(Range{ inter.second + 1, i.second });
+        }
+    }
+    return retval;
+}
+#pragma endregion
+
+#pragma region Derived Types
 struct Part
 {
     int x, m, a, s;
@@ -121,6 +172,7 @@ auto parse_part(std::string line)
 }
 #pragma endregion
 
+#pragma region Solution
 bool is_accepted(Part &part)
 {
     auto curr = workflows["in"];
@@ -178,78 +230,6 @@ bool is_accepted(Part &part)
     }
 }
 
-auto do_part1(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    while (std::getline(file, line) && !line.empty())
-    {
-        auto w = parse_workflow(line);
-        workflows[w.label] = w;
-    }
-
-    auto retval = 0LL;
-
-    while (std::getline(file, line) && !line.empty())
-    {
-        Part p = parse_part(line);
-        if (is_accepted(p))
-            retval += p.x + p.m + p.a + p.s;
-    }
-
-    return retval;
-}
-
-auto intersect(Range &r1, Range &r2) // returns -1,-1 if no intersection
-{
-    if (r1.first > r2.second || r1.second < r2.first) // no intersection
-        return Range{ -1,-1 };
-    if (r1.first >= r2.first && r1.second <= r2.second) // return full r1
-        return r1;
-    if (r1.first >= r2.first && r1.first < r2.second)  // return left part of r1
-        return Range{ r1.first, r2.second };
-    if (r2.first > r1.first && r2.first <= r1.second && r2.second >= r1.second)  // return right part of r1
-        return Range{ r2.first, r1.second };
-    return r2;
-}
-
-Ranges intersect(Ranges ranges, Range r)
-{
-    Ranges retval;
-    for (auto &i : ranges)
-    {
-        auto inter = intersect(i, r);
-        if (inter.first != -1)
-            retval.push_back(inter);
-    }
-    return retval;
-}
-
-Ranges sub_intersects(Ranges ranges, Range r)
-{
-    Ranges retval;
-    for (auto &i : ranges)
-    {
-        auto inter = intersect(i, r);
-
-        if (inter.first == -1)
-            retval.push_back(inter);
-        else
-        {
-            bool has_left_non_intersect = i.first < inter.first;
-            bool has_right_non_intersect = i.second > inter.second;
-
-            if (has_left_non_intersect)
-                retval.push_back(Range{ i.first, inter.first - 1 });
-
-            if (has_right_non_intersect)
-                retval.push_back(Range{ inter.second + 1, i.second });
-        }
-    }
-    return retval;
-}
-
 long long recur(const std::string &label, PartRange pr)
 {
     if (label == "A")
@@ -299,10 +279,34 @@ long long recur(const std::string &label, PartRange pr)
     return retval;
 }
 
+auto do_part1(const std::string &filename)
+{
+    std::ifstream file(filename);
+    std::string line;
+
+    while (std::getline(file, line) && !line.empty())
+    {
+        auto w = parse_workflow(line);
+        workflows[w.label] = w;
+    }
+
+    auto retval = 0LL;
+
+    while (std::getline(file, line) && !line.empty())
+    {
+        Part p = parse_part(line);
+        if (is_accepted(p))
+            retval += p.x + p.m + p.a + p.s;
+    }
+
+    return retval;
+}
+
 auto do_part2()
 {
     return recur("in", PartRange());
 }
+#pragma endregion
 
 int main()
 {
