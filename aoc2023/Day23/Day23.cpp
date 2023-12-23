@@ -16,8 +16,8 @@ const int dr[] = { -1, 1, 0, 0 }, dc[] = { 0, 0, -1 ,1 };
 
 std::vector<DecisionPoint> dps;
 std::set<int> seen2;
-
 std::vector<std::string> grid;
+
 void read_grid(const std::string &filename)
 {
     std::ifstream file(filename);
@@ -79,13 +79,16 @@ auto follow_tunnel(DecisionPoint &dp, int rdir, int cdir)
             return make_pair(found, len);
 
         auto nrow = -1, ncol = -1;
-        for (auto i = 0; i < 4; i++) // no more than one of four should be valid
+        for (auto i = 0; i < 4; i++)
         {
             nrow = row + dr[i], ncol = col + dc[i];
-            if (nrow < 0 || nrow == grid.size()) continue; // don't fall off grid
-            if (grid[nrow][ncol] == '#') continue; // obstacle
-            if (nrow == prow && ncol == pcol) continue; // don't back up
-            break;
+
+            if (nrow >= 0 && nrow < grid.size() && // don't fall off grid
+                grid[nrow][ncol] != '#' && // obstacle
+                (nrow != prow || ncol != pcol)) // don't back up
+            {
+                break;  // no more than one of four should be valid
+            }
         }
 
         if (nrow == -1 && ncol == -1)
@@ -97,8 +100,10 @@ auto follow_tunnel(DecisionPoint &dp, int rdir, int cdir)
     }
 }
 
-void recur2(int dist, int start_index, int end_index, std::vector<std::vector<int>> &adj)
+void recur2(int dist, int start_index, std::vector<std::vector<int>> &adj)
 {
+    auto end_index = adj.size() - 1;
+
     if (start_index == end_index)
     {
         max_path = std::max(max_path, dist);
@@ -109,7 +114,7 @@ void recur2(int dist, int start_index, int end_index, std::vector<std::vector<in
         if (adj[start_index][i] && seen2.find(i) == seen2.end())
         {
             seen2.insert(i);
-            recur2(dist + adj[start_index][i], i, end_index, adj);
+            recur2(dist + adj[start_index][i], i, adj);
             seen2.erase(i);
         }
 }
@@ -124,61 +129,46 @@ auto do_part1()
 
 auto do_part2()
 {
-    auto start_index = -1, end_index = -1;
-
-    // 1. Scan grid for decision points
+    // 1. Scan grid for decision points (start and end will be first and last ones)
     for (auto i = 0; i < grid.size(); i++)
         for (auto j = 0; j < grid[0].size(); j++)
         {
             if (grid[i][j] == '#')
                 continue;
 
-            if (i == 0)
+            if (i == 0 || i == grid.size() - 1)
             {
-                start_index = int(dps.size());
-                dps.push_back({ i, j });
-                continue;
-            }
-            if (i == grid.size() - 1)
-            {
-                end_index = int(dps.size());
                 dps.push_back({ i, j });
                 continue;
             }
 
             auto num_ways = 0;
-            if (grid[i - 1][j] != '#') num_ways++;
-            if (grid[i + 1][j] != '#') num_ways++;
-            if (grid[i][j - 1] != '#') num_ways++;
-            if (grid[i][j + 1] != '#') num_ways++;
+            for (auto k = 0; k < 4; k++)
+                if (grid[i + dr[k]][j + dc[k]] != '#')
+                    num_ways++;
 
             if (num_ways > 2)
-            {
                 dps.push_back({ i, j });
-                continue;
-            }
         }
 
     // 2. From each decision point, find neighbors and cost (indexes match the dps ones)
     std::vector<std::vector<int>> adj(dps.size(), std::vector<int>(dps.size()));
     for (auto i = 0; i < dps.size(); i++)
-    {
         for (auto j = 0; j < 4; j++)
         {
-            int nrow = dps[i].row + dr[j], ncol = dps[i].col + dc[j];
-            if (nrow < 0 || nrow == grid.size()) continue; // don't fall off grid
-            if (grid[nrow][ncol] == '#') continue; // obstacle
+            auto nrow = dps[i].row + dr[j], ncol = dps[i].col + dc[j];
+            if (nrow < 0 || nrow == grid.size() || grid[nrow][ncol] == '#')
+                continue;
 
             auto temp = follow_tunnel(dps[i], dr[j], dc[j]);
             if (temp.second != -1)
                 adj[i][temp.first - dps.begin()] = temp.second;
         }
-    }
 
     // Do DFS on adjacency matrix, all possible paths
     max_path = 0;
     seen2.insert(0); // start dp
-    recur2(0, 0, int(dps.size() - 1), adj);
+    recur2(0, 0, adj);
 
     return max_path;
 }
