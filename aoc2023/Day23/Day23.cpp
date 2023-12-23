@@ -11,11 +11,10 @@ struct DecisionPoint
 };
 
 auto max_path = 0;
-std::set<std::pair<int, int>> seen;
 const int dr[] = { -1, 1, 0, 0 }, dc[] = { 0, 0, -1 ,1 };
 
 std::vector<DecisionPoint> dps;
-std::set<int> seen2;
+std::set<int> seen;
 std::vector<std::string> grid;
 
 void read_grid(const std::string &filename)
@@ -27,45 +26,7 @@ void read_grid(const std::string &filename)
         grid.push_back(line);
 }
 
-void recur1(int steps, int row, int col)
-{
-    if (row == grid.size() - 1)
-    {
-        if (steps > max_path)
-            max_path = steps;
-
-        return;
-    }
-
-    if (row < 0 || seen.find(std::make_pair(row, col)) != seen.end())
-        return;
-
-    auto inserted = seen.insert(std::make_pair(row, col));
-
-    for (auto i = 0; i < 4; i++)
-    {
-        auto nrow = row + dr[i], ncol = col + dc[i];
-
-        if (nrow >= 0 && nrow < grid.size())
-        {
-            if (nrow < grid.size())
-            {
-                if (grid[nrow][ncol] == '#') continue;
-                if (grid[nrow][ncol] == '^' && (dr[i] != -1 || dc[i] != 0)) continue;
-                if (grid[nrow][ncol] == 'v' && (dr[i] != 1 || dc[i] != 0)) continue;
-                if (grid[nrow][ncol] == '<' && (dr[i] != 0 || dc[i] != -1)) continue;
-                if (grid[nrow][ncol] == '>' && (dr[i] != 0 || dc[i] != 1)) continue;
-            }
-
-            recur1(steps + 1, nrow, ncol);
-        }
-    }
-
-    auto found = seen.find(std::make_pair(row, col));
-    seen.erase(found);
-}
-
-auto follow_tunnel(DecisionPoint &dp, int rdir, int cdir)
+auto follow_tunnel(DecisionPoint &dp, int rdir, int cdir, bool respect_slope)
 {
     auto prow = dp.row, pcol = dp.col;
     auto row = dp.row + rdir, col = dp.col + cdir;
@@ -82,6 +43,14 @@ auto follow_tunnel(DecisionPoint &dp, int rdir, int cdir)
         for (auto i = 0; i < 4; i++)
         {
             nrow = row + dr[i], ncol = col + dc[i];
+
+            if (respect_slope)
+            {
+                if (grid[nrow][ncol] == '^' && (dr[i] != -1 || dc[i] != 0)) continue;
+                if (grid[nrow][ncol] == 'v' && (dr[i] != 1 || dc[i] != 0)) continue;
+                if (grid[nrow][ncol] == '<' && (dr[i] != 0 || dc[i] != -1)) continue;
+                if (grid[nrow][ncol] == '>' && (dr[i] != 0 || dc[i] != 1)) continue;
+            }
 
             if (nrow >= 0 && nrow < grid.size() && // don't fall off grid
                 grid[nrow][ncol] != '#' && // obstacle
@@ -100,7 +69,7 @@ auto follow_tunnel(DecisionPoint &dp, int rdir, int cdir)
     }
 }
 
-void recur2(int dist, int start_index, std::vector<std::vector<int>> &adj)
+void recur(int dist, int start_index, std::vector<std::vector<int>> &adj)
 {
     auto end_index = adj.size() - 1;
 
@@ -111,24 +80,20 @@ void recur2(int dist, int start_index, std::vector<std::vector<int>> &adj)
     } 
 
     for (auto i = 0; i < adj[start_index].size(); i++)
-        if (adj[start_index][i] && seen2.find(i) == seen2.end())
+        if (adj[start_index][i] && seen.find(i) == seen.end())
         {
-            seen2.insert(i);
-            recur2(dist + adj[start_index][i], i, adj);
-            seen2.erase(i);
+            seen.insert(i);
+            recur(dist + adj[start_index][i], i, adj);
+            seen.erase(i);
         }
 }
 
-auto do_part1()
+auto solve(bool respect_slope)
 {
     max_path = 0;
+    dps.clear();
     seen.clear();
-    recur1(0, 0, 1);
-    return max_path;
-}
 
-auto do_part2()
-{
     // 1. Scan grid for decision points (start and end will be first and last ones)
     for (auto i = 0; i < grid.size(); i++)
         for (auto j = 0; j < grid[0].size(); j++)
@@ -160,15 +125,22 @@ auto do_part2()
             if (nrow < 0 || nrow == grid.size() || grid[nrow][ncol] == '#')
                 continue;
 
-            auto temp = follow_tunnel(dps[i], dr[j], dc[j]);
+            if (respect_slope)
+            {
+                if (grid[nrow][ncol] == '^' && (dr[j] != -1 || dc[j] != 0)) continue;
+                if (grid[nrow][ncol] == 'v' && (dr[j] != 1 || dc[j] != 0)) continue;
+                if (grid[nrow][ncol] == '<' && (dr[j] != 0 || dc[j] != -1)) continue;
+                if (grid[nrow][ncol] == '>' && (dr[j] != 0 || dc[j] != 1)) continue;
+            }
+
+            auto temp = follow_tunnel(dps[i], dr[j], dc[j], respect_slope);
             if (temp.second != -1)
                 adj[i][temp.first - dps.begin()] = temp.second;
         }
 
     // Do DFS on adjacency matrix, all possible paths
-    max_path = 0;
-    seen2.insert(0); // start dp
-    recur2(0, 0, adj);
+    seen.insert(0); // start dp
+    recur(0, 0, adj);
 
     return max_path;
 }
@@ -177,10 +149,10 @@ int main()
 {
     read_grid("input.txt");
 
-    auto part1 = do_part1();
+    auto part1 = solve(true);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = do_part2();
+    auto part2 = solve(false);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 2154);
