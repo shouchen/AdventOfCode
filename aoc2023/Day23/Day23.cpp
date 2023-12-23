@@ -2,19 +2,10 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <set>
 #include <cassert>
 
-struct DecisionPoint
-{
-    int row, col;
-};
-
-auto max_path = 0;
 const int dr[] = { -1, 1, 0, 0 }, dc[] = { 0, 0, -1 ,1 };
-
-std::vector<DecisionPoint> dps;
-std::set<int> seen;
+const std::string anti_slope = "v^><";
 std::vector<std::string> grid;
 
 void read_grid(const std::string &filename)
@@ -26,75 +17,16 @@ void read_grid(const std::string &filename)
         grid.push_back(line);
 }
 
-auto follow_tunnel(DecisionPoint &dp, int rdir, int cdir, bool respect_slope)
+auto can_advance(int row, int col, bool respect_slope, int dir_index)
 {
-    auto prow = dp.row, pcol = dp.col;
-    auto row = dp.row + rdir, col = dp.col + cdir;
-    auto len = 1;
-
-    for (;;)
-    {
-        auto found = std::find_if(dps.begin(), dps.end(),
-            [row, col](DecisionPoint &dp) {return dp.row == row && dp.col == col; });
-        if (found != dps.end())
-            return make_pair(found, len);
-
-        auto nrow = -1, ncol = -1;
-        for (auto i = 0; i < 4; i++)
-        {
-            nrow = row + dr[i], ncol = col + dc[i];
-
-            if (respect_slope)
-            {
-                if (grid[nrow][ncol] == '^' && (dr[i] != -1 || dc[i] != 0)) continue;
-                if (grid[nrow][ncol] == 'v' && (dr[i] != 1 || dc[i] != 0)) continue;
-                if (grid[nrow][ncol] == '<' && (dr[i] != 0 || dc[i] != -1)) continue;
-                if (grid[nrow][ncol] == '>' && (dr[i] != 0 || dc[i] != 1)) continue;
-            }
-
-            if (nrow >= 0 && nrow < grid.size() && // don't fall off grid
-                grid[nrow][ncol] != '#' && // obstacle
-                (nrow != prow || ncol != pcol)) // don't back up
-            {
-                break;  // no more than one of four should be valid
-            }
-        }
-
-        if (nrow == -1 && ncol == -1)
-            return make_pair(dps.end(), -1); // hit a dead end
-
-        len++;
-        prow = row, pcol = col;
-        row = nrow, col = ncol;
-    }
+    return row >= 0 && row < grid.size() && grid[row][col] != '#' &&
+        (!respect_slope || anti_slope.find(grid[row][col]) != dir_index);
 }
 
-void recur(int dist, int start_index, std::vector<std::vector<int>> &adj)
+auto find_forks()
 {
-    auto end_index = adj.size() - 1;
+    std::vector<std::pair<int,int>> retval;
 
-    if (start_index == end_index)
-    {
-        max_path = std::max(max_path, dist);
-        return;
-    } 
-
-    for (auto i = 0; i < adj[start_index].size(); i++)
-        if (adj[start_index][i] && seen.find(i) == seen.end())
-        {
-            seen.insert(i);
-            recur(dist + adj[start_index][i], i, adj);
-            seen.erase(i);
-        }
-}
-
-auto solve(bool respect_slope)
-{
-    max_path = 0;
-    dps.clear();
-    seen.clear();
-
-    // 1. Scan grid for decision points (start and end will be first and last ones)
     for (auto i = 0; i < grid.size(); i++)
         for (auto j = 0; j < grid[0].size(); j++)
         {
@@ -103,7 +35,7 @@ auto solve(bool respect_slope)
 
             if (i == 0 || i == grid.size() - 1)
             {
-                dps.push_back({ i, j });
+                retval.push_back({ i, j });
                 continue;
             }
 
@@ -113,35 +45,86 @@ auto solve(bool respect_slope)
                     num_ways++;
 
             if (num_ways > 2)
-                dps.push_back({ i, j });
+                retval.push_back({ i, j });
         }
 
-    // 2. From each decision point, find neighbors and cost (indexes match the dps ones)
-    std::vector<std::vector<int>> adj(dps.size(), std::vector<int>(dps.size()));
-    for (auto i = 0; i < dps.size(); i++)
+    return retval;
+}
+
+auto follow_tunnel(std::vector<std::pair<int, int>> &forks, std::pair<int, int> &fork, int rdir, int cdir, bool respect_slope)
+{
+    auto prow = fork.first, pcol = fork.second;
+    auto row = fork.first + rdir, col = fork.second + cdir;
+
+    for (auto len = 1; ; len++)
+    {
+        auto found = std::find_if(forks.begin(), forks.end(),
+            [row, col](std::pair<int, int> &fork) {return fork.first == row && fork.second == col; });
+        if (found != forks.end())
+            return make_pair(found, len);
+
+        auto nrow = -1, ncol = -1;
+        for (auto i = 0; i < 4; i++)
+        {
+            nrow = row + dr[i], ncol = col + dc[i];
+
+            if ((nrow != prow || ncol != pcol) && can_advance(nrow, ncol, respect_slope, i))
+                break;
+        }
+
+        if (nrow == -1 && ncol == -1)
+            return make_pair(forks.end(), -1);
+
+        prow = row, pcol = col;
+        row = nrow, col = ncol;
+    }
+}
+
+auto build_adjacency_matrix(std::vector<std::pair<int, int>> &forks, bool respect_slope)
+{
+    std::vector<std::vector<int>> adj(forks.size(), std::vector<int>(forks.size()));
+    for (auto i = 0; i < forks.size(); i++)
         for (auto j = 0; j < 4; j++)
         {
-            auto nrow = dps[i].row + dr[j], ncol = dps[i].col + dc[j];
-            if (nrow < 0 || nrow == grid.size() || grid[nrow][ncol] == '#')
+            auto nrow = forks[i].first + dr[j], ncol = forks[i].second + dc[j];
+
+            if (!can_advance(nrow, ncol, respect_slope, j))
                 continue;
 
-            if (respect_slope)
-            {
-                if (grid[nrow][ncol] == '^' && (dr[j] != -1 || dc[j] != 0)) continue;
-                if (grid[nrow][ncol] == 'v' && (dr[j] != 1 || dc[j] != 0)) continue;
-                if (grid[nrow][ncol] == '<' && (dr[j] != 0 || dc[j] != -1)) continue;
-                if (grid[nrow][ncol] == '>' && (dr[j] != 0 || dc[j] != 1)) continue;
-            }
-
-            auto temp = follow_tunnel(dps[i], dr[j], dc[j], respect_slope);
+            auto temp = follow_tunnel(forks, forks[i], dr[j], dc[j], respect_slope);
             if (temp.second != -1)
-                adj[i][temp.first - dps.begin()] = temp.second;
+                adj[i][temp.first - forks.begin()] = temp.second;
         }
 
-    // Do DFS on adjacency matrix, all possible paths
-    seen.insert(0); // start dp
-    recur(0, 0, adj);
+    return adj;
+}
 
+void recur(int dist, int start_index, std::vector<std::vector<int>> &adj, std::vector<bool> &seen, int &max_path)
+{
+    if (start_index == adj.size() - 1)
+    {
+        max_path = std::max(max_path, dist);
+        return;
+    } 
+
+    for (auto i = 0; i < adj[start_index].size(); i++)
+        if (adj[start_index][i] && !seen[i])
+        {
+            seen[i] = true;
+            recur(dist + adj[start_index][i], i, adj, seen, max_path);
+            seen[i] = false;
+        }
+}
+
+auto solve(bool respect_slope)
+{
+    auto forks = find_forks();
+    auto adj = build_adjacency_matrix(forks, respect_slope);
+    auto seen = std::vector<bool>(forks.size());
+    seen[0] = true;
+    auto max_path = 0;
+
+    recur(0, 0, adj, seen, max_path);
     return max_path;
 }
 
@@ -159,3 +142,5 @@ int main()
     assert(part2 == 6654);
     return 0;
 }
+// TODO: Make recur return max path instead of passing as param
+// TODO: Use nested, recursive lambda to avoid so much context passing
