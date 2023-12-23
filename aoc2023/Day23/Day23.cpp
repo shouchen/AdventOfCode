@@ -4,6 +4,9 @@
 #include <vector>
 #include <cassert>
 
+using Point = std::pair<int, int>;
+using Points = std::vector<Point>;
+
 const int dr[] = { -1, 1, 0, 0 }, dc[] = { 0, 0, -1 ,1 };
 const std::string anti_slope = "v^><";
 std::vector<std::string> grid;
@@ -51,15 +54,16 @@ auto find_forks()
     return retval;
 }
 
-auto follow_tunnel(std::vector<std::pair<int, int>> &forks, std::pair<int, int> &fork, int rdir, int cdir, bool respect_slope)
+auto follow_tunnel(Points &forks, int index, int rdir, int cdir, bool respect_slope)
 {
+    Point &fork = forks[index];
     auto prow = fork.first, pcol = fork.second;
     auto row = fork.first + rdir, col = fork.second + cdir;
 
     for (auto len = 1; ; len++)
     {
         auto found = std::find_if(forks.begin(), forks.end(),
-            [row, col](std::pair<int, int> &fork) {return fork.first == row && fork.second == col; });
+            [row, col](Point &fork) {return fork.first == row && fork.second == col; });
         if (found != forks.end())
             return make_pair(found, len);
 
@@ -80,20 +84,21 @@ auto follow_tunnel(std::vector<std::pair<int, int>> &forks, std::pair<int, int> 
     }
 }
 
-auto build_adjacency_matrix(std::vector<std::pair<int, int>> &forks, bool respect_slope)
+auto build_adjacency_matrix(Points &forks, bool respect_slope)
 {
     std::vector<std::vector<int>> adj(forks.size(), std::vector<int>(forks.size()));
+
     for (auto i = 0; i < forks.size(); i++)
         for (auto j = 0; j < 4; j++)
         {
-            auto nrow = forks[i].first + dr[j], ncol = forks[i].second + dc[j];
+            auto row = forks[i].first + dr[j], col = forks[i].second + dc[j];
 
-            if (!can_advance(nrow, ncol, respect_slope, j))
-                continue;
-
-            auto temp = follow_tunnel(forks, forks[i], dr[j], dc[j], respect_slope);
-            if (temp.second != -1)
-                adj[i][temp.first - forks.begin()] = temp.second;
+            if (can_advance(row, col, respect_slope, j))
+            {
+                auto tunnel_end = follow_tunnel(forks, i, dr[j], dc[j], respect_slope);
+                if (tunnel_end.second != -1)
+                    adj[i][tunnel_end.first - forks.begin()] = tunnel_end.second;
+            }
         }
 
     return adj;
