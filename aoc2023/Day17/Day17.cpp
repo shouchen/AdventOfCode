@@ -25,10 +25,10 @@ auto do_part(bool part2)
         static const int dx[] = { 0, 1, 0, -1 }, dy[] = { 1, 0, -1, 0 };
 
         std::vector<std::vector<std::vector<std::vector<int>>>> dist(
-        NumRows, std::vector<std::vector<std::vector<int>>>(
-            NumCols, std::vector<std::vector<int>>(
-                4, std::vector<int>(
-                    11, INT_MAX))));
+            NumRows, std::vector<std::vector<std::vector<int>>>(
+                NumCols, std::vector<std::vector<int>>(
+                    4, std::vector<int>(
+                        11, INT_MAX))));
 
         using T = std::array<int, 4>;
         using U = std::pair<int, std::array<int, 4>>;
