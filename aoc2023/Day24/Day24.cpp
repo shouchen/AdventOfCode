@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <cassert>
 
 struct Hailstone
 {
-    double x_pos, y_pos, z_pos;
-    double x_vel, y_vel, z_vel;
+    long long x_pos, y_pos, z_pos;
+    long long x_vel, y_vel, z_vel;
 };
 
 std::vector<Hailstone> hailstones;
@@ -14,14 +15,15 @@ std::vector<Hailstone> hailstones;
 void read_input(const std::string &filename)
 {
     std::ifstream file(filename);
-    double xp, yp, zp, xv, yv, zv;
+    auto test = 0.0l;
+    auto xp = 0LL, yp = 0LL, zp = 0LL, xv = 0LL, yv = 0LL, zv = 0LL;
     auto sep = ' ';
 
     while (file >> xp >> sep >> yp >> sep >> zp >> sep >> xv >> sep >> yv >> sep >> zv)
         hailstones.push_back(Hailstone{ xp, yp, zp, xv, yv, zv });
 }
 
-// adapted from online code sample!
+// Adapted from online code sample!
 auto intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
 {
     auto denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
@@ -41,8 +43,10 @@ auto do_part1()
         for (auto j = i + 1; j < hailstones.size(); j++)
         {
             Hailstone &h1 = hailstones[i], &h2 = hailstones[j];
-            auto x1 = h1.x_pos, x2 = h1.x_pos + h1.x_vel; auto x3 = h2.x_pos, x4 = h2.x_pos + h2.x_vel; 
-            auto y1 = h1.y_pos, y2 = h1.y_pos + h1.y_vel; auto y3 = h2.y_pos, y4 = h2.y_pos + h2.y_vel;
+            auto x1 = double(h1.x_pos), x2 = double(h1.x_pos + h1.x_vel);
+            auto x3 = double(h2.x_pos), x4 = double(h2.x_pos + h2.x_vel);
+            auto y1 = double(h1.y_pos), y2 = double(h1.y_pos + h1.y_vel);
+            auto y3 = double(h2.y_pos), y4 = double(h2.y_pos + h2.y_vel);
 
             auto res = intersection(x1, y1, x2, y2, x3, y3, x4, y4);
             auto x = res.first, y = res.second;
@@ -58,7 +62,29 @@ auto do_part1()
 
 auto do_part2()
 {
-    return -1;
+    // Seems that the linear systems in the input are WAY overdetermined and any three hailstones would
+    // work. Let's arbitrarily pick the first three.
+
+    std::stringstream ss;
+    for (auto i = 0; i < 3; i++)
+    {
+        ss << 't' << i << " >= 0, ";
+        ss << hailstones[i].x_pos << " + " << hailstones[i].x_vel << 't' << i << " == x + vx " << 't' << i << ", ";
+        ss << hailstones[i].y_pos << " + " << hailstones[i].y_vel << 't' << i << " == y + vy " << 't' << i << ", ";
+        ss << hailstones[i].z_pos << " + " << hailstones[i].z_vel << 't' << i << " == z + vz " << 't' << i << ", ";
+    }
+    auto equations = ss.str();
+
+    std::string sendToMathematica = "Solve[{" + equations.substr(0, equations.length() - 2) + "}, {x,y,z,vx,vy,vz,t0,t1,t2}]";
+    std::cout << std::endl << sendToMathematica << std::endl << std::endl;
+
+    // After getting a free trial Mathematica subscription from https://www.wolfram.com/mathematica/trial/ and
+    // a few seconds of computation, we get these solutions:
+
+    auto x = 242369545669096;
+    auto y = 339680097675927;
+    auto z = 102145685363875;
+    return x + y + z;
 }
 
 int main()
@@ -72,6 +98,6 @@ int main()
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 26611);
-    //assert(part2 == );
+    assert(part2 == 684195328708898);
     return 0;
 }
