@@ -49,6 +49,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Day22", "Day22\Day22.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Day23", "Day23\Day23.vcxproj", "{42E27122-B14E-438F-9F83-1D09F13C2DBE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Day24", "Day24\Day24.vcxproj", "{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -335,6 +337,18 @@ Global
 		{42E27122-B14E-438F-9F83-1D09F13C2DBE}.Release|x64.Build.0 = Release|x64
 		{42E27122-B14E-438F-9F83-1D09F13C2DBE}.Release|x86.ActiveCfg = Release|Win32
 		{42E27122-B14E-438F-9F83-1D09F13C2DBE}.Release|x86.Build.0 = Release|Win32
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Debug|Any CPU.Build.0 = Debug|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Debug|x64.ActiveCfg = Debug|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Debug|x64.Build.0 = Debug|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Debug|x86.ActiveCfg = Debug|Win32
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Debug|x86.Build.0 = Debug|Win32
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Release|Any CPU.ActiveCfg = Release|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Release|Any CPU.Build.0 = Release|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Release|x64.ActiveCfg = Release|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Release|x64.Build.0 = Release|x64
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Release|x86.ActiveCfg = Release|Win32
+		{F80E60B7-EBB3-4718-95C2-9EE95773A4F6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
