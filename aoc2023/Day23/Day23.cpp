@@ -6,27 +6,30 @@
 
 using Point = std::pair<int, int>;
 using Points = std::vector<Point>;
+using Grid = std::vector<std::string>;
 
 const int dr[] = { -1, 1, 0, 0 }, dc[] = { 0, 0, -1 ,1 };
 const std::string anti_slope = "v^><";
-std::vector<std::string> grid;
 
-void read_grid(const std::string &filename)
+auto read_grid(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
+    Grid grid;
 
     while (std::getline(file, line))
         grid.push_back(line);
+
+    return grid;
 }
 
-auto can_advance(int row, int col, bool respect_slope, int dir_index)
+auto can_advance(Grid &grid, int row, int col, bool respect_slope, int dir_index)
 {
     return row >= 0 && row < grid.size() && grid[row][col] != '#' &&
         (!respect_slope || anti_slope.find(grid[row][col]) != dir_index);
 }
 
-auto find_forks()
+auto find_forks(Grid &grid)
 {
     std::vector<std::pair<int,int>> retval;
 
@@ -54,10 +57,10 @@ auto find_forks()
     return retval;
 }
 
-auto follow_tunnel(Points &forks, int index, int rdir, int cdir, bool respect_slope)
+auto follow_tunnel(Grid &grid, Points &forks, int index, int rdir, int cdir, bool respect_slope)
 {
     Point &fork = forks[index];
-    auto prow = fork.first, pcol = fork.second;
+    auto prev_row = fork.first, prev_col = fork.second;
     auto row = fork.first + rdir, col = fork.second + cdir;
 
     for (auto len = 1; ; len++)
@@ -67,24 +70,24 @@ auto follow_tunnel(Points &forks, int index, int rdir, int cdir, bool respect_sl
         if (found != forks.end())
             return make_pair(found, len);
 
-        auto nrow = -1, ncol = -1;
+        auto next_row = -1, next_col = -1;
         for (auto i = 0; i < 4; i++)
         {
-            nrow = row + dr[i], ncol = col + dc[i];
+            next_row = row + dr[i], next_col = col + dc[i];
 
-            if ((nrow != prow || ncol != pcol) && can_advance(nrow, ncol, respect_slope, i))
+            if ((next_row != prev_row || next_col != prev_col) && can_advance(grid, next_row, next_col, respect_slope, i))
                 break;
         }
 
-        if (nrow == -1 && ncol == -1)
+        if (next_row == -1 && next_col == -1)
             return make_pair(forks.end(), -1);
 
-        prow = row, pcol = col;
-        row = nrow, col = ncol;
+        prev_row = row, prev_col = col;
+        row = next_row, col = next_col;
     }
 }
 
-auto build_adjacency_matrix(Points &forks, bool respect_slope)
+auto build_adjacency_matrix(Grid &grid, Points &forks, bool respect_slope)
 {
     std::vector<std::vector<int>> adj(forks.size(), std::vector<int>(forks.size()));
 
@@ -93,9 +96,9 @@ auto build_adjacency_matrix(Points &forks, bool respect_slope)
         {
             auto row = forks[i].first + dr[j], col = forks[i].second + dc[j];
 
-            if (can_advance(row, col, respect_slope, j))
+            if (can_advance(grid, row, col, respect_slope, j))
             {
-                auto tunnel_end = follow_tunnel(forks, i, dr[j], dc[j], respect_slope);
+                auto tunnel_end = follow_tunnel(grid, forks, i, dr[j], dc[j], respect_slope);
                 if (tunnel_end.second != -1)
                     adj[i][tunnel_end.first - forks.begin()] = tunnel_end.second;
             }
@@ -104,48 +107,47 @@ auto build_adjacency_matrix(Points &forks, bool respect_slope)
     return adj;
 }
 
-void recur(int dist, int start_index, std::vector<std::vector<int>> &adj, std::vector<bool> &seen, int &max_path)
+auto solve(Grid &grid, bool respect_slope)
 {
-    if (start_index == adj.size() - 1)
-    {
-        max_path = std::max(max_path, dist);
-        return;
-    } 
-
-    for (auto i = 0; i < adj[start_index].size(); i++)
-        if (adj[start_index][i] && !seen[i])
-        {
-            seen[i] = true;
-            recur(dist + adj[start_index][i], i, adj, seen, max_path);
-            seen[i] = false;
-        }
-}
-
-auto solve(bool respect_slope)
-{
-    auto forks = find_forks();
-    auto adj = build_adjacency_matrix(forks, respect_slope);
-    auto seen = std::vector<bool>(forks.size());
-    seen[0] = true;
+    auto forks = find_forks(grid);
+    auto adj = build_adjacency_matrix(grid, forks, respect_slope);
     auto max_path = 0;
 
-    recur(0, 0, adj, seen, max_path);
+    auto seen = std::vector<bool>(forks.size());
+    seen[0] = true;
+
+    auto recur = [&](auto &self, int dist, int start_index)
+    {
+        if (start_index == adj.size() - 1)
+        {
+            max_path = std::max(max_path, dist);
+            return;
+        }
+
+        for (auto i = 0; i < adj[start_index].size(); i++)
+            if (adj[start_index][i] && !seen[i])
+            {
+                seen[i] = true;
+                self(self, dist + adj[start_index][i], i);
+                seen[i] = false;
+            }
+    };
+
+    recur(recur, 0, 0);
     return max_path;
 }
 
 int main()
 {
-    read_grid("input.txt");
+    auto grid = read_grid("input.txt");
 
-    auto part1 = solve(true);
+    auto part1 = solve(grid, true);
     std::cout << "Part One: " << part1 << std::endl;
 
-    auto part2 = solve(false);
+    auto part2 = solve(grid, false);
     std::cout << "Part Two: " << part2 << std::endl;
 
     assert(part1 == 2154);
     assert(part2 == 6654);
     return 0;
 }
-// TODO: Make recur return max path instead of passing as param
-// TODO: Use nested, recursive lambda to avoid so much context passing
