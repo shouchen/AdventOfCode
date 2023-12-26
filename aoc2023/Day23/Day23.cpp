@@ -57,11 +57,11 @@ auto find_forks(Grid &grid)
     return retval;
 }
 
-auto follow_tunnel(Grid &grid, Points &forks, int index, int rdir, int cdir, bool respect_slope)
+auto follow_tunnel(Grid &grid, Points &forks, int index, int index_dir, bool respect_slope)
 {
     Point &fork = forks[index];
     auto prev_row = fork.first, prev_col = fork.second;
-    auto row = fork.first + rdir, col = fork.second + cdir;
+    auto row = fork.first + dr[index_dir], col = fork.second + dc[index_dir];
 
     for (auto len = 1; ; len++)
     {
@@ -96,12 +96,12 @@ auto build_adjacency_matrix(Grid &grid, Points &forks, bool respect_slope)
         {
             auto row = forks[i].first + dr[j], col = forks[i].second + dc[j];
 
-            if (can_advance(grid, row, col, respect_slope, j))
-            {
-                auto tunnel_end = follow_tunnel(grid, forks, i, dr[j], dc[j], respect_slope);
-                if (tunnel_end.second != -1)
-                    adj[i][tunnel_end.first - forks.begin()] = tunnel_end.second;
-            }
+            if (!can_advance(grid, forks[i].first + dr[j], forks[i].second + dc[j], respect_slope, j))
+                continue;
+
+            auto tunnel_end = follow_tunnel(grid, forks, i, j, respect_slope);
+            if (tunnel_end.second != -1)
+                adj[i][tunnel_end.first - forks.begin()] = tunnel_end.second;
         }
 
     return adj;

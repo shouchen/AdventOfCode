@@ -62,8 +62,9 @@ auto do_part1()
 
 auto do_part2()
 {
-    // Seems that the linear systems in the input are WAY overdetermined and any three hailstones would
-    // work. Let's arbitrarily pick the first three.
+    // The linear systems in the input are WAY overdetermined and any three hailstones would
+    // work (or else the problem would not be solvable as described). Let's arbitrarily pick
+    // the first stones for getting enough equations.
 
     std::stringstream ss;
     for (auto i = 0; i < 3; i++)
@@ -78,8 +79,11 @@ auto do_part2()
     std::string sendToMathematica = "Solve[{" + equations.substr(0, equations.length() - 2) + "}, {x,y,z,vx,vy,vz,t0,t1,t2}]";
     std::cout << std::endl << sendToMathematica << std::endl << std::endl;
 
-    // After getting a free trial Mathematica subscription from https://www.wolfram.com/mathematica/trial/ and
-    // a few seconds of computation, we get these solutions:
+    // After getting a free trial Mathematica subscription from https://www.wolfram.com/mathematica/trial/
+    // and a few seconds of computation, we get the below solutions. I'm at peace with doing this since the
+    // alternative would be to import a high-powered library like Z3 to do basically the same thing. And
+    // other code-only solutions would rely on examining the particulars of the input data and doing a
+    // part-programming, part-data deep dive that may not really be much of a general solution at all.
 
     auto x = 242369545669096;
     auto y = 339680097675927;
