@@ -56,10 +56,16 @@ auto rng = std::mt19937(unsigned(time(nullptr)));
 void read_input(const std::string &filename)
 {
     std::ifstream file("input.txt");
-//    adj.resize(1500); // must be large enough for all vertices (which is more than input lines)
-
     std::string line, s, t;
     std::map<std::string, int> name_to_index;
+
+    auto get_or_create_vertex_index = [&](std::string &n) -> int {
+        if (name_to_index.count(n))
+            return name_to_index[n];
+
+        adj.push_back(std::vector<std::pair<int, int>>());
+        return name_to_index[n] = V++;
+    };
 
     while (getline(file, line))
     {
@@ -67,21 +73,17 @@ void read_input(const std::string &filename)
 
         ss >> s;
         s.pop_back();
-        auto s_index = name_to_index.count(s) ? name_to_index[s] : (name_to_index[s] = V++);
+        auto s_index = get_or_create_vertex_index(s);
 
         while (ss >> t)
         {
-            auto t_index = name_to_index.count(t) ? name_to_index[t] : (name_to_index[t] = V++);
-            while (adj.size() < name_to_index.size())
-                adj.push_back(std::vector<std::pair<int, int>>());
+            auto t_index = get_or_create_vertex_index(t);
 
-            adj[s_index].push_back({ t_index, int(edges.size()) });
-            adj[t_index].push_back({ s_index, int(edges.size()) });
             edges.push_back({ s_index, t_index });
+            adj[s_index].push_back({ t_index, E });
+            adj[t_index].push_back({ s_index, E++ });
         }
     }
-
-    E = int(edges.size());
 }
 
 auto do_karger()
