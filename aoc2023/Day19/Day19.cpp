@@ -63,6 +63,17 @@ Ranges sub_intersects(Ranges ranges, Range r)
 struct Part
 {
     int x, m, a, s;
+    int &get_xmas(char xmas)
+    {
+        switch (xmas)
+        {
+        case 'x': return x;
+        case 'm': return m;
+        case 'a': return a;
+        case 's': return s;
+        default: assert(false);
+        }
+    }
 };
 
 struct PartRange
@@ -116,20 +127,17 @@ auto parse_rule(std::string line)
 auto parse_rules(std::string line)
 {
     std::vector<Rule> retval;
-
-    auto curr = 0;
-    for (;;)
+    
+    for (auto curr = 0;;)
     {
         auto comma = line.find(',', curr);
         if (comma == std::string::npos)
         {
-            Rule r = parse_rule(line.substr(curr));
-            retval.push_back(r);
+            retval.push_back(parse_rule(line.substr(curr)));
             return retval;
         }
 
-        Rule r = parse_rule(line.substr(curr, comma - curr));
-        retval.push_back(r);
+        retval.push_back(parse_rule(line.substr(curr, comma - curr)));
         curr = int(comma + 1);
     }
 }
@@ -146,12 +154,12 @@ auto parse_workflow(std::string line)
 
 auto parse_part(std::string line)
 {
-    Part part;
-    part.x = stoi(line.substr(line.find("x=") + 2));
-    part.m = stoi(line.substr(line.find("m=") + 2));
-    part.a = stoi(line.substr(line.find("a=") + 2));
-    part.s = stoi(line.substr(line.find("s=") + 2));
-    return part;
+    return Part{
+        stoi(line.substr(line.find("x=") + 2)),
+        stoi(line.substr(line.find("m=") + 2)),
+        stoi(line.substr(line.find("a=") + 2)),
+        stoi(line.substr(line.find("s=") + 2))
+    };
 }
 #pragma endregion
 
@@ -163,22 +171,8 @@ bool is_accepted(Part &part)
     for (;;)
         for (auto &r : curr.rules)
         {
-            if (r.op == '<' &&
-                (r.xmas != 'x' || part.x >= r.operand) &&
-                (r.xmas != 'm' || part.m >= r.operand) &&
-                (r.xmas != 'a' || part.a >= r.operand) &&
-                (r.xmas != 's' || part.s >= r.operand))
-            {
-                continue;
-            }
-            else if (r.op == '>' &&
-                (r.xmas != 'x' || part.x <= r.operand) &&
-                (r.xmas != 'm' || part.m <= r.operand) &&
-                (r.xmas != 'a' || part.a <= r.operand) &&
-                (r.xmas != 's' || part.s <= r.operand))
-            {
-                continue;
-            }
+            if (r.op == '<' && part.get_xmas(r.xmas) >= r.operand) continue;
+            if (r.op == '>' && part.get_xmas(r.xmas) <= r.operand) continue;
 
             if (r.action == "A") return true;
             if (r.action == "R") return false;
