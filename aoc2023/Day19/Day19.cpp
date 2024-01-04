@@ -84,7 +84,7 @@ struct PartRange
 
     auto get_size()
     {
-        return (long long)get_size(x) * get_size(m) * get_size(a) * get_size(s);
+        return long long(get_size(x)) * get_size(m) * get_size(a) * get_size(s);
     }
 };
 
@@ -107,23 +107,10 @@ std::map<std::string, Workflow> workflows;
 #pragma region Parsing
 auto parse_rule(std::string line)
 {
-    Rule retval;
-
-    if (line.find('<') != std::string::npos || line.find('>') != std::string::npos)
-    {
-        retval.xmas = line[0];
-        retval.op = line[1];
-        retval.operand = stoi(line.substr(2));
-
-        auto colon = line.find(':');
-        retval.action = line.substr(colon + 1);
-    }
-    else
-    {
-        retval.action = line;
-    }
-
-    return retval;
+    auto colon = line.find(':');
+    return (colon == std::string::npos)
+        ? Rule{ ' ', ' ', 0, line }
+        : Rule{ line[0], line[1], stoi(line.substr(2)), line.substr(colon + 1) };
 }
 
 auto parse_rules(std::string line)
@@ -138,17 +125,13 @@ auto parse_rules(std::string line)
         {
             Rule r = parse_rule(line.substr(curr));
             retval.push_back(r);
-            break;
+            return retval;
         }
-        else
-        {
-            Rule r = parse_rule(line.substr(curr, comma - curr));
-            retval.push_back(r);
-            curr = int(comma + 1);
-        }
-    }
 
-    return retval;
+        Rule r = parse_rule(line.substr(curr, comma - curr));
+        retval.push_back(r);
+        curr = int(comma + 1);
+    }
 }
 
 auto parse_workflow(std::string line)
@@ -178,70 +161,41 @@ bool is_accepted(Part &part)
     auto curr = workflows["in"];
 
     for (;;)
-    {
         for (auto &r : curr.rules)
         {
-            if (r.op == '<')
+            if (r.op == '<' &&
+                (r.xmas != 'x' || part.x >= r.operand) &&
+                (r.xmas != 'm' || part.m >= r.operand) &&
+                (r.xmas != 'a' || part.a >= r.operand) &&
+                (r.xmas != 's' || part.s >= r.operand))
             {
-                if (r.xmas == 'x' && part.x < r.operand ||
-                    r.xmas == 'm' && part.m < r.operand ||
-                    r.xmas == 'a' && part.a < r.operand ||
-                    r.xmas == 's' && part.s < r.operand)
-                {
-                    if (r.action == "A")
-                        return true;
-                    else if (r.action == "R")
-                        return false;
+                continue;
+            }
+            else if (r.op == '>' &&
+                (r.xmas != 'x' || part.x <= r.operand) &&
+                (r.xmas != 'm' || part.m <= r.operand) &&
+                (r.xmas != 'a' || part.a <= r.operand) &&
+                (r.xmas != 's' || part.s <= r.operand))
+            {
+                continue;
+            }
 
-                    curr = workflows[r.action];
-                    break;
-                }
-            }
-            else if (r.op == '>')
-            {
-                if (r.xmas == 'x' && part.x > r.operand ||
-                    r.xmas == 'm' && part.m > r.operand ||
-                    r.xmas == 'a' && part.a > r.operand ||
-                    r.xmas == 's' && part.s > r.operand)
-                {
-                    if (r.action == "A")
-                        return true;
-                    else if (r.action == "R")
-                        return false;
+            if (r.action == "A") return true;
+            if (r.action == "R") return false;
 
-                    curr = workflows[r.action];
-                    break;
-                }
-            }
-            else if (r.action == "A")
-            {
-                return true;
-            }
-            else if (r.action == "R")
-            {
-                return false;
-            }
-            else
-            {
-                curr = workflows[r.action];
-                break;
-            }
+            curr = workflows[r.action];
+            break;
         }
-    }
 }
 
 long long recur(const std::string &label, PartRange pr)
 {
-    if (label == "A")
-        return pr.get_size();
-
-    if (label == "R")
-        return 0;
+    if (label == "A") return pr.get_size();
+    if (label == "R") return 0;
 
     auto retval = 0LL;
-    auto &wf = workflows[label];
 
-    for (auto &r : wf.rules)
+    for (auto &r : workflows[label].rules)
     {
         PartRange new_pr = pr;
 
@@ -269,8 +223,6 @@ long long recur(const std::string &label, PartRange pr)
                 new_pr.s = intersect(pr.s, temp);
                 pr.s = sub_intersects(pr.s, temp);
                 break;
-            default:
-                assert(false);
             }
         }
 
@@ -294,7 +246,7 @@ auto do_part1(const std::string &filename)
 
     while (std::getline(file, line) && !line.empty())
     {
-        Part p = parse_part(line);
+        auto p = parse_part(line);
         if (is_accepted(p))
             retval += p.x + p.m + p.a + p.s;
     }
