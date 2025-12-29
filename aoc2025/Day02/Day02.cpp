@@ -21,10 +21,7 @@ auto is_invalid(unsigned long long n)
 
     for (auto replen = s.length() / 2; replen; --replen)
         if (is_repeats(s, replen))
-            if ((s.length() % 2 == 0) && (replen == s.length() / 2))
-                return std::make_pair(true, true);
-            else
-                return std::make_pair(false, true);
+            return std::make_pair(replen + replen == s.length(), true);
 
     return std::make_pair(false, false);
 }
