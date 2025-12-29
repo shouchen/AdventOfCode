@@ -15,38 +15,34 @@ auto is_repeats(const std::string &s, int replen)
     return true;
 }
 
-auto is_invalid1(const std::string &s)
+auto is_invalid(unsigned long long n)
 {
-    return s.length() % 2 == 0 && is_repeats(s, s.length() / 2);
-}
+    auto s = std::to_string(n);
 
-auto is_invalid2(const std::string &s)
-{
-    for (auto replen = 1; replen <= s.length() / 2; replen++)
+    for (auto replen = s.length() / 2; replen; --replen)
         if (is_repeats(s, replen))
-            return true;
+            if ((s.length() % 2 == 0) && (replen == s.length() / 2))
+                return std::make_pair(true, true);
+            else
+                return std::make_pair(false, true);
 
-    return false;
+    return std::make_pair(false, false);
 }
 
 auto solve(const std::string &filename)
 {
+    std::ifstream file(filename);
     auto retval = std::make_pair(0ULL, 0ULL);
     auto first = 0ULL, second = 0ULL;
     auto dash = '-', comma = ',';
-
-    std::ifstream file(filename);
 
     while (file >> first >> dash >> second)
     {
         for (auto curr = first; curr <= second; curr++)
         {
-            auto s = std::to_string(curr);
-
-            if (is_invalid1(s))
-                retval.first += curr;
-            if (is_invalid2(s))
-                retval.second += curr;
+            auto inv = is_invalid(curr);
+            if (inv.first) retval.first += curr;
+            if (inv.second) retval.second += curr;
         }
 
         file >> comma;
