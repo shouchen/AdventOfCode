@@ -6,31 +6,35 @@
 
 std::vector<std::pair<unsigned long long, unsigned long long>> ranges;
 
-auto coalesce_range()
+void coalesce_ranges()
 {
-    for (auto a = 0; a < ranges.size(); a++)
-        for (auto b = 0; b < ranges.size(); b++)
-        {
-            if (a == b)
-                continue;
-
-            // Extend A left and delete B
-            if (ranges[b].first < ranges[a].first && ranges[b].second >= ranges[a].first && ranges[b].second <= ranges[a].second)
+    auto coalesce = [&]() -> bool {
+        for (auto a = ranges.begin(); a != ranges.end(); a++)
+            for (auto b = ranges.begin(); b != ranges.end(); b++)
             {
-                ranges[a].first = ranges[b].first;
-                ranges.erase(ranges.begin() + b);
-                return true;
+                if (a == b)
+                    continue;
+
+                // Partial overlap: Widen one and delete the other
+                if (b->first < a->first && b->second >= a->first && b->second <= a->second)
+                {
+                    a->first = b->first;
+                    ranges.erase(b);
+                    return true;
+                }
+
+                // Complete overlap: Delete the one that's not needed
+                if (b->first <= a->first && b->second >= a->second)
+                {
+                    ranges.erase(a);
+                    return true;
+                }
             }
 
-            // Just delete A
-            if (ranges[b].first <= ranges[a].first && ranges[b].second >= ranges[a].second)
-            {
-                ranges.erase(ranges.begin() + a);
-                return true;
-            }
-        }
+        return false;
+    };
 
-    return false;
+    while (coalesce());
 }
 
 auto is_fresh(unsigned long long ingredient)
@@ -57,7 +61,7 @@ auto do_part1(const std::string &filename)
         ranges.push_back(std::make_pair(from, to));
     }
 
-    while(coalesce_range());
+    coalesce_ranges();
 
     auto retval = 0;
     auto ingredient = 0ULL;
