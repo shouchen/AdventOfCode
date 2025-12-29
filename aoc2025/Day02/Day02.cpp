@@ -3,44 +3,28 @@
 #include <string>
 #include <cassert>
 
-auto is_invalid1(const unsigned long long n)
+auto is_repeats(const std::string &s, int replen)
 {
-    auto s = std::to_string(n);
-    auto len = s.length();
-    if (len % 2 != 0)
+    if (s.length() % replen)
         return false;
 
-    for (auto i = 0; i < len / 2; i ++)
-    {
-        if (s[i] != s[i + len / 2])
+    for (auto i = replen; i < s.length(); i++)
+        if (s[i] != s[i % replen])
             return false;
-    }
 
     return true;
 }
 
-auto is_invalid2(const unsigned long long n)
+auto is_invalid1(const std::string &s)
 {
-    auto s = std::to_string(n);
+    return s.length() % 2 == 0 && is_repeats(s, s.length() / 2);
+}
 
+auto is_invalid2(const std::string &s)
+{
     for (auto replen = 1; replen <= s.length() / 2; replen++)
-    {
-        if (s.length() % replen != 0)
-            continue;
-
-        bool repeats = true;
-        for (auto i = 0; i < s.length(); i++)
-        {
-            if (s[i] != s[i % replen])
-            {
-                repeats = false;
-                break;
-            }
-        }
-
-        if (repeats)
+        if (is_repeats(s, replen))
             return true;
-    }
 
     return false;
 }
@@ -57,9 +41,11 @@ auto solve(const std::string &filename)
     {
         for (auto curr = first; curr <= second; curr++)
         {
-            if (is_invalid1(curr))
+            auto s = std::to_string(curr);
+
+            if (is_invalid1(s))
                 retval.first += curr;
-            if (is_invalid2(curr))
+            if (is_invalid2(s))
                 retval.second += curr;
         }
 
