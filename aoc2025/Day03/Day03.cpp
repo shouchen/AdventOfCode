@@ -1,46 +1,47 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
 #include <cassert>
 
-auto get_max_joltage(const std::string &bank)
+auto get_joltage(const std::string &bank, int n)
 {
-    auto first = '0', second = '0';
-    auto savepos = 0;
-    for (auto i = 0; i < bank.length() - 1; i++)
-        if (bank[i] > first)
-        {
-            first = bank[i];
-            savepos = i;
-        }
+    auto startpos = bank.begin(), endpos = bank.end() - n;
+    auto retval = std::string{};
 
-    for (auto i = savepos + 1; i < bank.length(); i++)
-        if (bank[i] > second)
-            second = bank[i];
+    while (retval.length() < n)
+    {
+        endpos++;
 
-    return (first - '0') * 10 + (second - '0');
+        auto maxpos = std::max_element(startpos, endpos);
+        retval.push_back(*maxpos);
+
+        startpos = maxpos + 1;
+    }
+
+    return std::stoull(retval);
 }
 
-auto solve(const std::string &filename)
+auto solve(const std::string &filename, int n)
 {
     std::ifstream file(filename);
     std::string bank;
-    auto retval = 0;
+    auto retval = 0ULL;
 
     while (std::getline(file, bank))
-        retval += get_max_joltage(bank);
+        retval += get_joltage(bank, n);
 
     return retval;
 }
 
 int main()
 {
-    auto part1 = solve("input.txt");
+    auto part1 = solve("input.txt", 2);
     std::cout << "Part One: " << part1 << std::endl;
+
+    auto part2 = solve("input.txt", 12);
+    std::cout << "Part Two: " << part2 << std::endl;
+
     assert(part1 == 17343);
-    
-    // std::cout << "Part Two: " << solution.second << std::endl;
-    // assert(solution.second == );
+    assert(part2 == 172664333119298);
     return 0;
 }
