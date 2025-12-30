@@ -28,10 +28,13 @@ auto do_part1(const std::string &filename)
 
         for (auto row = 1; row < worksheet.size() - 1; row++)
         {
-            if (worksheet.back()[col] == "+")
-                temp += std::stoull(worksheet[row][col]);
+            auto operand = std::stoull(worksheet[row][col]);
+            auto operation = worksheet.back()[col];
+
+            if (operation == "+")
+                temp += operand;
             else
-                temp *= std::stoull(worksheet[row][col]);
+                temp *= operand;
         }
 
         retval += temp;
@@ -50,38 +53,35 @@ auto do_part2(const std::string &filename)
         worksheet.push_back(line);
 
     auto temp = 0ULL, retval = 0ULL;
+    auto operation = ' ';
 
-    for (int col = worksheet[0].length() - 1; col >= 0; --col)
+    for (auto col = 0; col < worksheet[0].size(); col++)
     {
-        auto operation = ' ';
-        for (auto i = col; ; --i)
+        auto cell = worksheet.back()[col];
+        if (cell != ' ')
         {
-            if (worksheet.back()[i] == '+' || worksheet.back()[i] == '*')
-            {
-                operation = worksheet.back()[i];
-                break;
-            }
+            operation = cell;
+            temp = cell == '+' ? 0 : 1;
         }
 
-        auto operand = 0ULL;
+        auto operand_str = std::string();
 
         for (auto row = 0; row < worksheet.size() - 1; row++)
             if (isdigit(worksheet[row][col]))
-                operand = operand * 10 + (worksheet[row][col] - '0');
+                operand_str.push_back(worksheet[row][col]);
 
-        if (temp == 0)
-            temp = operand;
-        else if (operation == '+')
-            temp += operand;
-        else
-            temp *= operand;
-
-        if (worksheet.back()[col] == operation)
+        if (operand_str.length())
         {
-            --col;
-            retval += temp;
-            temp = 0ULL;
+            auto operand = std::stoull(operand_str);
+
+            if (operation == '+')
+                temp += operand;
+            else
+                temp *= operand;
         }
+
+        if (operand_str.length() == 0 || col == worksheet[0].size() - 1)
+            retval += temp;
     }
 
     return retval;
