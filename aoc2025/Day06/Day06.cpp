@@ -34,8 +34,54 @@ auto do_part1(const std::string &filename)
                 temp *= std::stoull(worksheet[row][col]);
         }
 
-        std::cout << temp << std::endl;
         retval += temp;
+    }
+
+    return retval;
+}
+
+auto do_part2(const std::string &filename)
+{
+    std::vector<std::string> worksheet;
+    std::ifstream file(filename);
+    std::string line;
+
+    while (std::getline(file, line))
+        worksheet.push_back(line);
+
+    auto temp = 0ULL, retval = 0ULL;
+
+    for (int col = worksheet[0].length() - 1; col >= 0; --col)
+    {
+        auto operation = ' ';
+        for (auto i = col; ; --i)
+        {
+            if (worksheet.back()[i] == '+' || worksheet.back()[i] == '*')
+            {
+                operation = worksheet.back()[i];
+                break;
+            }
+        }
+
+        auto operand = 0ULL;
+
+        for (auto row = 0; row < worksheet.size() - 1; row++)
+            if (isdigit(worksheet[row][col]))
+                operand = operand * 10 + (worksheet[row][col] - '0');
+
+        if (temp == 0)
+            temp = operand;
+        else if (operation == '+')
+            temp += operand;
+        else
+            temp *= operand;
+
+        if (worksheet.back()[col] == operation)
+        {
+            --col;
+            retval += temp;
+            temp = 0ULL;
+        }
     }
 
     return retval;
@@ -47,9 +93,9 @@ int main()
     std::cout << "Part One: " << part1 << std::endl;
     assert(part1 == 6209956042374);
 
-    //auto part2 = do_part2();
-    //std::cout << "Part Two: " << part2 << std::endl;
-    //assert(part2 == );
+    auto part2 = do_part2("input.txt");
+    std::cout << "Part Two: " << part2 << std::endl;
+    assert(part2 == 12608160008022);
 
     return 0;
 }
