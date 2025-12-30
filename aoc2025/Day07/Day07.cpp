@@ -29,23 +29,6 @@ auto do_part1(const std::string &filename)
 
 std::map<std::pair<int, int>, unsigned long long> memo;
 
-//auto recur(const std::vector<std::string> &grid, int row, int col)
-//{
-//    if (row >= grid.size())
-//        return 1ULL;
-//
-//    auto x = memo.find({ row, col });
-//    if (x != memo.end())
-//        return x->second;
-//
-//    auto retval = (grid[row][col] == '^')
-//        ? recur(grid, row + 1, col - 1) + recur(grid, row + 1, col + 1)
-//        : recur(grid, row + 1, col);
-//
-//    memo[{row, col}] = retval;
-//    return retval;
-//}
-
 auto do_part2(const std::string &filename)
 {
     auto recur2 = [&](auto &&self, const std::vector<std::string> &grid, int row, int col) -> unsigned long long {
