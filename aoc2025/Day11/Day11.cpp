@@ -1,14 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <vector>
 #include <map>
-#include <set>
 #include <cassert>
 
 struct Node
 {
-    std::string name;
     std::vector<Node *> adjacents;
 };
 
@@ -28,13 +25,13 @@ auto read_data(const std::string &filename)
             token.pop_back();
 
             from = graph.find(token) == graph.end()
-                ? graph[token] = new Node{ token }
+                ? graph[token] = new Node()
                 : graph[token];
         }
         else
         {
             to = graph.find(token) == graph.end()
-                ? graph[token] = new Node{ token }
+                ? graph[token] = new Node()
                 : graph[token];
 
             from->adjacents.push_back(to);
@@ -69,8 +66,7 @@ auto do_part2()
     Node *svr = graph["svr"], *out = graph["out"];
     Node *dac = graph["dac"], *fft = graph["fft"];
 
-    auto fft_dac = recur(fft, dac);
-    auto dac_fft = recur(dac, fft);
+    auto fft_dac = recur(fft, dac), dac_fft = recur(dac, fft);
 
     return fft_dac
         ? recur(svr, fft) * fft_dac * recur(dac, out)
