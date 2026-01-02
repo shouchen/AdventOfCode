@@ -34,7 +34,7 @@ auto read_data(const std::string &filename)
                 ? graph[token] = new Node()
                 : graph[token];
 
-            from->adjacents.push_back(to);
+            if (from) from->adjacents.push_back(to);
         }
     }
 }
