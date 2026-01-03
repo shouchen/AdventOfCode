@@ -9,127 +9,72 @@
 
 struct JunctionBox
 {
-    std::tuple<int, int, int> location;
-    std::vector<JunctionBox *> connections;
+    std::tuple<long long, long long, long long> location;
     int circuit_id;
 };
 
-auto boxes = std::vector<JunctionBox *>();
-auto next_circuit_id = 1;
-auto ignore = std::set<std::pair<JunctionBox *, JunctionBox *>>();
+std::vector<JunctionBox> boxes;
+auto next_circuit_id = 0;
 
 auto merge_circuits(int id1, int id2)
 {
     for (auto &box : boxes)
-        if (box->circuit_id == id1 || box->circuit_id == id2)
-            box->circuit_id = next_circuit_id;
+        if (box.circuit_id == id1 || box.circuit_id == id2)
+            box.circuit_id = next_circuit_id;
 
     next_circuit_id++;
 }
 
-auto connect_closest_pair()
+auto get_distance(JunctionBox *b1, JunctionBox *b2)
 {
-    auto min_distance = std::numeric_limits<double>::max();
-    std::pair<JunctionBox *, JunctionBox*> closest_pair;
+    auto xdiff = std::get<0>(b1->location) - std::get<0>(b2->location);
+    auto ydiff = std::get<1>(b1->location) - std::get<1>(b2->location);
+    auto zdiff = std::get<2>(b1->location) - std::get<2>(b2->location);
 
-    for (auto i : boxes)
-    {
-        for (auto j : boxes)
-        {
-            if (i == j)
-                continue;
-
-            if (ignore.find({ i, j }) != ignore.end())
-                continue;
-
-            if (std::find(i->connections.begin(), i->connections.end(), j) != i->connections.end())
-                continue;
-
-            auto xdiff = std::get<0>(i->location) - std::get<0>(j->location);
-            auto ydiff = std::get<1>(i->location) - std::get<1>(j->location);
-            auto zdiff = std::get<2>(i->location) - std::get<2>(j->location);
-
-            auto distance = std::sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
-
-            if (distance < min_distance)
-            {
-                min_distance = distance;
-                closest_pair = { i, j };
-            }
-        }
-    }
-
-    if (closest_pair.first->circuit_id && closest_pair.first->circuit_id == closest_pair.second->circuit_id)
-    {
-        std::cout << "NOT Connecting boxes: ("
-            << std::get<0>(closest_pair.first->location) << ", "
-            << std::get<1>(closest_pair.first->location) << ", "
-            << std::get<2>(closest_pair.first->location) << ") <--> ("
-            << std::get<0>(closest_pair.second->location) << ", "
-            << std::get<1>(closest_pair.second->location) << ", "
-            << std::get<2>(closest_pair.second->location) << ") with distance "
-            << min_distance << std::endl;
-
-        ignore.insert({ closest_pair.first, closest_pair.second });
-        ignore.insert({ closest_pair.second, closest_pair.first });
-        return;
-    }
-
-    std::cout << "Connecting boxes: (" 
-              << std::get<0>(closest_pair.first->location) << ", "
-              << std::get<1>(closest_pair.first->location) << ", "
-              << std::get<2>(closest_pair.first->location) << ") <--> ("
-              << std::get<0>(closest_pair.second->location) << ", "
-              << std::get<1>(closest_pair.second->location) << ", "
-              << std::get<2>(closest_pair.second->location) << ") with distance " 
-        << min_distance << std::endl;
-
-    closest_pair.first->connections.push_back(closest_pair.second);
-    closest_pair.second->connections.push_back(closest_pair.first);
-
-    if (!closest_pair.first->circuit_id && closest_pair.second->circuit_id) // i no circuit, j has circuit
-        closest_pair.first->circuit_id = closest_pair.second->circuit_id;
-    else if (closest_pair.first->circuit_id && !closest_pair.second->circuit_id) // i has circuit, j doesn't
-        closest_pair.second->circuit_id = closest_pair.first->circuit_id;
-    else if (closest_pair.first->circuit_id && closest_pair.second->circuit_id) // both have different circuits
-        merge_circuits(closest_pair.first->circuit_id, closest_pair.second->circuit_id);
-    else // neither was in a circuit yet
-        closest_pair.first->circuit_id = closest_pair.second->circuit_id = next_circuit_id++;
+    return std::sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
 }
 
-auto do_part1(const std::string &filename)
+auto do_part1(const std::string &filename, int times)
 {
     std::ifstream file(filename);
     auto x = 0, y = 0, z = 0;
     auto comma = ',';
 
     while (file >> x >> comma >> y >> comma >> z)
-    {
-        auto box = new JunctionBox{ std::make_tuple(x, y, z), {}, 0 };
-        boxes.push_back(box);
-    }
+        boxes.push_back({ { x, y, z }, next_circuit_id++ });
+
+    std::vector<std::pair<std::pair<JunctionBox *, JunctionBox *>, double>> distances;
+
+    for (auto i = 0; i < boxes.size(); i++)
+        for (auto j = i + 1; j < boxes.size(); j++)
+            distances.push_back({ { &boxes[i], &boxes[j]}, get_distance(&boxes[i], &boxes[j]) });
+
+    std::sort(distances.begin(), distances.end(), [](const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &a, const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &b) -> bool {
+        return a.second > b.second;
+        });
 
     auto circuit_sizes = std::vector<int>();
 
-    for (auto i = 0; i < 1000; i++)
+    for (auto i = 0; i < times; i++)
     {
-        connect_closest_pair();
+        auto closest1 = distances.back().first.first, closest2 = distances.back().first.second;
+        distances.pop_back();
 
-        for (auto j = 1; j < next_circuit_id; j++)
-        {
-            auto count = 0;
-            for (auto &box : boxes)
-                if (box->circuit_id == j)
-                    count++;
+        if (closest1->circuit_id == closest2->circuit_id)
+            continue;
 
-            if (count)
-            {
-                std::cout << "Circuit " << j << ": " << count << std::endl;
+        merge_circuits(closest1->circuit_id, closest2->circuit_id);
+    }
+        
+    for (auto j = 0; j < next_circuit_id; j++)
+    {
+        auto count = 0;
+        for (auto &box : boxes)
+            if (box.circuit_id == j)
+                count++;
 
-                if (i == 999)
-                    circuit_sizes.push_back(count);
-            }
-        }
+        if (count)
+            circuit_sizes.push_back(count);
     }
 
     std::sort(circuit_sizes.begin(), circuit_sizes.end(), std::greater<int>());
@@ -137,15 +82,64 @@ auto do_part1(const std::string &filename)
     return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2];
 }
 
+bool all_same_circuit()
+{
+    for (auto box : boxes)
+        if (box.circuit_id != boxes[0].circuit_id)
+            return false;
+    return true;
+}
+
+auto do_part2(const std::string &filename)
+{
+    boxes.clear();
+    next_circuit_id = 0;
+
+    std::ifstream file(filename);
+    auto x = 0, y = 0, z = 0;
+    auto comma = ',';
+
+    while (file >> x >> comma >> y >> comma >> z)
+        boxes.push_back({ { x, y, z }, next_circuit_id++ });
+
+    std::vector<std::pair<std::pair<JunctionBox *, JunctionBox *>, double>> distances;
+
+    for (auto i = 0; i < boxes.size(); i++)
+        for (auto j = i + 1; j < boxes.size(); j++)
+            distances.push_back({ { &boxes[i], &boxes[j]}, get_distance(&boxes[i], &boxes[j]) });
+
+    std::sort(distances.begin(), distances.end(), [](const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &a, const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &b) -> bool {
+        return a.second > b.second;
+        });
+
+    auto circuit_sizes = std::vector<int>();
+
+    while (!distances.empty())
+    {
+        auto closest1 = distances.back().first.first, closest2 = distances.back().first.second;
+        distances.pop_back();
+
+        if (closest1->circuit_id == closest2->circuit_id)
+            continue;
+
+        merge_circuits(closest1->circuit_id, closest2->circuit_id);
+
+        if (all_same_circuit())
+            return std::get<0>(closest1->location) * std::get<0>(closest2->location);
+    }
+
+    return 0LL;
+}
+
 int main()
 {
-    auto part1 = do_part1("input.txt");
+    auto part1 = do_part1("input.txt", 1000);
     std::cout << "Part One: " << part1 << std::endl;
-    // assert(part1 == ); // 23700 was too low :(
+    assert(part1 == 175500);
 
-    //auto part2 = do_part2("input.txt");
-    //std::cout << "Part Two: " << part2 << std::endl;
-    //assert(part2 == );
+    auto part2 = do_part2("input.txt");
+    std::cout << "Part Two: " << part2 << std::endl;
+    assert(part2 == 6934702555);
 
     return 0;
 }
