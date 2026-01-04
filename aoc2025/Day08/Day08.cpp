@@ -25,18 +25,36 @@ auto get_distance(JunctionBox *b1, JunctionBox *b2)
 auto merge_circuits(int id1, int id2)
 {
     for (auto &box : boxes)
-        if (box.circuit_id == id1 || box.circuit_id == id2)
-            box.circuit_id = next_circuit_id;
-
-    next_circuit_id++;
+        if (box.circuit_id == id2)
+            box.circuit_id = id1;
 }
 
-bool all_same_circuit()
+auto all_same_circuit()
 {
     for (auto box : boxes)
         if (box.circuit_id != boxes[0].circuit_id)
             return false;
+
     return true;
+}
+
+auto get_product_of_top_three_circuit_sizes()
+{
+    auto circuit_sizes = std::vector<long long>();
+
+    for (auto j = 0; j < next_circuit_id; j++)
+    {
+        auto count = 0;
+        for (auto &box : boxes)
+            if (box.circuit_id == j)
+                count++;
+
+        if (count)
+            circuit_sizes.push_back(count);
+    }
+
+    std::partial_sort(circuit_sizes.begin(), circuit_sizes.begin() + 3, circuit_sizes.end(), std::greater<int>());
+    return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2];
 }
 
 auto solve(const std::string &filename)
@@ -60,8 +78,6 @@ auto solve(const std::string &filename)
         return a.second > b.second;
         });
 
-    auto circuit_sizes = std::vector<int>();
-
     for (auto times = 1; !retval.first || !retval.second; times++)
     {
         auto closest1 = distances.back().first.first, closest2 = distances.back().first.second;
@@ -71,21 +87,7 @@ auto solve(const std::string &filename)
             merge_circuits(closest1->circuit_id, closest2->circuit_id);
 
         if (times == 1000)
-        {
-            for (auto j = 0; j < next_circuit_id; j++)
-            {
-                auto count = 0;
-                for (auto &box : boxes)
-                    if (box.circuit_id == j)
-                        count++;
-
-                if (count)
-                    circuit_sizes.push_back(count);
-            }
-
-            std::sort(circuit_sizes.begin(), circuit_sizes.end(), std::greater<int>());
-            retval.first = circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2];
-        }
+            retval.first = get_product_of_top_three_circuit_sizes();
 
         if (all_same_circuit())
             retval.second = closest1->x * closest2->x;
