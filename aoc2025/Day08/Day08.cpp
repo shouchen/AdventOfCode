@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <queue>
 #include <algorithm>
 #include <cassert>
 
@@ -58,29 +59,26 @@ auto solve(const std::string &filename)
     std::ifstream file(filename);
     auto x = 0, y = 0, z = 0;
     auto comma = ',';
-    auto retval = std::make_pair<long long, long long>(0, 0);
+    //auto retval = std::make_pair<long long, long long>(0, 0);
+    std::pair<long long, long long> retval;
 
     while (file >> x >> comma >> y >> comma >> z)
         boxes.push_back({ x, y, z, int(boxes.size()) });
 
-    std::vector<std::pair<std::pair<JunctionBox *, JunctionBox *>, double>> distances;
+    using PairDistance = std::pair<std::pair<JunctionBox *, JunctionBox *>, double>;
+    auto comp = [](const PairDistance &a, const PairDistance &b) -> bool {
+        return a.second > b.second;
+    };
+    std::priority_queue<PairDistance, std::vector<PairDistance>, decltype(comp)> distances(comp);
 
     for (auto i = 0; i < boxes.size(); i++)
         for (auto j = i + 1; j < boxes.size(); j++)
-            distances.push_back({ { &boxes[i], &boxes[j]}, get_distance(&boxes[i], &boxes[j]) });
-
-    // TODO: Use priority queue instead of sorting
-    std::sort(
-        distances.begin(), distances.end(),
-        [](const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &a, const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &b) -> bool {
-        return a.second > b.second;
-        }
-    );
+            distances.push({ { &boxes[i], &boxes[j]}, get_distance(&boxes[i], &boxes[j]) });
 
     for (auto times = 1; !retval.first || !retval.second; times++)
     {
-        auto jb1 = distances.back().first.first, jb2 = distances.back().first.second;
-        distances.pop_back();
+        auto jb1 = distances.top().first.first, jb2 = distances.top().first.second;
+        distances.pop();
 
         if (jb1->circuit_id != jb2->circuit_id)
             merge_circuits(jb1->circuit_id, jb2->circuit_id);
