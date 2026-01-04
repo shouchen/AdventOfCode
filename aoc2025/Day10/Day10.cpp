@@ -106,7 +106,7 @@ auto do_part(const std::string &filename, bool part2)
         if (word.front() == '[')
         {
             goal = 0U;
-            num_indicators = word.length() - 2;
+            num_indicators = int(word.length()) - 2;
             for (auto c : word)
             {
                 if (c == '#')

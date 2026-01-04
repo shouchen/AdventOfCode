@@ -2,89 +2,80 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <set>
-#include <queue>
 #include <cassert>
 
-using Shape = std::vector<std::string>;
-using Shapes = std::vector<Shape>;
-
-Shapes shapes;
-
-auto get_shape_area(const Shape &shape)
+struct Shape
 {
-    auto retval = 0U;
-    for (int i = 0; i < shape.size(); i++)
-        for (int j = 0; j < shape[i].size(); j++)
-            if (shape[i][j] == '#')
-                retval++;
-    return retval;
-}
+    std::vector<std::string> form;
+    unsigned length, width;
+    unsigned packed_area;
+};
 
-auto will_fit(int width, int length, const std::vector<int> &quantities)
+std::vector<Shape> shapes;
+auto max_shape_width = 0U, max_shape_length = 0U;
+
+auto will_fit(int area_width, int area_length, const std::vector<int> &quantities)
 {
-    auto packages_require = 0U;
-    for (auto i = 0; i < shapes.size(); i++)
-        packages_require += quantities[i] * get_shape_area(shapes[i]);
+    auto total_packed_area = 0ULL, num_packages = 0ULL;
 
-    // Disquality if target area is too small, even with perfect interlocking
-    if (packages_require > width * length)
+    for (auto i = 0; i < quantities.size(); i++)
+    {
+        total_packed_area += quantities[i] * shapes[i].packed_area;
+        num_packages += quantities[i];
+    }
+
+    // If total packed area exceeds target area, no fit is possible.
+    if (total_packed_area > area_width * area_length)
         return false;
 
-    // Auto-succeed if the number of 3x3's in target area covers all the pieces, no interlocking required
-    auto num_packages = 0U;
-    for (auto &q : quantities)
-        num_packages += q;
-
-    if (num_packages <= (width / 3) * (length / 3)) // TODO: Shouldn't hard-code 3
+    // If target area has enough blocks to hold all pieces without interlocking, they fit.
+    if (num_packages <= (area_width / max_shape_width) * (area_length / max_shape_length))
         return true;
 
-    // Case three = have to interlock - does this even hit?
+    // This path is for more complex cases where interlocking could be required. For the example
+    // data, this assert does hit, but for the real puzzle data, this case is irrelevant. If this
+    // were to be hit with the puzzle data, we would need to implement a very complex packing
+    // algorithm for a general solution, or else examine the data for patterns and build a
+    // strategy for just the particular cases that occur in the puzzle input. Seeing that it's
+    // Christmastime, this is welcomed as a gift from our benevolent puzzlemaker.
     assert(false);
     return false;
 }
 
-auto do_part(const std::string &filename)
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
-    auto comma = ',', parenth = '(', brace = '{', token = ' ';
-    auto n = 0, num_indicators = 0;
-
-    auto buttons = std::vector<unsigned int>{};
-    auto joltages = std::vector<unsigned int>{};
-    auto goal = 0U;
-    unsigned retval = 0U;
-
+    auto retval = 0;
 
     while (std::getline(file, line))
     {
-        auto x = line.find('x');
-        auto colon = line.find(':');
-
-        if (x == std::string::npos) // shape definition
+        if (line.find('x') == std::string::npos)
         {
-            Shape shape;
+            std::vector<std::string> form;
+            auto packed_area = 0LL;
 
-            while (std::getline(file, line))
+            while (std::getline(file, line) && !line.empty())
             {
-                if (line.empty())
-                    break;
-
-                shape.push_back(line);
+                form.push_back(line);
+                packed_area += std::count(line.begin(), line.end(), '#');
             }
 
-            shapes.push_back(shape);
+            auto length = unsigned(form.size()), width = unsigned(form[0].size());
+            shapes.push_back({ form, length, width, unsigned(packed_area) });
+
+            max_shape_length = std::max(max_shape_length, length);
+            max_shape_width = std::max(max_shape_width, width);
         }
-        else // space under tree
+        else
         {
-            auto width = atoi(line.substr(0, x).c_str());
-            auto length = atoi(line.substr(x + 1, colon - x - 1).c_str());
-            auto rest = line.substr(colon + 1);
-            auto n = 0;
+            auto width = 0, length = 0, n = 0;
+            auto x = 'x', colon = ':';
             std::vector<int> quantities;
 
-            auto ss = std::stringstream(rest);
+            auto ss = std::stringstream(line);
+            ss >> width >> x >> length >> colon;
+
             while (ss >> n)
                 quantities.push_back(n);
 
@@ -98,7 +89,7 @@ auto do_part(const std::string &filename)
 
 int main()
 {
-    auto part1 = do_part("input.txt");
+    auto part1 = solve("input.txt");
     std::cout << "Part One: " << part1 << std::endl;
     assert(part1 == 479);
 

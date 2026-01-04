@@ -1,9 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <map>
-#include <set>
-#include <tuple>
 #include <algorithm>
 #include <cassert>
 
@@ -14,7 +11,6 @@ struct JunctionBox
 };
 
 std::vector<JunctionBox> boxes;
-auto next_circuit_id = 0;
 
 auto get_distance(JunctionBox *b1, JunctionBox *b2)
 {
@@ -31,7 +27,7 @@ auto merge_circuits(int id1, int id2)
 
 auto all_same_circuit()
 {
-    for (auto box : boxes)
+    for (auto &box : boxes)
         if (box.circuit_id != boxes[0].circuit_id)
             return false;
 
@@ -42,7 +38,7 @@ auto get_product_of_top_three_circuit_sizes()
 {
     auto circuit_sizes = std::vector<long long>();
 
-    for (auto j = 0; j < next_circuit_id; j++)
+    for (auto j = 0; j < boxes.size(); j++)
     {
         auto count = 0;
         for (auto &box : boxes)
@@ -53,7 +49,7 @@ auto get_product_of_top_three_circuit_sizes()
             circuit_sizes.push_back(count);
     }
 
-    std::partial_sort(circuit_sizes.begin(), circuit_sizes.begin() + 3, circuit_sizes.end(), std::greater<int>());
+    std::partial_sort(circuit_sizes.begin(), circuit_sizes.begin() + 3, circuit_sizes.end(), std::greater<long long>());
     return circuit_sizes[0] * circuit_sizes[1] * circuit_sizes[2];
 }
 
@@ -65,7 +61,7 @@ auto solve(const std::string &filename)
     auto retval = std::make_pair<long long, long long>(0, 0);
 
     while (file >> x >> comma >> y >> comma >> z)
-        boxes.push_back({ x, y, z, next_circuit_id++ });
+        boxes.push_back({ x, y, z, int(boxes.size()) });
 
     std::vector<std::pair<std::pair<JunctionBox *, JunctionBox *>, double>> distances;
 
@@ -74,23 +70,26 @@ auto solve(const std::string &filename)
             distances.push_back({ { &boxes[i], &boxes[j]}, get_distance(&boxes[i], &boxes[j]) });
 
     // TODO: Use priority queue instead of sorting
-    std::sort(distances.begin(), distances.end(), [](const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &a, const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &b) -> bool {
+    std::sort(
+        distances.begin(), distances.end(),
+        [](const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &a, const std::pair<std::pair<JunctionBox *, JunctionBox *>, double> &b) -> bool {
         return a.second > b.second;
-        });
+        }
+    );
 
     for (auto times = 1; !retval.first || !retval.second; times++)
     {
-        auto closest1 = distances.back().first.first, closest2 = distances.back().first.second;
+        auto jb1 = distances.back().first.first, jb2 = distances.back().first.second;
         distances.pop_back();
 
-        if (closest1->circuit_id != closest2->circuit_id)
-            merge_circuits(closest1->circuit_id, closest2->circuit_id);
+        if (jb1->circuit_id != jb2->circuit_id)
+            merge_circuits(jb1->circuit_id, jb2->circuit_id);
 
         if (times == 1000)
             retval.first = get_product_of_top_three_circuit_sizes();
 
         if (all_same_circuit())
-            retval.second = closest1->x * closest2->x;
+            retval.second = jb1->x * jb2->x;
     }
 
     return retval;

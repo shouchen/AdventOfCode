@@ -3,7 +3,7 @@
 #include <string>
 #include <cassert>
 
-auto is_repeats(const std::string &s, int replen)
+auto is_repeats(const std::string &s, unsigned long long replen)
 {
     if (s.length() % replen)
         return false;
