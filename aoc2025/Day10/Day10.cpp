@@ -4,116 +4,19 @@
 #include <vector>
 #include <set>
 #include <queue>
+#include <unordered_set>
 #include <unordered_map>
 #include <bitset>
 #include <ranges>
 #include <algorithm>
 #include <cassert>
 
-auto find_min_button_presses1(unsigned goal, const std::vector<unsigned int> &buttons)
-{
-    struct Elem
-    {
-        unsigned state = 0x0;
-        unsigned presses = 0;
-    };
-
-    std::set<unsigned> seen;
-
-    std::queue<Elem> q;
-    q.push(Elem());
-
-    while (!q.empty())
-    {
-        auto elem = q.front(); q.pop();
-
-        if (elem.state == goal)
-            return elem.presses;
-
-        if (seen.find(elem.state) != seen.end())
-            continue;
-
-        seen.insert(elem.state);
-
-        for (auto button : buttons)
-        {
-            auto new_state = elem.state ^ button;
-            q.push(Elem{ new_state, elem.presses + 1 });
-        }
-    }
-
-    return 0U;
-}
-
-auto do_part1(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string word;
-    auto comma = ',', parenth = '(', brace = '{', token = ' ';
-    auto n = 0, num_indicators = 0;
-
-    auto buttons = std::vector<unsigned int>{};
-    auto joltages = std::vector<unsigned int>{};
-    auto goal = 0U;
-    unsigned retval = 0U;
-
-    while (file >> word)
-    {
-        if (word.front() == '[')
-        {
-            goal = 0U;
-            num_indicators = int(word.length()) - 2;
-            for (auto c : word)
-            {
-                if (c == '#')
-                    goal = (goal <<  1) | 0x1;
-                if (c == '.')
-                    goal <<= 1;
-            }
-        }
-        else if (word.front() == '(')
-        {
-            auto button = 0U;
-            std::stringstream ss(word);
-
-            ss >> parenth;
-            while (ss >> n)
-            {
-                auto temp = 0x1 << (num_indicators - 1 - n);
-                button |= temp;
-                ss >> token;
-            }
-
-            buttons.push_back(button);
-        }
-        else // word.front() == '{'
-        {
-            auto joltage = 0U;
-            std::stringstream ss(word);
-
-            ss >> brace;
-            while (ss >> n)
-            {
-                joltages.push_back(n);
-                ss >> token;
-            }
-
-            retval += find_min_button_presses1(goal, buttons);
-
-            buttons.clear();
-            joltages.clear();
-        }
-    }
-
-    return retval;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// PART 2
-////////////////////////////////////////////////////////////////////////////////
-
-// implements an approach like the one suggested here:
+// Note: part 2 implements an approach like the one suggested here:
 // https://www.reddit.com/r/adventofcode/comments/1pk87hl/2025_day_10_part_2_bifurcate_your_way_to_victory/
+
+using Button = std::vector<int>;
+using Buttons = std::vector<Button>;
+using Joltages = std::vector<int>;
 
 struct cache_hash
 {
@@ -135,13 +38,47 @@ struct parity_hash
     }
 };
 
-using Button = std::vector<int>;
-using Buttons = std::vector<Button>;
-using Joltages = std::vector<int>;
-
 using ParityMap = std::vector<int>;
 using ParityMaps = std::unordered_map<ParityMap, std::unordered_map<std::vector<int>, int, cache_hash>, parity_hash>;
 using Cache = std::unordered_map<std::vector<int>, std::tuple<bool, int>, cache_hash>;
+
+auto find_min_button_presses1(const std::string &goal, const Buttons &buttons)
+{
+    struct State
+    {
+        std::string current_state;
+        int s_id, depth;
+    };
+
+    std::queue<State> q;
+    std::unordered_set<std::string> seen;
+    auto depth = 1;
+
+    for (auto i = 0; i < buttons.size(); i++)
+        q.push({ std::string(goal.size(), '.'), i, depth });
+
+    depth++;
+
+    while (!q.empty())
+    {
+        auto tsf = q.front();
+        q.pop();
+
+        for (const auto i : buttons[tsf.s_id])
+            tsf.current_state[i] = (tsf.current_state[i] == '.' ? '#' : '.');
+
+        if (tsf.current_state == goal)
+            return tsf.depth;
+
+        if (seen.contains(tsf.current_state)) continue;
+        seen.insert(tsf.current_state);
+
+        for (auto i = 0; i < buttons.size(); i++)
+            q.push({ tsf.current_state, i, tsf.depth + 1 });
+    }
+
+    return -1;
+};
 
 auto compute_parity_maps(int num_counters, const Buttons &buttons)
 {
@@ -217,26 +154,27 @@ auto find_min_button_presses2(const Joltages &joltages, const Buttons &buttons, 
         ? std::make_pair(false, 0) : std::make_pair(true, min_flips);
 };
 
-auto do_part2(const std::string &filename)
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string word;
-    auto n = 0, total = 0;
-    auto parenth = '(', comma_or_close_parenth = ',', comma_or_close_brace = '}';;
+    auto n = 0;
+    auto retval = std::make_pair(0, 0);
+    auto open_parenth = '(', open_bracket = '[', comma_or_close_parenth = ',', comma_or_close_brace = '}';
 
     std::string lights;
     Buttons buttons;
-    std::vector<int> joltages;
+    Joltages joltages;
 
     while (file >> word)
     {
-        if (word.front() == '[')
+        if (word.front() == open_bracket)
         {
             lights = word.substr(1, word.length() - 2);
             buttons.clear();
             joltages.clear();
         }
-        else if (word.front() == parenth)
+        else if (word.front() == open_parenth)
         {
             std::stringstream ss(&word[1]);
             buttons.push_back(Button());
@@ -252,25 +190,25 @@ auto do_part2(const std::string &filename)
                 joltages.push_back(n);
 
             // Solve for this machine (input line)
+            retval.first += find_min_button_presses1(lights, buttons);
+
             Cache cache;
             const auto parity_maps = compute_parity_maps(int(joltages.size()), buttons);
             const auto [reached_goal, count] = find_min_button_presses2(joltages, buttons, parity_maps, cache);
-            total += count;
+            retval.second += count;
         }
     }
 
-    return total;
+    return retval;
 }
 
 int main(int argc, char *argv[])
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 449);
+    auto solution = solve("input.txt");
+    std::cout << "Part One: " << solution.first << std::endl;
+    std::cout << "Part Two: " << solution.second << std::endl;
 
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl;
-    assert(part2 == 17848);
-
+    assert(solution.first == 449);
+    assert(solution.second == 17848);
     return 0;
 }
