@@ -1,8 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <vector>
-#include <set>
 #include <queue>
 #include <unordered_set>
 #include <unordered_map>
@@ -42,44 +40,6 @@ using ParityMap = std::vector<int>;
 using ParityMaps = std::unordered_map<ParityMap, std::unordered_map<std::vector<int>, int, cache_hash>, parity_hash>;
 using Cache = std::unordered_map<std::vector<int>, std::tuple<bool, int>, cache_hash>;
 
-auto find_min_button_presses1(const std::string &goal, const Buttons &buttons)
-{
-    struct State
-    {
-        std::string current_state;
-        int s_id, depth;
-    };
-
-    std::queue<State> q;
-    std::unordered_set<std::string> seen;
-    auto depth = 1;
-
-    for (auto i = 0; i < buttons.size(); i++)
-        q.push({ std::string(goal.size(), '.'), i, depth });
-
-    depth++;
-
-    while (!q.empty())
-    {
-        auto tsf = q.front();
-        q.pop();
-
-        for (const auto i : buttons[tsf.s_id])
-            tsf.current_state[i] = (tsf.current_state[i] == '.' ? '#' : '.');
-
-        if (tsf.current_state == goal)
-            return tsf.depth;
-
-        if (seen.contains(tsf.current_state)) continue;
-        seen.insert(tsf.current_state);
-
-        for (auto i = 0; i < buttons.size(); i++)
-            q.push({ tsf.current_state, i, tsf.depth + 1 });
-    }
-
-    return -1;
-};
-
 auto compute_parity_maps(int num_counters, const Buttons &buttons)
 {
     ParityMaps parity_maps;
@@ -110,6 +70,41 @@ auto compute_parity_maps(int num_counters, const Buttons &buttons)
 
     return parity_maps;
 }
+
+auto find_min_button_presses1(const std::string &goal, const Buttons &buttons)
+{
+    struct State
+    {
+        std::string current_state;
+        int s_id, depth;
+    };
+
+    std::queue<State> q;
+    std::unordered_set<std::string> seen;
+
+    for (auto i = 0; i < buttons.size(); i++)
+        q.push({ std::string(goal.size(), '.'), i, 1 });
+
+    while (!q.empty())
+    {
+        auto curr = q.front();
+        q.pop();
+
+        for (const auto i : buttons[curr.s_id])
+            curr.current_state[i] = (curr.current_state[i] == '.' ? '#' : '.');
+
+        if (curr.current_state == goal)
+            return curr.depth;
+
+        if (seen.contains(curr.current_state)) continue;
+        seen.insert(curr.current_state);
+
+        for (auto i = 0; i < buttons.size(); i++)
+            q.push({ curr.current_state, i, curr.depth + 1 });
+    }
+
+    return -1;
+};
 
 auto find_min_button_presses2(const Joltages &joltages, const Buttons &buttons, const ParityMaps &parity_maps, Cache &cache)
 {
@@ -160,7 +155,7 @@ auto solve(const std::string &filename)
     std::string word;
     auto n = 0;
     auto retval = std::make_pair(0, 0);
-    auto open_parenth = '(', open_bracket = '[', comma_or_close_parenth = ',', comma_or_close_brace = '}';
+    auto open_parenth = '(', open_bracket = '[', comma_or_close_parenth = ')', comma_or_close_brace = '}';
 
     std::string lights;
     Buttons buttons;
