@@ -27,10 +27,10 @@ auto do_part1(const std::string &filename)
     return retval;
 }
 
-std::map<std::pair<int, int>, unsigned long long> memo;
-
 auto do_part2(const std::string &filename)
 {
+    std::map<std::pair<int, int>, unsigned long long> memo;
+
     auto recur2 = [&](auto &&self, const std::vector<std::string> &grid, int row, int col) -> unsigned long long {
         if (row >= grid.size())
             return 1ULL;
@@ -43,8 +43,7 @@ auto do_part2(const std::string &filename)
             ? self(self, grid, row + 1, col - 1) + self(self, grid, row + 1, col + 1)
             : self(self, grid, row + 1, col);
 
-        memo[{row, col}] = retval;
-        return retval;
+        return memo[{row, col}] = retval;
     };
 
     std::vector<std::string> grid;
