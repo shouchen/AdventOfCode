@@ -57,10 +57,9 @@ auto get_product_of_top_three_circuit_sizes()
 auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
+    std::pair<long long, long long> retval;
     auto x = 0, y = 0, z = 0;
     auto comma = ',';
-    //auto retval = std::make_pair<long long, long long>(0, 0);
-    std::pair<long long, long long> retval;
 
     while (file >> x >> comma >> y >> comma >> z)
         boxes.push_back({ x, y, z, int(boxes.size()) });
