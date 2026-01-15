@@ -1,24 +1,22 @@
 #include <iostream>
 #include <fstream>
+#include <array>
 #include <vector>
-#include <map>
+#include <queue>
 #include <set>
-#include <tuple>
-#include <algorithm>
+#include <string>
 #include <cassert>
-
-auto tiles = std::vector<std::pair<long long, long long>>();
 
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
+    std::vector<std::pair<long long, long long>> tiles;
     auto x = 0LL, y = 0LL;
     auto comma = ',';
+    auto max_area = 0LL;
 
     while (file >> x >> comma >> y)
         tiles.push_back({ x, y });
-
-    auto max_area = 0LL;
 
     for (auto i = 0; i < tiles.size(); i++)
         for (auto j = 0; j < tiles.size(); j++)
@@ -27,179 +25,162 @@ auto do_part1(const std::string &filename)
                 continue;
 
             auto area = std::abs(tiles[i].first - tiles[j].first + 1) * std::abs(tiles[i].second - tiles[j].second + 1);
-            if (area > max_area)
-                max_area = area;
+            max_area = std::max(max_area, area);
         }
 
     return max_area;
 }
 
-auto grid = std::map<std::pair<int, int>, char>();
-auto row_min = INT_MAX, row_max = INT_MIN, col_min = INT_MAX, col_max = INT_MIN;
-
-void dump()
+// maintain order of points as they show linkage order
+auto compress_cooordinates(const std::vector<std::array<long long, 2>> &points)
 {
-    for (auto row = row_min - 1; row <= row_max + 1; row++)
+    // deduplicate and sort using a set
+    std::set<int> rows, cols;
+    std::vector<std::array<int, 2>> compressed_points;
+
+    compressed_points.reserve(points.size());
+    for (const auto &p : points)
     {
-        for (auto col = col_min - 1; col <= col_max + 1; col++)
-        {
-            auto temp = grid.find({ row, col });
-            if (temp == grid.end())
-                std::cout << ".";
-            else
-                std::cout << temp->second;
-        }
-        std::cout << std::endl;
+        rows.insert(int(p[0]));
+        cols.insert(int(p[1]));
     }
-    std::cout << std::endl;
+
+    for (const auto &p : points)
+    {
+        compressed_points.push_back(
+            std::array<int, 2> {
+                static_cast<int>(std::distance(std::begin(rows), rows.find(static_cast<int>(p[0])))),
+                static_cast<int>(std::distance(std::begin(cols), cols.find(static_cast<int>(p[1]))))
+            }
+        );
+    }
+
+    return compressed_points;
 }
 
-auto qualify_part2(std::map<std::pair<int, int>, char> &grid, std::pair<int, int> a, std::pair<int, int> b)
-{
-    auto
-        row_start = std::min(a.first, b.first),
-        row_end = std::max(a.first, b.first),
-        col_start = std::min(a.second, b.second),
-        col_end = std::min(a.second, b.second);
+// can be optimized as using compressed points
+auto create_map(const std::vector<std::array<int, 2>> &points) {
+    const auto col_max = (*std::max_element(std::begin(points), std::end(points), [](const auto &p1, const auto &p2) {return p1[1] < p2[1]; }))[1];
+    const auto row_max = (*std::max_element(std::begin(points), std::end(points), [](const auto &p1, const auto &p2) {return p1[0] < p2[0]; }))[0];
+    auto map = std::vector<std::vector<int>>(row_max + 1, std::vector<int>(col_max + 1, 0));
 
-    for (auto r = row_start; r <= row_end; r++)
-        for (auto c = col_start; c <= col_end; c++)
-            if (grid.find({ r, c }) == grid.end())
-                return false;
+    for (auto i = 1; i < points.size(); i++)
+    {
+        const auto d_r = points[i][0] - points[i - 1][0], d_c = points[i][1] - points[i - 1][1];
+        const auto delta = std::array<int, 2>{ d_r ? d_r / std::abs(d_r) : 0, d_c ? d_c / std::abs(d_c) : 0, };
+
+        auto current = points[i - 1];
+        while (current != points[i])
+        {
+            map[current[0]][current[1]] = 1;
+            current[0] += delta[0];
+            current[1] += delta[1];
+        }
+    }
+
+    return map;
+}
+
+auto flood_fill(std::vector<std::vector<int>> &map)
+{
+    // get starting point 
+    std::array<int, 2> p{ 0 ,0 };
+    {
+        auto idx = 0;
+        while (map[idx][0] == 0)
+            idx++;
+
+        p = { idx + 1, 1 };
+    }
+
+    std::queue<std::array<int, 2>> q;
+    q.push(p);
+
+    const std::vector<std::array<int, 2>> adj_delta{ {1,0}, {0,-1}, {0,1}, {-1,0} };
+
+    while (!q.empty())
+    {
+        const auto c = q.front();
+        q.pop();
+
+        map[c[0]][c[1]] = 2;
+
+        for (const auto &d : adj_delta)
+        {
+            const auto n = std::array<int, 2>{ c[0] + d[0], c[1] + d[1] };
+            if (n[0] >= 0 && n[0] < map.size() &&
+                n[1] >= 0 && n[1] < map[0].size() &&
+                map[n[0]][n[1]] == 0)
+            {
+                q.push(n);
+                map[n[0]][n[1]] = -1;
+            }
+        }
+    }
+}
+
+auto is_valid_rectangle(
+    const std::vector<std::vector<int>> &map,
+    const std::array<int, 2> &p1,
+    const std::array<int, 2> &p2)
+{
+    for (auto row = std::min(p1[0], p2[0]); row <= std::max(p1[0], p2[0]); row++)
+        for (auto col = std::min(p1[1], p2[1]); col <= std::max(p1[1], p2[1]); col++)
+            if (map[row][col] == 0) return false;
 
     return true;
 }
 
+auto find_largest_rectangle(
+    const std::vector<std::vector<int>> &map,
+    const std::vector<std::array<int, 2>> &compressed_points,
+    const std::vector<std::array<long long, 2>> &points)
+{
+    auto area = 0ULL;
+    for (auto i = 0; i < points.size(); i++)
+        for (auto j = 0; j < points.size(); j++)
+            if (is_valid_rectangle(map, compressed_points[i], compressed_points[j]))
+            {
+                area = std::max(
+                    area,
+                    unsigned long long(std::abs((points[i][0] - points[j][0]) + 1) * (std::abs(points[i][1] - points[j][1]) + 1))
+                );
+            }
+
+    return area;
+}
+
 auto do_part2(const std::string &filename)
 {
-    auto reds = std::vector<std::pair<int, int>>();
-
+    std::string line;
     std::ifstream file(filename);
-    auto row = 0, col = 0;
+    std::vector<std::array<long long, 2>> points;
+
+    auto row = 0LL, col = 0LL;
     auto comma = ',';
-    std::pair<int, int> origin, previous;
 
-    bool first = true;
+    while (file >> row >> comma >> col)
+        points.push_back({ row, col });
 
-    while (file >> col >> comma >> row)
-    {
-        reds.push_back({ row,  col });
+    points.push_back(points[0]); // Close the polygon
+    const auto compressed_points = compress_cooordinates(points);
+    auto map = create_map(compressed_points);
+    flood_fill(map);
 
-        if (first)
-        {
-            origin = { row, col };
-            first = false;
-        }
-        else
-        {
-            if (row == previous.first)
-            {
-                if (col < previous.second)
-                    for (auto i = col + 1; i < previous.second; i++)
-                        grid.insert({ { row, i }, 'X' });
-                else
-                    for (auto i = previous.second+ 1; i < col; i++)
-                        grid.insert({ { row, i }, 'X' });
-            }
-            else
-            {
-                if (row < previous.first)
-                    for (auto i = row + 1; i < previous.first; i++)
-                        grid.insert({ { i , col }, 'X' });
-                else
-                    for (auto i = previous.first + 1; i < row; i++)
-                        grid.insert({ { i, col }, 'X' });
-            }
-        }
-        previous = { row, col };
-
-        grid.insert({ { row, col }, '#' });
-        col_min = std::min(col, col_min);
-        col_max = std::max(col, col_max);
-        row_min = std::min(row, row_min);
-        row_max = std::max(row, row_max);
-    }
-
-    if (origin.first == previous.first)
-    {
-        if (origin.second < previous.second)
-            for (auto i = origin.second + 1; i < previous.second; i++)
-                grid.insert({ { origin.first, i }, 'X' });
-        else
-            for (auto i = previous.second + 1; i < origin.second; i++)
-                grid.insert({ { origin.first, i }, 'X' });
-    }
-    else
-    {
-        if (origin.first < previous.first)
-            for (auto i = origin.first + 1; i < previous.first; i++)
-                grid.insert({ { i, origin.second    }, 'X' });
-        else
-            for (auto i = previous.first + 1; i < row; i++)
-                grid.insert({ { i, origin.second }, 'X' });
-    }
-
-    // paint interior
-    for (auto r = row_min; r <= row_max; r++)
-    {
-        std::cout << (r / double(row_max - row_min + 1)) * 100 << std::endl;
-
-        auto in_wall = false, interior = false;
-
-        for (auto c = col_min; c <= col_max; c++)
-        {
-            auto temp = grid.find({ r, c });
-
-            if (in_wall)
-            {
-                if (temp == grid.end())
-                    in_wall = false, interior = !interior;
-            }
-            else
-            {
-                if (temp != grid.end())
-                    in_wall = true;
-            }
-
-            if (interior)
-                grid.insert({ { r, c }, 'X' }); 
-        }
-    }
-
-//    dump();
-
-    auto max_area = 0LL;
-
-    for (auto i = 0; i < reds.size(); i++)
-    {
-        std::cout << i << std::endl;
-
-        for (auto j = 0; j < reds.size(); j++)
-        {
-            if (i == j)
-                continue;
-
-            if (!qualify_part2(grid, reds[i], reds[j]))
-                continue;
-
-            auto area = std::abs(reds[i].first - reds[j].first + 1) * std::abs(reds[i].second - reds[j].second + 1);
-            if (area > max_area)
-                max_area = area;
-        }
-    }
-
-    return max_area;
+    return find_largest_rectangle(map, compressed_points, points);
 }
 
 int main()
 {
-    //auto part1 = do_part1("input.txt");
-    //std::cout << "Part One: " << part1 << std::endl;
-    //assert(part1 == 4782896435);
+    // TODO: Only read the file once
+
+    auto part1 = do_part1("input.txt");
+    std::cout << "Part One: " << part1 << std::endl;
+    assert(part1 == 4782896435);
                                                  
     auto part2 = do_part2("input.txt");
     std::cout << "Part Two: " << part2 << std::endl;
-    //assert(part2 == );
+    assert(part2 == 1540060480);
 
     return 0;
 }
