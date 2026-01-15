@@ -36,26 +36,20 @@ auto do_part1(const std::string &filename)
 
 auto compress_cooordinates(const CoordinatesList &points)
 {
-    // deduplicate and sort using a set
     std::set<int> rows, cols;
+    for (const auto &p : points)
+        rows.insert(int(p[0])), cols.insert(int(p[1]));
+
     CoordinatesList compressed_points;
-
     compressed_points.reserve(points.size());
-    for (const auto &p : points)
-    {
-        rows.insert(int(p[0]));
-        cols.insert(int(p[1]));
-    }
 
     for (const auto &p : points)
-    {
         compressed_points.push_back(
             Coordinates {
-                static_cast<int>(std::distance(std::begin(rows), rows.find(static_cast<int>(p[0])))),
-                static_cast<int>(std::distance(std::begin(cols), cols.find(static_cast<int>(p[1]))))
+                int(std::distance(std::begin(rows), rows.find(static_cast<int>(p[0])))),
+                int(std::distance(std::begin(cols), cols.find(static_cast<int>(p[1]))))
             }
         );
-    }
 
     return compressed_points;
 }
@@ -85,7 +79,6 @@ auto create_map(const std::vector<std::array<int, 2>> &points) {
 
 auto flood_fill(std::vector<std::vector<int>> &map)
 {
-    // get starting point 
     Coordinates p{ 0 ,0 };
     {
         auto idx = 0;
@@ -148,8 +141,8 @@ auto find_largest_rectangle(const std::vector<std::vector<int>> &map, const Coor
 
 auto do_part2(const std::string &filename)
 {
-    std::string line;
     std::ifstream file(filename);
+    std::string line;
     CoordinatesList points;
     auto row = 0, col = 0;
     auto comma = ',';
@@ -157,7 +150,7 @@ auto do_part2(const std::string &filename)
     while (file >> row >> comma >> col)
         points.push_back({ row, col });
 
-    points.push_back(points[0]); // Close the polygon
+    points.push_back(points[0]);
     const auto compressed_points = compress_cooordinates(points);
     auto map = create_map(compressed_points);
     flood_fill(map);
