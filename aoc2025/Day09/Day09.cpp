@@ -7,6 +7,9 @@
 #include <string>
 #include <cassert>
 
+using Coordinates = std::array<int, 2>;
+using CoordinatesList = std::vector<Coordinates>;
+
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
@@ -31,12 +34,11 @@ auto do_part1(const std::string &filename)
     return max_area;
 }
 
-// maintain order of points as they show linkage order
-auto compress_cooordinates(const std::vector<std::array<long long, 2>> &points)
+auto compress_cooordinates(const CoordinatesList &points)
 {
     // deduplicate and sort using a set
     std::set<int> rows, cols;
-    std::vector<std::array<int, 2>> compressed_points;
+    CoordinatesList compressed_points;
 
     compressed_points.reserve(points.size());
     for (const auto &p : points)
@@ -48,7 +50,7 @@ auto compress_cooordinates(const std::vector<std::array<long long, 2>> &points)
     for (const auto &p : points)
     {
         compressed_points.push_back(
-            std::array<int, 2> {
+            Coordinates {
                 static_cast<int>(std::distance(std::begin(rows), rows.find(static_cast<int>(p[0])))),
                 static_cast<int>(std::distance(std::begin(cols), cols.find(static_cast<int>(p[1]))))
             }
@@ -67,7 +69,7 @@ auto create_map(const std::vector<std::array<int, 2>> &points) {
     for (auto i = 1; i < points.size(); i++)
     {
         const auto d_r = points[i][0] - points[i - 1][0], d_c = points[i][1] - points[i - 1][1];
-        const auto delta = std::array<int, 2>{ d_r ? d_r / std::abs(d_r) : 0, d_c ? d_c / std::abs(d_c) : 0, };
+        const auto delta = Coordinates{ d_r ? d_r / std::abs(d_r) : 0, d_c ? d_c / std::abs(d_c) : 0, };
 
         auto current = points[i - 1];
         while (current != points[i])
@@ -84,7 +86,7 @@ auto create_map(const std::vector<std::array<int, 2>> &points) {
 auto flood_fill(std::vector<std::vector<int>> &map)
 {
     // get starting point 
-    std::array<int, 2> p{ 0 ,0 };
+    Coordinates p{ 0 ,0 };
     {
         auto idx = 0;
         while (map[idx][0] == 0)
@@ -93,10 +95,10 @@ auto flood_fill(std::vector<std::vector<int>> &map)
         p = { idx + 1, 1 };
     }
 
-    std::queue<std::array<int, 2>> q;
+    std::queue<Coordinates> q;
     q.push(p);
 
-    const std::vector<std::array<int, 2>> adj_delta{ {1,0}, {0,-1}, {0,1}, {-1,0} };
+    const CoordinatesList adj_delta{ {1,0}, {0,-1}, {0,1}, {-1,0} };
 
     while (!q.empty())
     {
@@ -119,10 +121,7 @@ auto flood_fill(std::vector<std::vector<int>> &map)
     }
 }
 
-auto is_valid_rectangle(
-    const std::vector<std::vector<int>> &map,
-    const std::array<int, 2> &p1,
-    const std::array<int, 2> &p2)
+auto is_valid_rectangle(const std::vector<std::vector<int>> &map, const Coordinates &p1, const Coordinates &p2)
 {
     for (auto row = std::min(p1[0], p2[0]); row <= std::max(p1[0], p2[0]); row++)
         for (auto col = std::min(p1[1], p2[1]); col <= std::max(p1[1], p2[1]); col++)
@@ -131,10 +130,7 @@ auto is_valid_rectangle(
     return true;
 }
 
-auto find_largest_rectangle(
-    const std::vector<std::vector<int>> &map,
-    const std::vector<std::array<int, 2>> &compressed_points,
-    const std::vector<std::array<long long, 2>> &points)
+auto find_largest_rectangle(const std::vector<std::vector<int>> &map, const CoordinatesList &compressed_points, const CoordinatesList &points)
 {
     auto area = 0ULL;
     for (auto i = 0; i < points.size(); i++)
@@ -154,9 +150,8 @@ auto do_part2(const std::string &filename)
 {
     std::string line;
     std::ifstream file(filename);
-    std::vector<std::array<long long, 2>> points;
-
-    auto row = 0LL, col = 0LL;
+    CoordinatesList points;
+    auto row = 0, col = 0;
     auto comma = ',';
 
     while (file >> row >> comma >> col)
