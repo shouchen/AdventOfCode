@@ -9,36 +9,26 @@
 
 using Coordinates = std::array<int, 2>;
 using CoordinatesList = std::vector<Coordinates>;
+using Map = std::vector<std::vector<int>>;
 
-auto do_part1(const std::string &filename)
+CoordinatesList read_data(const std::string &filename)
 {
     std::ifstream file(filename);
-    std::vector<std::pair<long long, long long>> tiles;
-    auto x = 0LL, y = 0LL;
+    CoordinatesList retval;
+    auto row = 0, col = 0;
     auto comma = ',';
-    auto max_area = 0LL;
 
-    while (file >> x >> comma >> y)
-        tiles.push_back({ x, y });
+    while (file >> row >> comma >> col)
+        retval.push_back({ row, col });
 
-    for (auto i = 0; i < tiles.size(); i++)
-        for (auto j = 0; j < tiles.size(); j++)
-        {
-            if (i == j)
-                continue;
-
-            auto area = std::abs(tiles[i].first - tiles[j].first + 1) * std::abs(tiles[i].second - tiles[j].second + 1);
-            max_area = std::max(max_area, area);
-        }
-
-    return max_area;
+    return retval;
 }
 
 auto compress_cooordinates(const CoordinatesList &points)
 {
     std::set<int> rows, cols;
     for (const auto &p : points)
-        rows.insert(int(p[0])), cols.insert(int(p[1]));
+        rows.insert(p[0]), cols.insert(p[1]);
 
     CoordinatesList compressed_points;
     compressed_points.reserve(points.size());
@@ -46,19 +36,18 @@ auto compress_cooordinates(const CoordinatesList &points)
     for (const auto &p : points)
         compressed_points.push_back(
             Coordinates {
-                int(std::distance(std::begin(rows), rows.find(static_cast<int>(p[0])))),
-                int(std::distance(std::begin(cols), cols.find(static_cast<int>(p[1]))))
+                int(std::distance(std::begin(rows), rows.find(p[0]))),
+                int(std::distance(std::begin(cols), cols.find(p[1])))
             }
         );
 
     return compressed_points;
 }
 
-// can be optimized as using compressed points
-auto create_map(const std::vector<std::array<int, 2>> &points) {
+auto create_map(const CoordinatesList &points) {
     const auto col_max = (*std::max_element(std::begin(points), std::end(points), [](const auto &p1, const auto &p2) {return p1[1] < p2[1]; }))[1];
     const auto row_max = (*std::max_element(std::begin(points), std::end(points), [](const auto &p1, const auto &p2) {return p1[0] < p2[0]; }))[0];
-    auto map = std::vector<std::vector<int>>(row_max + 1, std::vector<int>(col_max + 1, 0));
+    Map map(row_max + 1, std::vector<int>(col_max + 1, 0));
 
     for (auto i = 1; i < points.size(); i++)
     {
@@ -77,16 +66,15 @@ auto create_map(const std::vector<std::array<int, 2>> &points) {
     return map;
 }
 
-auto flood_fill(std::vector<std::vector<int>> &map)
+auto flood_fill(Map &map)
 {
-    Coordinates p{ 0 ,0 };
-    {
-        auto idx = 0;
-        while (map[idx][0] == 0)
-            idx++;
+    Coordinates p{ 0, 0 };
 
-        p = { idx + 1, 1 };
-    }
+    auto index = 0;
+    while (map[index][0] == 0)
+        index++;
+
+    p = { index + 1, 1 };
 
     std::queue<Coordinates> q;
     q.push(p);
@@ -102,9 +90,9 @@ auto flood_fill(std::vector<std::vector<int>> &map)
 
         for (const auto &d : adj_delta)
         {
-            const auto n = std::array<int, 2>{ c[0] + d[0], c[1] + d[1] };
-            if (n[0] >= 0 && n[0] < map.size() &&
-                n[1] >= 0 && n[1] < map[0].size() &&
+            const auto n = Coordinates{ c[0] + d[0], c[1] + d[1] };
+
+            if (n[0] >= 0 && n[0] < map.size() && n[1] >= 0 && n[1] < map[0].size() &&
                 map[n[0]][n[1]] == 0)
             {
                 q.push(n);
@@ -114,7 +102,7 @@ auto flood_fill(std::vector<std::vector<int>> &map)
     }
 }
 
-auto is_valid_rectangle(const std::vector<std::vector<int>> &map, const Coordinates &p1, const Coordinates &p2)
+auto is_valid_rectangle(const Map &map, const Coordinates &p1, const Coordinates &p2)
 {
     for (auto row = std::min(p1[0], p2[0]); row <= std::max(p1[0], p2[0]); row++)
         for (auto col = std::min(p1[1], p2[1]); col <= std::max(p1[1], p2[1]); col++)
@@ -123,34 +111,44 @@ auto is_valid_rectangle(const std::vector<std::vector<int>> &map, const Coordina
     return true;
 }
 
-auto find_largest_rectangle(const std::vector<std::vector<int>> &map, const CoordinatesList &compressed_points, const CoordinatesList &points)
+auto find_largest_rectangle(const Map &map, const CoordinatesList &compressed_points, const CoordinatesList &points)
 {
-    auto area = 0ULL;
+    auto max_area = 0ULL;
+
     for (auto i = 0; i < points.size(); i++)
         for (auto j = 0; j < points.size(); j++)
             if (is_valid_rectangle(map, compressed_points[i], compressed_points[j]))
             {
-                area = std::max(
-                    area,
-                    unsigned long long(std::abs((points[i][0] - points[j][0]) + 1) * (std::abs(points[i][1] - points[j][1]) + 1))
-                );
+                unsigned long long area = std::abs((points[i][0] - points[j][0]) + 1) * (std::abs(points[i][1] - points[j][1]) + 1);
+                max_area = std::max(max_area,area);
             }
 
-    return area;
+    return max_area;
+}
+
+auto do_part1(const std::string &filename)
+{
+    auto points = read_data(filename);
+    auto max_area = 0LL;
+
+    for (auto i = 0; i < points.size(); i++)
+        for (auto j = 0; j < points.size(); j++)
+            if (i != j)
+            {
+                auto area =
+                    std::abs(long long(points[i][0] - points[j][0] + 1)) *
+                    std::abs(long long(points[i][1] - points[j][1] + 1));
+                max_area = std::max(max_area, area);
+            }
+
+    return max_area;
 }
 
 auto do_part2(const std::string &filename)
 {
-    std::ifstream file(filename);
-    std::string line;
-    CoordinatesList points;
-    auto row = 0, col = 0;
-    auto comma = ',';
-
-    while (file >> row >> comma >> col)
-        points.push_back({ row, col });
-
+    auto points = read_data(filename);
     points.push_back(points[0]);
+
     const auto compressed_points = compress_cooordinates(points);
     auto map = create_map(compressed_points);
     flood_fill(map);
@@ -160,8 +158,6 @@ auto do_part2(const std::string &filename)
 
 int main()
 {
-    // TODO: Only read the file once
-
     auto part1 = do_part1("input.txt");
     std::cout << "Part One: " << part1 << std::endl;
     assert(part1 == 4782896435);
