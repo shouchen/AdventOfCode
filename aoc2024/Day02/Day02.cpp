@@ -5,41 +5,29 @@
 #include <string>
 #include <cassert>
 
-bool is_safe(const std::vector<int> &report, bool allow_skip, int start = 0, int prev_val = -1, int dirn = 0)
+auto is_safe(const std::vector<int> &report, bool allow_skip, int start = 0, int prev_val = -1, int dirn = 0)
 {
     if (start > report.size() - 1)
         return true;
 
-    // Case 1: Not skipping this element
-    if (prev_val == -1) // First element
+    // case 1: skipping this element
+    if (allow_skip && is_safe(report, false, start + 1, prev_val, dirn))
+        return true;
+
+    // case 2: not skipping this element
+    auto in_range = true;
+
+    if (prev_val > -1) // not first element
     {
-        if (is_safe(report, allow_skip, start + 1, report[start], dirn))
-            return true;
-    }
-    else
-    {
-        auto delta = report[start] - prev_val, save_dirn = dirn;
+        auto delta = report[start] - prev_val;
+        if (!dirn) dirn = (delta > 0) ? 1 : -1;
 
-        if (dirn == 0) // Second element (no direction yet)
-        {
-            if (delta > 0)
-                dirn = 1;
-            else if (delta < 0)
-                dirn = -1;
-        }
-
-        if ((dirn == 1 && delta >= 1 && delta <= 3) ||
-            (dirn == -1 && delta <= -1 && delta >= -3))
-        {
-            if (is_safe(report, allow_skip, start + 1, report[start], dirn))
-                return true;
-        }
-
-        dirn = save_dirn; // undo direction if we're going to skipped this one 
+        in_range =
+            (dirn == 1 && delta >= 1 && delta <= 3) ||
+            (dirn == -1 && delta <= -1 && delta >= -3);
     }
 
-    // Case 2: Skipping this element
-    return allow_skip && is_safe(report, false, start + 1, prev_val, dirn);
+    return in_range && is_safe(report, allow_skip, start + 1, report[start], dirn);
 }
 
 auto solve(const std::string &filename)
