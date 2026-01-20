@@ -39,17 +39,15 @@ auto has_x_mases(int row, int col)
     if (grid[row][col] != 'A')
         return false;
 
-    int retval = 0;
+    if ((grid[row - 1][col - 1] != 'M' || grid[row + 1][col + 1] != 'S') &&
+        (grid[row - 1][col - 1] != 'S' || grid[row + 1][col + 1] != 'M'))
+        return false;
 
-    if (grid[row - 1][col - 1] == 'M' && grid[row + 1][col + 1] == 'S' ||
-        grid[row - 1][col - 1] == 'S' && grid[row + 1][col + 1] == 'M')
-        retval++;
+    if ((grid[row - 1][col + 1] != 'M' || grid[row + 1][col - 1] != 'S') &&
+        (grid[row - 1][col + 1] != 'S' || grid[row + 1][col - 1] != 'M'))
+        return false;
 
-    if (grid[row - 1][col + 1] == 'M' && grid[row + 1][col - 1] == 'S' ||
-        grid[row - 1][col + 1] == 'S' && grid[row + 1][col - 1] == 'M')
-        retval++;
-
-    return retval == 2;
+    return true;
 }
 
 auto do_part1()
