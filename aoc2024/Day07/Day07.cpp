@@ -15,7 +15,7 @@ auto concat(ULL a, ULL b)
     return a * multiplier + b;
 }
 
-auto could_possibly(std::vector<ULL> &numbers, int start_index, ULL so_far, ULL target, bool allow_concat)
+auto could_possibly(const std::vector<ULL> &numbers, int start_index, ULL so_far, ULL target, bool allow_concat)
 {
     if (start_index == numbers.size())
         return so_far == target;
@@ -31,17 +31,15 @@ auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
-    auto colon = ':';
     std::pair<ULL, ULL> retval;
+    auto test_value = 0ULL, n = 0ULL;
+    auto colon = ':';
 
     while (std::getline(file, line))
     {
-        auto test_value = 0ULL;
-
         std::stringstream ss(line);
         ss >> test_value >> colon;
 
-        auto n = 0ULL;
         std::vector<ULL> numbers;
         while (ss >> n)
             numbers.push_back(n);
