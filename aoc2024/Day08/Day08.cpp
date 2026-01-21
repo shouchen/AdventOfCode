@@ -6,135 +6,84 @@
 #include <map>
 #include <cassert>
 
-std::vector<std::string> grid; // really not be needed for solution
-std::map<char, std::vector<std::pair<int, int>>> antennae;
-auto height = 0, width = 0;
+using Coordinates = std::pair<int, int>;
+using CoordinateList = std::vector<Coordinates>;
+using CoordinateSet = std::set<Coordinates>;
+using AntennaMap = std::map<char, CoordinateList>;
 
-std::set<std::pair<int, int>> antinodes;
-
-auto count_antinodes(char frequency)
+auto add_antinodes(CoordinateList &same_freq_antennae, int height, int width, bool part2, CoordinateSet &antinodes)
 {
-    auto ant = antennae[frequency];
-
-    for (auto i = 0; i < ant.size(); i++)
-        for (auto j = i + 1; j < ant.size(); j++)
+    for (auto i = 0; i < same_freq_antennae.size(); i++)
+        for (auto j = i + 1; j < same_freq_antennae.size(); j++)
         {
-            auto a = ant[i], b = ant[j];
+            auto a = same_freq_antennae[i], b = same_freq_antennae[j];
             auto row_dir = b.first - a.first, col_dir = b.second - a.second;
 
-            auto new_antinode_row = a.first - row_dir;
-            auto new_antinode_col = a.second - col_dir;
-            if (new_antinode_row >= 0 && new_antinode_row < height &&
-                new_antinode_col >= 0 && new_antinode_col < width)
-                antinodes.insert({ new_antinode_row, new_antinode_col });
-
-            new_antinode_row = b.first + row_dir;
-            new_antinode_col = b.second + col_dir;
-            if (new_antinode_row >= 0 && new_antinode_row < height &&
-                new_antinode_col >= 0 && new_antinode_col < width)
-                antinodes.insert({ new_antinode_row, new_antinode_col });
-        }
-}
-
-auto count_antinodes2(char frequency)
-{
-    auto ant = antennae[frequency];
-
-    for (auto i = 0; i < ant.size(); i++)
-        for (auto j = i + 1; j < ant.size(); j++)
-        {
-            auto a = ant[i], b = ant[j];
-            auto row_dir = b.first - a.first, col_dir = b.second - a.second;
-
-            auto new_antinode_row = a.first;
-            auto new_antinode_col = a.second;
+            auto new_antinode_row = part2 ? a.first : (a.first - row_dir);
+            auto new_antinode_col = part2 ? a.second : (a.second - col_dir);
 
             while (new_antinode_row >= 0 && new_antinode_row < height && new_antinode_col >= 0 && new_antinode_col < width)
             {
                 antinodes.insert({ new_antinode_row, new_antinode_col });
                 new_antinode_row -= row_dir;
                 new_antinode_col -= col_dir;
+
+                if (!part2) break;
             }
 
-            new_antinode_row = a.first + row_dir;
-            new_antinode_col = a.second + col_dir;
+            new_antinode_row = part2 ? b.first : (b.first + row_dir);
+            new_antinode_col = part2 ? b.second : (b.second + col_dir);
 
             while (new_antinode_row >= 0 && new_antinode_row < height && new_antinode_col >= 0 && new_antinode_col < width)
             {
                 antinodes.insert({ new_antinode_row, new_antinode_col });
                 new_antinode_row += row_dir;
                 new_antinode_col += col_dir;
+
+                if (!part2) break;
             }
         }
 }
 
-auto do_part1(const std::string &filename)
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
+    AntennaMap antennae;
+    auto height = 0, width = 0;
 
-    while (std::getline(file, line))
+    while (file >> line)
     {
-        grid.push_back(line);
         for (auto i = 0; i < line.size(); i++)
             if (line[i] != '.')
-                antennae[line[i]].push_back({ int(grid.size() - 1), i });
+                antennae[line[i]].push_back({ height, i });
+
+        height++;
+        width = int(line.length());
     }
 
-    height = int(grid.size()), width = int(grid[0].length());
+    CoordinateSet antinodes;
 
-    for (auto frequency = '0'; frequency <= '9'; frequency++)
-        count_antinodes(frequency);
+    for (auto test : antennae)
+        add_antinodes(test.second, height, width, false, antinodes);
 
-    for (auto frequency = 'A'; frequency <= 'Z'; frequency++)
-        count_antinodes(frequency);
+    auto retval = std::make_pair(antinodes.size(), 0ULL);
 
-    for (auto frequency = 'a'; frequency <= 'z'; frequency++)
-        count_antinodes(frequency);
+    for (auto test : antennae)
+        add_antinodes(test.second, height, width, true, antinodes);
 
-    return antinodes.size();
-}
-
-auto do_part2(const std::string &filename)
-{
-    grid.clear();
-    antennae.clear();
-    antinodes.clear();
-
-    std::ifstream file(filename);
-    std::string line;
-
-    while (std::getline(file, line))
-    {
-        grid.push_back(line);
-        for (auto i = 0; i < line.size(); i++)
-            if (line[i] != '.')
-                antennae[line[i]].push_back({ int(grid.size() - 1), i });
-    }
-
-    height = int(grid.size()), width = int(grid[0].length());
-
-    for (auto frequency = '0'; frequency <= '9'; frequency++)
-        count_antinodes2(frequency);
-
-    for (auto frequency = 'A'; frequency <= 'Z'; frequency++)
-        count_antinodes2(frequency);
-
-    for (auto frequency = 'a'; frequency <= 'z'; frequency++)
-        count_antinodes2(frequency);
-
-    return antinodes.size();
+    retval.second = antinodes.size();
+    return retval;
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 244);
 
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl;
-    assert(part2 == 912);
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
+    assert(answer.first == 244);
+    assert(answer.second == 912);
     return 0;
 }
