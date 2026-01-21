@@ -3,106 +3,77 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <map>
 #include <cassert>
 
-std::vector<std::string> grid;
-std::set<std::pair<int, int>> visited;
-auto init_guard_row = 0, init_guard_col = 0;
+using Grid = std::vector <std::string>;
+using VisitedMap = std::map<std::pair<int, int>, int>;
 
-auto read_input(const std::string &filename)
+auto hash(int row_dir, int col_dir)
+{
+    return row_dir ? ((row_dir == 1) ? 0x1 : 0x2) : ((col_dir == 1) ? 0x4 : 0x8);
+}
+
+auto run_scenario(Grid &grid, int guard_row, int guard_col, VisitedMap &visited)
+{
+    auto row_dir = -1, col_dir = 0;
+    visited.clear();
+
+    for (;;)
+    {
+        auto guard_pos = std::make_pair(guard_row, guard_col);
+        auto map_it = visited.find(guard_pos);
+
+        if (map_it != visited.end() && map_it->second & hash(row_dir, col_dir))
+            return false;
+
+        visited[guard_pos] |= hash(row_dir, col_dir);
+
+        auto new_row = guard_row + row_dir, new_col = guard_col + col_dir;
+        if (new_row < 0 || new_row >= int(grid.size()) || new_col < 0 || new_col >= int(grid[0].size()))
+            return true;
+
+        if (grid[new_row][new_col] == '#')
+        {
+            std::swap(row_dir, col_dir);
+            col_dir = -col_dir;
+        }
+        else
+        {
+            guard_row += row_dir, guard_col += col_dir;
+        }
+    }
+}
+
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
+    Grid grid;
+    auto guard_row = 0, guard_col = 0;
 
     while (std::getline(file, line))
     {
         auto pos = line.find('^');
         if (pos != std::string::npos)
-        {
-            init_guard_row = int(grid.size()), init_guard_col = int(pos);
-            line[pos] = '.';
-        }
+            guard_row = int(grid.size()), guard_col = int(pos);
 
         grid.push_back(line);
     }
-}
 
-auto do_part1()
-{
-    auto guard_row = init_guard_row, guard_col = init_guard_col, row_dir = -1, col_dir = 0;
+    std::pair<int, int> retval;
+    VisitedMap visited_part1, visited_part2;
 
-    for (;;)
+    run_scenario(grid, guard_row, guard_col, visited_part1);
+    retval.first = int(visited_part1.size());
+
+    for (const auto &v : visited_part1)
     {
-        visited.insert({ guard_row, guard_col }); // TODO: don't redo this for turns
-
-        auto new_row = guard_row + row_dir, new_col = guard_col + col_dir;
-
-        if (new_row < 0 || new_row >= int(grid.size()) ||
-            new_col < 0 || new_col >= int(grid[0].size()))
-        {
-            return visited.size();
-        }
-
-        if (grid[new_row][new_col] == '#')
-        {
-            auto temp = row_dir;
-            row_dir = col_dir, col_dir = -temp;
-        }
-        else
-        {
-            guard_row += row_dir;
-            guard_col += col_dir;
-        }
-    }
-}
-
-auto has_loop(int guard_row, int guard_col, int row_dir, int col_dir)
-{
-    std::set<std::pair<std::pair<int, int>, std::pair<int, int>>> visited2;
-
-    // TODO: This is almost like part 1, refactor
-    for (;;)
-    {
-        if (visited2.find({ { guard_row, guard_col }, { row_dir, col_dir} }) != visited2.end())
-            return true;
-
-        visited2.insert({ { guard_row, guard_col }, { row_dir, col_dir} }); // TODO: don't redo this for turns
-
-        auto new_row = guard_row + row_dir, new_col = guard_col + col_dir;
-
-        if (new_row < 0 || new_row >= int(grid.size()) ||
-            new_col < 0 || new_col >= int(grid[0].size()))
-        {
-            return false;
-        }
-
-        if (grid[new_row][new_col] == '#')
-        {
-            auto temp = row_dir;
-            row_dir = col_dir, col_dir = -temp;
-        }
-        else
-        {
-            guard_row += row_dir;
-            guard_col += col_dir;
-        }
-    }
-}
-
-auto do_part2()
-{
-    auto retval = 0;
-
-    for (auto &v : visited)
-    {
-        auto obs_row = v.first, obs_col = v.second;
-
-        if (obs_row == init_guard_row && obs_col == init_guard_col)
-            continue;
+        auto obs_row = v.first.first, obs_col = v.first.second;
 
         grid[obs_row][obs_col] = '#';
-        if (has_loop(init_guard_row, init_guard_col, -1, 0))
-            retval++;
+        if (!run_scenario(grid, guard_row, guard_col, visited_part2))
+            retval.second++;
 
         grid[obs_row][obs_col] = '.';
     }
@@ -112,15 +83,11 @@ auto do_part2()
 
 int main()
 {
-    read_input("input.txt");
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part1 = do_part1();
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 4967);
-
-    auto part2 = do_part2();
-    std::cout << "Part Two: " << part2 << std::endl;
-    assert(part2 == 1789);
-
+    assert(answer.first == 4967);
+    assert(answer.second == 1789);
     return 0;
 }
