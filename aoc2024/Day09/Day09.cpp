@@ -11,54 +11,51 @@ struct Chunk
 
 std::list<Chunk> disk;
 
-void dump_disk()
+auto sum_of_integers(unsigned long long up_to)
 {
-    for (auto &b : disk)
-        for (auto i = 0; i < b.blocks; i++)
-            std::cout << char((b.id == -1) ? '.' : (b.id + '0'));
-
-    std::cout << std::endl;
+    return (up_to * (up_to + 1)) / 2;
 }
 
-//auto sum_of_integers(unsigned long long up_to)
-//{
-//    return (up_to * (up_to + 1)) / 2;
-//}
-//
-//auto sum_of_integers(int starting, int length)
-//{
-//    return sum_of_integers(starting + length) - sum_of_integers(starting - 1);
-//}
+auto sum_of_integers(int starting, int length)
+{
+    return sum_of_integers(starting + length - 1) - sum_of_integers(starting - 1);
+}
 
 auto compute_checksum()
 {
-    auto position = 0ULL, checksum = 0ULL;
-    for (auto &b : disk)
-    {
-        for (auto i = 0; i < b.blocks; i++)
-        {
-            if (b.id != -1)
-                checksum += b.id * position;
+    auto position = 0;
+    auto checksum = 0ULL;
 
-            position++;
-        }
+    for (const auto &b : disk)
+    {
+        if (b.id != -1)
+            checksum += b.id * sum_of_integers(position, b.blocks);
+
+        position += b.blocks;
     }
 
     return checksum;
 }
 
-auto do_part1(const std::string &filename)
+void read_data(const std::string &filename)
 {
     std::ifstream file(filename);
     auto next_id = 0;
     auto c = ' ';
 
+    disk.clear();
+
     while (file >> c)
     {
-        disk.push_back({ next_id++, c - '0'});
+        disk.push_back({ next_id++, c - '0' });
         if (file >> c)
             disk.push_back({ -1, c - '0' });
     }
+}
+
+auto do_part1(const std::string &filename)
+{
+    read_data(filename);
 
     // Look at leftmost free chunk and rightmost non-free chunk.
     // Case 1: Left side is >= than right size: Insert a chunk at left with the ID of the rightmost
@@ -121,18 +118,7 @@ auto do_part1(const std::string &filename)
 
 auto do_part2(const std::string &filename)
 {
-    disk.clear();
-
-    std::ifstream file(filename);
-    auto next_id = 0;
-    auto c = ' ';
-
-    while (file >> c)
-    {
-        disk.push_back({ next_id++, c - '0' });
-        if (file >> c)
-            disk.push_back({ -1, c - '0' });
-    }
+    read_data(filename);
 
     for (auto right = disk.rbegin(); right != disk.rend(); right++)
     {
@@ -164,5 +150,6 @@ int main()
     auto part2 = do_part2("input.txt");
     std::cout << "Part Two: " << part2 << std::endl;
     assert(part2 == 6379677752410);
+
     return 0;
 }
