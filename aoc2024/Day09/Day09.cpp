@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <list>
+#include <vector>
 #include <string>
 #include <cassert>
 
@@ -19,7 +19,7 @@ auto sum_of_integers(int starting, int length)
     return sum_of_integers(starting + length - 1) - sum_of_integers(starting - 1);
 }
 
-auto compute_checksum(const std::list<Chunk> &disk)
+auto compute_checksum(const std::vector<Chunk> &disk)
 {
     auto position = 0;
     auto checksum = 0ULL;
@@ -40,7 +40,7 @@ auto read_data(const std::string &filename)
     std::ifstream file(filename);
     auto next_id = 0;
     auto c = ' ';
-    std::list<Chunk> disk;
+    std::vector<Chunk> disk;
 
     while (file >> c)
     {
@@ -56,33 +56,23 @@ auto do_part1(const std::string &filename)
 {
     auto disk = read_data(filename);
 
-    // Look at leftmost free chunk and rightmost non-free chunk.
-    // Case 1: Left side is >= than right size: Insert a chunk at left with the ID of the rightmost
-    // chunk, then reduce the free space on the left accordingly. Also adjust the right free space.
-    // May need to consolidate with adjacent free spaces.
-    // Case 2: Left side is < right size: Change left's ID to fill it. Right's ID reduces the used size
-    // and either inserts a free block after it or else increases the size of an existing free count.
-
-    auto left = disk.begin();
-    auto right = disk.rbegin();
+    auto left = 0, right = int(disk.size()) - 1;
     auto crossed = false;
 
     for (;;)
     {
-        while (left->id != -1)
+        while (left <= right && disk[left].id != -1)
         {
-            left++;
-            if (left == right.base())
+            if (++left > right)
             {
                 crossed = true;
                 break;
             }
         }
 
-        while (right->id == -1)
+        while (right >= left && disk[right].id == -1)
         {
-            right++;
-            if (left == right.base())
+            if (left > --right)
             {
                 crossed = true;
                 break;
@@ -92,23 +82,26 @@ auto do_part1(const std::string &filename)
         if (crossed)
             break;
 
-        if (left->blocks <= right->blocks)
+        if (disk[left].blocks <= disk[right].blocks)
         {
-            auto blocks_moving = left->blocks;
-            left->id = right->id;
-            right->blocks -= blocks_moving;
+            auto blocks_moving = disk[left].blocks;
+            disk[left].id = disk[right].id;
+            disk[right].blocks -= blocks_moving;
 
-            // TODO: may sometimes need to just increase existing free space
-            disk.insert(right.base(), { -1, blocks_moving });
+            // insert a free chunk immediately after 'right'
+            disk.insert(disk.begin() + (right + 1), Chunk{ -1, blocks_moving });
         }
         else // left has more space than right needs
         {
-            auto blocks_moving = right->blocks;
-            left->blocks -= blocks_moving;
+            auto blocks_moving = disk[right].blocks;
+            disk[left].blocks -= blocks_moving;
 
-            // TODO: May need to consolidate
-            disk.insert(left, { right->id, blocks_moving });
-            right->id = -1;
+            // insert used chunk at position 'left'
+            disk.insert(disk.begin() + left, Chunk{ disk[right].id, blocks_moving });
+
+            // insertion before 'left' shifts indices >= left; original right moved to right+1
+            right++;
+            disk[right].id = -1;
         }
     }
 
@@ -119,19 +112,27 @@ auto do_part2(const std::string &filename)
 {
     auto disk = read_data(filename);
 
-    for (auto right = disk.rbegin(); right != disk.rend(); right++)
+    for (auto right = static_cast<int>(disk.size()) - 1; right >= 0; --right)
     {
-        if (right->id == -1)
+        if (disk[right].id == -1)
             continue;
 
-        for (auto left = disk.begin(); left != right.base(); left++)
+        const int right_id = disk[right].id;
+        const int right_blocks = disk[right].blocks;
+
+        for (int left = 0; left < right; left++)
         {
-            if (left->id > -1 || left->blocks < right->blocks)
+            if (disk[left].id > -1 || disk[left].blocks < right_blocks)
                 continue;
 
-            disk.insert(left, { right->id, right->blocks });
-            left->blocks -= right->blocks;
-            right->id = -1;
+            // insert a used chunk before left
+            disk.insert(disk.begin() + left, Chunk{ right_id, right_blocks });
+
+            // original chunk at left moved to left+1; subtract moved blocks
+            disk[left + 1].blocks -= right_blocks;
+
+            // original right chunk shifted to right+1eft due to insertion at left (< right)
+            disk[right + 1].id = -1;
 
             break;
         }
