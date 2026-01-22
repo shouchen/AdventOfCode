@@ -13,11 +13,12 @@ using DirectionList = std::vector<std::pair<int, int>>;
 const DirectionList dirs = { {-1,0}, {1,0}, {0,-1}, {0,1} };
 
 // DFS - builds up the location set
-auto recur(const Grid &grid, int row, int col, LocationSet &reachable_nines)
+auto recur(const Grid &grid, int row, int col, LocationSet &reachable_nines, unsigned long long &num_paths)
 {
     if (grid[row][col] == '9')
     {
         reachable_nines.insert({ row,col });
+        num_paths++;
         return;
     }
 
@@ -30,21 +31,23 @@ auto recur(const Grid &grid, int row, int col, LocationSet &reachable_nines)
             continue;
 
         if (grid[new_row][new_col] == grid[row][col] + 1)
-            recur(grid, new_row, new_col, reachable_nines);
+            recur(grid, new_row, new_col, reachable_nines, num_paths);
     }
 }
 
+// first = score, second = rating
 auto score_trailhead(const Grid &grid, int start_row, int start_col)
 {
     LocationSet reachable_nines;
-    recur(grid, start_row, start_col, reachable_nines);
+    auto num_paths = 0ULL;
 
-    return reachable_nines.size();
+    recur(grid, start_row, start_col, reachable_nines, num_paths);
+
+    return std::make_pair(reachable_nines.size(), num_paths);
 }
 
-auto do_part1(const std::string &filename)
+auto solve(const std::string &filename)
 {
-    // read topology
     std::ifstream file(filename);
     std::string line;
     Grid grid;
@@ -52,30 +55,30 @@ auto do_part1(const std::string &filename)
     while (file >> line)
         grid.push_back(line);
 
-    // locate trailheads
     LocationList trailheads;
     for (auto row = 0; row < int(grid.size()); row++)
         for (int col = 0; col < int(grid[row].size()); col++)
             if (grid[row][col] == '0')
                 trailheads.push_back({ row, col });
 
-    // score each trailhead
-    int retval = 0;
+    auto retval = std::make_pair(0ULL, 0ULL);
     for (auto &th : trailheads)
-        retval += score_trailhead(grid, th.first, th.second);
+    {
+        auto temp = score_trailhead(grid, th.first, th.second);
+        retval.first += temp.first;
+        retval.second += temp.second;
+    }
 
     return retval;
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 535);
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    //auto part2 = do_part2("input.txt");
-    //std::cout << "Part Two: " << part2 << std::endl;
-    //assert(part2 == 6379677752410);
-
+    assert(answer.first == 535);
+    assert(answer.second == 1186);
     return 0;
 }
