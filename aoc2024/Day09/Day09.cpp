@@ -38,9 +38,9 @@ auto compute_checksum(const std::vector<Chunk> &disk)
 auto read_data(const std::string &filename)
 {
     std::ifstream file(filename);
+    std::vector<Chunk> disk;
     auto next_id = 0;
     auto c = ' ';
-    std::vector<Chunk> disk;
 
     while (file >> c)
     {
@@ -55,85 +55,54 @@ auto read_data(const std::string &filename)
 auto do_part1(const std::string &filename)
 {
     auto disk = read_data(filename);
-
     auto left = 0, right = int(disk.size()) - 1;
-    auto crossed = false;
 
     for (;;)
     {
         while (left <= right && disk[left].id != -1)
-        {
             if (++left > right)
-            {
-                crossed = true;
-                break;
-            }
-        }
+                return compute_checksum(disk);
 
         while (right >= left && disk[right].id == -1)
-        {
             if (left > --right)
-            {
-                crossed = true;
-                break;
-            }
-        }
-
-        if (crossed)
-            break;
+                return compute_checksum(disk);
 
         if (disk[left].blocks <= disk[right].blocks)
         {
             auto blocks_moving = disk[left].blocks;
             disk[left].id = disk[right].id;
             disk[right].blocks -= blocks_moving;
-
-            // insert a free chunk immediately after 'right'
             disk.insert(disk.begin() + (right + 1), Chunk{ -1, blocks_moving });
         }
-        else // left has more space than right needs
+        else
         {
             auto blocks_moving = disk[right].blocks;
             disk[left].blocks -= blocks_moving;
-
-            // insert used chunk at position 'left'
             disk.insert(disk.begin() + left, Chunk{ disk[right].id, blocks_moving });
-
-            // insertion before 'left' shifts indices >= left; original right moved to right+1
-            right++;
-            disk[right].id = -1;
+            disk[++right].id = -1;
         }
     }
-
-    return compute_checksum(disk);
 }
 
 auto do_part2(const std::string &filename)
 {
     auto disk = read_data(filename);
 
-    for (auto right = static_cast<int>(disk.size()) - 1; right >= 0; --right)
+    for (auto right = int(disk.size()) - 1; right >= 0; --right)
     {
         if (disk[right].id == -1)
             continue;
 
-        const int right_id = disk[right].id;
-        const int right_blocks = disk[right].blocks;
+        auto blocks_moving = disk[right].blocks;
 
-        for (int left = 0; left < right; left++)
+        for (auto left = 0; left < right; left++)
         {
-            if (disk[left].id > -1 || disk[left].blocks < right_blocks)
+            if (disk[left].id > -1 || disk[left].blocks < blocks_moving)
                 continue;
 
-            // insert a used chunk before left
-            disk.insert(disk.begin() + left, Chunk{ right_id, right_blocks });
-
-            // original chunk at left moved to left+1; subtract moved blocks
-            disk[left + 1].blocks -= right_blocks;
-
-            // original right chunk shifted to right+1eft due to insertion at left (< right)
+            disk.insert(disk.begin() + left, Chunk{ disk[right].id, blocks_moving });
+            disk[left + 1].blocks -= blocks_moving;
             disk[right + 1].id = -1;
-
             break;
         }
     }
