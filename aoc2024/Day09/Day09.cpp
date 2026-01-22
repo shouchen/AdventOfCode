@@ -9,8 +9,6 @@ struct Chunk
     int id, blocks;
 };
 
-std::list<Chunk> disk;
-
 auto sum_of_integers(unsigned long long up_to)
 {
     return (up_to * (up_to + 1)) / 2;
@@ -21,7 +19,7 @@ auto sum_of_integers(int starting, int length)
     return sum_of_integers(starting + length - 1) - sum_of_integers(starting - 1);
 }
 
-auto compute_checksum()
+auto compute_checksum(const std::list<Chunk> &disk)
 {
     auto position = 0;
     auto checksum = 0ULL;
@@ -37,13 +35,12 @@ auto compute_checksum()
     return checksum;
 }
 
-void read_data(const std::string &filename)
+auto read_data(const std::string &filename)
 {
     std::ifstream file(filename);
     auto next_id = 0;
     auto c = ' ';
-
-    disk.clear();
+    std::list<Chunk> disk;
 
     while (file >> c)
     {
@@ -51,11 +48,13 @@ void read_data(const std::string &filename)
         if (file >> c)
             disk.push_back({ -1, c - '0' });
     }
+
+    return disk;
 }
 
 auto do_part1(const std::string &filename)
 {
-    read_data(filename);
+    auto disk = read_data(filename);
 
     // Look at leftmost free chunk and rightmost non-free chunk.
     // Case 1: Left side is >= than right size: Insert a chunk at left with the ID of the rightmost
@@ -70,7 +69,7 @@ auto do_part1(const std::string &filename)
 
     for (;;)
     {
-        while (left->id != -1/* && left != disk.end()*/)
+        while (left->id != -1)
         {
             left++;
             if (left == right.base())
@@ -80,7 +79,7 @@ auto do_part1(const std::string &filename)
             }
         }
 
-        while (right->id == -1/* && right != disk.rend()*/)
+        while (right->id == -1)
         {
             right++;
             if (left == right.base())
@@ -113,12 +112,12 @@ auto do_part1(const std::string &filename)
         }
     }
 
-    return compute_checksum();
+    return compute_checksum(disk);
 }
 
 auto do_part2(const std::string &filename)
 {
-    read_data(filename);
+    auto disk = read_data(filename);
 
     for (auto right = disk.rbegin(); right != disk.rend(); right++)
     {
@@ -138,7 +137,7 @@ auto do_part2(const std::string &filename)
         }
     }
 
-    return compute_checksum();
+    return compute_checksum(disk);
 }
 
 int main()
