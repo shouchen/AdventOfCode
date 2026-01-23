@@ -1,94 +1,61 @@
 #include <iostream>
 #include <fstream>
-#include <map>
-#include <vector>
+#include <unordered_map>
 #include <string>
 #include <cassert>
 
-auto do_generation(std::vector<unsigned long long> stones)
+using StoneCounts = std::unordered_map<unsigned long long, unsigned long long>;
+
+auto solve(const std::string &filename, int blinks)
 {
-    std::vector<unsigned long long> retval;
+    std::ifstream file(filename);
+    StoneCounts stones;
+    auto n = 0ULL;
 
-    for (auto i = 0; i < stones.size(); i++)
+    while (file >> n)
+        stones[n]++;
+
+    while (blinks--)
     {
-        if (stones[i] == 0)
+        StoneCounts next_stones;
+
+        for (auto [stone, count] : stones)
         {
-            retval.push_back(1);
-            continue;
+            if (stone == 0)
+            {
+                next_stones[1] += count;
+                continue;
+            }
+
+            auto ss = std::to_string(stone);
+            if (ss.length() % 2 == 0)
+            {
+                auto n = int(ss.length());
+                auto left = std::stoull(ss.substr(0, n / 2)), right = stoull(ss.substr(n / 2));
+                next_stones[left] += count, next_stones[right] += count;
+                continue;
+            }
+
+            next_stones[stone * 2024] += count;
         }
 
-        auto s = std::to_string(stones[i]);
-        if (s.length() % 2 == 0)
-        {
-            retval.push_back(stoull(s.substr(0, s.length() / 2)));
-            retval.push_back(stoull(s.substr(s.length() / 2)));
-            continue;
-        }
-
-        retval.push_back(stones[i] * 2024);
+        stones = next_stones;
     }
+
+    auto retval = 0ULL;
+    for (auto pair : stones)
+        retval += pair.second;
 
     return retval;
 }
 
-auto do_part1(const std::string &filename, int blinks)
-{
-    std::ifstream file(filename);
-    std::vector<unsigned long long> stones;
-    auto n = 0ULL;
-
-    while (file >> n)
-        stones.push_back(n);
-
-    for (auto i = 1; i <= blinks; i++)
-    {
-        stones = do_generation(stones);
-        std::cout << "After " << i << " blinks, # stones = " << stones.size() << std::endl;
-    }
-
-    return stones.size();
-}
-
-std::map<unsigned long long, unsigned long long> memo;
-
-auto do_part2(const std::string &filename, int blinks)
-{
-    std::ifstream file(filename);
-    std::vector<unsigned long long> stones;
-    auto n = 0ULL;
-
-    while (file >> n)
-        stones.push_back(n);
-
-    // Do for each stone individually
-    for (int i = 0; i < stones.size(); i++)
-    {
-        std::vector<unsigned long long> current{ stones[i] };
-        if (memo.find(stones[i]) == memo.end())
-        {
-            for (auto j = 1; j <= 25; j++)
-                if (memo.find(stones[i]) == memo.end())
-                    current = do_generation(current);
-            memo[stones[i]] = current.size();
-        }
-    }
-
-    auto retval = 0ULL;
-    for (auto s : stones)
-        retval += memo[s];
-
-    // return retval; // This is the answer to part 1, and the memo field has the result after 25 ops
-
-
-}
-
 int main()
 {
-    //auto part1 = do_part1("input.txt", 25);
-    //std::cout << "Part One: " << part1 << std::endl;
-    //assert(part1 == 183484);
+    auto part1 = solve("input.txt", 25);
+    std::cout << "Part One: " << part1 << std::endl;
+    assert(part1 == 183484);
 
-    auto part2 = do_part2("input.txt", 75);
+    auto part2 = solve("input.txt", 75);
     std::cout << "Part Two: " << part2 << std::endl;
     assert(part2 == 218817038947400);
 
