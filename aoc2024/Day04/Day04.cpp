@@ -19,7 +19,7 @@ auto spells_xmas(int row, int col, int row_dir, int col_dir)
 {
     static std::string xmas = "XMAS";
 
-    for (char c : xmas)
+    for (auto c : xmas)
     {
         if (row < 0 || row >= grid.size() || col < 0 || col >= grid[0].size())
             return false;
@@ -27,8 +27,7 @@ auto spells_xmas(int row, int col, int row_dir, int col_dir)
         if (grid[row][col] != c)
             return false;
 
-        row += row_dir;
-        col += col_dir;
+        row += row_dir, col += col_dir;
     }
 
     return true;
