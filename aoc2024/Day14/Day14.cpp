@@ -12,44 +12,70 @@ struct Robot
     Velocity v;
 };
 
-std::vector<Robot> robots;
-const auto width = 101, height = 103;
+using Robots = std::vector<Robot>;
 
-void dump()
+constexpr auto width = 101, height = 103;
+
+auto compute_safety_factor(const Robots &robots)
+{
+    auto q1 = 0, q2 = 0, q3 = 0, q4 = 0;
+
+    for (auto &r : robots)
+    {
+             if ((r.p.x < width / 2) && (r.p.y < height / 2)) q1++;
+        else if ((r.p.x < width / 2) && (r.p.y > height / 2)) q2++;
+        else if ((r.p.x > width / 2) && (r.p.y < height / 2)) q3++;
+        else if ((r.p.x > width / 2) && (r.p.y > height / 2)) q4++;
+    }
+
+    return q1 * q2 * q3 * q4;
+}
+
+// For part 2, a manual process to visually the Christmas tree is too tedious. If we assume the
+// robots are not overlapping when they for the Christmas tree, it is easy to find. If this
+// assumption is wrong, we'll instead need to programmatically look at the entropy of each
+// section of the robot system and identify a second when it drastically drops (due to the
+// linearity and symmetry of the pattern. Fortunately, the earlier assumption proved to be true
+// for our input data so the latter turned out to be unnecessary.
+
+auto has_overlaps(const Robots &robots)
 {
     for (auto y = 0; y < height; y++)
-    {
         for (auto x = 0; x < width; x++)
         {
             auto count = 0;
             for (auto &i : robots)
                 if (i.p.x == x && i.p.y == y)
+                    if (++count > 1)
+                        return true;
+        }
+
+    return false;
+}
+
+void dump(const Robots &robots)
+{
+    std::cout << std::endl;
+    for (auto y = 0; y < height; y++)
+    {
+        for (auto x = 0; x < width; x++)
+        {
+            auto count = 0;
+            for (auto &r : robots)
+                if (r.p.x == x && r.p.y == y)
                     count++;
-            std::cout << (count ? char(count + '0') : '.');
+            std::cout << (count ? '#' : '.');
         }
         std::cout << std::endl;
     }
     std::cout << std::endl;
 }
 
-bool no_overlaps()
-{
-    for (auto y = 0; y < height; y++)
-        for (auto x = 0; x < width; x++)
-        {
-            auto count = 0;
-            for (auto &i : robots)
-                if (i.p.x == x && i.p.y == y)
-                    if (++count > 1) return false;
-        }
-
-    return true;
-}
-
 auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
+    Robots robots;
     auto p = 'p', v = 'v', equals = '=', comma = ',';
     auto px = 0, py = 0, vx = 0, vy = 0;
     auto retval = std::make_pair(0, 0);
@@ -63,40 +89,17 @@ auto solve(const std::string &filename)
         {
             r.p.x += r.v.x, r.p.y += r.v.y;
 
-            while (r.p.x < 0)
-                r.p.x += width;
-            while (r.p.x >= width)
-                r.p.x -= width;
-            while (r.p.y < 0)
-                r.p.y += height;
-            while (r.p.y >= height)
-                r.p.y -= height;
+            r.p.x = ((r.p.x % width) + width) % width;
+            r.p.y = ((r.p.y % height) + height) % height;
         }
 
         if (seconds == 100)
-        {
-            auto q1 = 0, q2 = 0, q3 = 0, q4 = 0;
+            retval.first = compute_safety_factor(robots);
 
-            for (auto &r : robots)
-            {
-                if ((r.p.x < width / 2) && (r.p.y < height / 2))
-                    q1++;
-                else if ((r.p.x < width / 2) && (r.p.y > height / 2))
-                    q2++;
-                else if ((r.p.x > width / 2) && (r.p.y < height / 2))
-                    q3++;
-                else if ((r.p.x > width / 2) && (r.p.y > height / 2))
-                    q4++;
-            }
-
-            retval.first = q1 * q2 * q3 * q4;
-        }
-
-        if (no_overlaps())
+        if (!has_overlaps(robots))
         {
             retval.second = seconds;
-            std::cout << std::endl;
-            dump();
+            dump(robots);
         }
     }
 
