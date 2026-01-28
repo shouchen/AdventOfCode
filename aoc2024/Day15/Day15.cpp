@@ -13,98 +13,88 @@ Direction::Direction(char move)
 {
     switch (move)
     {
-    case '^': row = -1, col =  0; break;
-    case 'v': row =  1, col =  0; break;
-    case '<': row =  0, col = -1; break;
-    case '>': row =  0, col =  1; break;
-    default:  row =  0, col =  0;
+        case '^': row = -1, col =  0; break;
+        case 'v': row =  1, col =  0; break;
+        case '<': row =  0, col = -1; break;
+        case '>': row =  0, col =  1; break;
+        default:  row =  0, col =  0;
     }
 }
 
-auto get_total_for_config(const Grid &grid)
-{
-    auto retval = 0;
-    for (auto row = 0; row < grid.size(); row++)
-        for (auto col = 0; col < grid[row].size(); col++)
-            if (grid[row][col] == 'O' || grid[row][col] == '[')
-                retval += row * 100 + col;
-    return retval;
-}
-
-// See if it will be possible to move the object at (row, col) in the specified direction
-// without actually performing the move.
 auto can_move(const Grid &grid, Location loc, Direction dir)
 {
-    if (grid[loc.row][loc.col] == '.')
-        return true;
+    if (grid[loc.row][loc.col] == '.') return true;
+    if (grid[loc.row][loc.col] == '#') return false;
 
-    if (grid[loc.row][loc.col] == '#')
-        return false;
-
-    // Align with start of object, like all other cases
+    // Align with start of object if second half of double-wide
     if (grid[loc.row][loc.col] == ']')
         loc.col--;
 
-    auto next_loc = Location{ loc.row + dir.row, loc.col + dir.col };
-    if (grid[loc.row][loc.col] == '[' && dir.col == 1) next_loc.col++;
+    auto next = Location{ loc.row + dir.row, loc.col + dir.col };
+    if (grid[loc.row][loc.col] == '[' && dir.col == 1) next.col++;
+
     return
-        can_move(grid, next_loc, dir) &&
-        (grid[loc.row][loc.col] != '[' || dir.row == 0 || can_move(grid, Location{ next_loc.row, next_loc.col + 1 }, dir));
+        can_move(grid, next, dir) &&
+        (grid[loc.row][loc.col] != '[' || dir.row == 0 || can_move(grid, Location{ next.row, next.col + 1 }, dir));
 }
 
-// Move the object at the location in the direction indicated. Should first call can_move2() 
-// to see whether the way is open or not. Otherwise, this function would have to back out
-// partial changes. TODO: Make this one function with a "test" bool parameter since the
-// traversal actions are essentially the same.
-auto do_move(Grid &grid, Location &robot, int row, int col, Direction dir)
+void do_move(Grid &grid, Location loc, Direction dir, Location &robot)
 {
-    if (grid[row][col] == '.')
-        return true;
+    // Align with start of object if second half of double-wide
+    if (grid[loc.row][loc.col] == ']')
+        loc.col--;
 
-    if (grid[row][col] == '#')
-        return false;
+    auto next_row = loc.row + dir.row, next_col = loc.col + dir.col;
+    if (grid[loc.row][loc.col] == '[' && dir.col == 1) next_col++;
 
-    // Align with start of a double-wide object, to match all other cases
-    if (grid[row][col] == ']')
-        col--;
+    if (grid[next_row][next_col] != '.')
+        do_move(grid, Location{ next_row, next_col }, dir, robot);
 
-    auto next_row = row + dir.row, next_col = col + dir.col;
-    if (grid[row][col] == '[' && dir.col == 1) next_col++;
+    if (grid[loc.row][loc.col] == '[' && dir.row != 0 && grid[next_row][next_col + 1] != '.')
+        do_move(grid, Location{ next_row, next_col + 1 }, dir, robot);
 
-    if (do_move(grid, robot, next_row, next_col, dir) &&
-        (grid[row][col] != '[' || dir.row == 0 || do_move(grid, robot, next_row, next_col + 1, dir)))
+    if (grid[loc.row][loc.col] == '[' && dir.col == 1)
+        --next_col;
+
+    if (grid[loc.row][loc.col] == '[') // double-wide moves
     {
-        if (grid[row][col] == '[' && dir.col == 1) --next_col;
+        grid[next_row][next_col] = '[', grid[next_row][next_col + 1] = ']';
 
-        // Special case for double-wide moves
-        if (grid[row][col] == '[')
+        if (dir.row == 0) // horizontal moves
         {
-            if (dir.row == 0) // horizontal moves
-            {
-                grid[next_row][next_col] = '[';
-                grid[next_row][next_col + 1] = ']';
-                if (dir.col == 1)
-                    grid[row][col] = '.';
-                else
-                    grid[row - dir.row][col - dir.col] = '.';
-            }
-            else // vertical moves
-            {
-                grid[next_row][next_col] = '[';
-                grid[next_row][next_col + 1] = ']';
-                grid[row][col] = '.';
-                grid[row][col + 1] = '.';
-            }
+            if (dir.col == 1)
+                grid[loc.row - dir.row][loc.col] = '.';
+            else
+                grid[loc.row - dir.row][loc.col - dir.col] = '.';
         }
-        else // single-wide moves
+        else // vertical moves
         {
-            if (grid[row][col] == '@') robot.row = next_row, robot.col = next_col;
-            grid[next_row][next_col] = grid[row][col];
-            grid[row][col] = '.';
+            grid[loc.row][loc.col] = '.';
+            grid[loc.row][loc.col + 1] = '.';
         }
     }
+    else // single-wide moves
+    {
+        if (grid[loc.row][loc.col] == '@')
+            robot = Location{ next_row, next_col };
 
-    return true;
+        grid[next_row][next_col] = grid[loc.row][loc.col];
+        grid[loc.row][loc.col] = '.';
+    }
+}
+
+auto expand_line(const std::string &line)
+{
+    std::string retval;
+    for (auto c : line)
+        switch (c)
+        {
+            case '@': retval.push_back(c),   retval.push_back('.'); break;
+            case 'O': retval.push_back('['), retval.push_back(']'); break;
+            default:  retval.push_back(c),   retval.push_back(c);
+        }
+
+    return retval;
 }
 
 auto solve(const std::string &filename, bool expand)
@@ -117,28 +107,12 @@ auto solve(const std::string &filename, bool expand)
     while (std::getline(file, line) && line.length())
     {
         if (expand)
-        {
-            std::string line2;
-            for (auto c : line)
-                if (c == '@')
-                    line2.push_back(c), line2.push_back('.');
-                else if (c == 'O')
-                    line2.push_back('['), line2.push_back(']');
-                else
-                    line2.push_back(c), line2.push_back(c);
-
-            auto at_pos = line2.find('@');
-            if (at_pos != std::string::npos)
-                robot.row = int(grid.size()), robot.col = int(at_pos);
-            grid.push_back(line2);
-        }
-        else
-        {
-            auto at_pos = line.find('@');
-            if (at_pos != std::string::npos)
-                robot.row = int(grid.size()), robot.col = int(at_pos);
-            grid.push_back(line);
-        }
+            line = expand_line(line);
+    
+        auto at_pos = line.find('@');
+        if (at_pos != std::string::npos)
+            robot = { int(grid.size()), int(at_pos) };
+        grid.push_back(line);
     }
 
     auto move = ' ';
@@ -146,10 +120,16 @@ auto solve(const std::string &filename, bool expand)
     {
         Direction dir(move);
         if (can_move(grid, robot, dir))
-            do_move(grid, robot, robot.row, robot.col, dir);
+            do_move(grid, robot, dir, robot);
     }
 
-    return get_total_for_config(grid);
+    auto gps_sum = 0;
+    for (auto row = 0; row < grid.size(); row++)
+        for (auto col = 0; col < grid[row].size(); col++)
+            if (grid[row][col] == 'O' || grid[row][col] == '[')
+                gps_sum += row * 100 + col;
+
+    return gps_sum;
 }
 
 int main()
