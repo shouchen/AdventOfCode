@@ -30,57 +30,56 @@ auto can_move(const Grid &grid, Location loc, Direction dir)
     if (grid[loc.row][loc.col] == ']')
         loc.col--;
 
+    auto is_double_wide = grid[loc.row][loc.col] == '[';
     auto next = Location{ loc.row + dir.row, loc.col + dir.col };
-    if (grid[loc.row][loc.col] == '[' && dir.col == 1) next.col++;
 
-    return
-        can_move(grid, next, dir) &&
-        (grid[loc.row][loc.col] != '[' || dir.row == 0 || can_move(grid, Location{ next.row, next.col + 1 }, dir));
+    if (is_double_wide && dir.col == 1)
+        next.col++;
+
+    if (!can_move(grid, next, dir))
+        return false;
+
+    return 
+        grid[loc.row][loc.col] != '[' || dir.row == 0 ||
+        can_move(grid, Location{ next.row, next.col + 1 }, dir);
 }
 
-void do_move(Grid &grid, Location loc, Direction dir, Location &robot)
+Location do_move(Grid &grid, Location loc, Direction dir)
 {
     // Align with start of object if second half of double-wide
     if (grid[loc.row][loc.col] == ']')
         loc.col--;
 
-    auto next_row = loc.row + dir.row, next_col = loc.col + dir.col;
-    if (grid[loc.row][loc.col] == '[' && dir.col == 1) next_col++;
+    auto is_double_wide = grid[loc.row][loc.col] == '[';
+    auto next = Location{ loc.row + dir.row, loc.col + dir.col };
+    auto next2 = Location{ next.row, next.col + 1}; // 2nd half of double-wides
 
-    if (grid[next_row][next_col] != '.')
-        do_move(grid, Location{ next_row, next_col }, dir, robot);
+    if (is_double_wide && dir.col == 1) // rightward double-wide move
+        next.col++;
 
-    if (grid[loc.row][loc.col] == '[' && dir.row != 0 && grid[next_row][next_col + 1] != '.')
-        do_move(grid, Location{ next_row, next_col + 1 }, dir, robot);
+    if (grid[next.row][next.col] != '.')
+        do_move(grid, next, dir);
 
-    if (grid[loc.row][loc.col] == '[' && dir.col == 1)
-        --next_col;
-
-    if (grid[loc.row][loc.col] == '[') // double-wide moves
+    if (is_double_wide)
     {
-        grid[next_row][next_col] = '[', grid[next_row][next_col + 1] = ']';
+        if (dir.row != 0 && grid[next2.row][next2.col] != '.') // vertical double-wide moves may have to move a second onstacle
+            do_move(grid, next2, dir);
 
-        if (dir.row == 0) // horizontal moves
-        {
-            if (dir.col == 1)
-                grid[loc.row - dir.row][loc.col] = '.';
-            else
-                grid[loc.row - dir.row][loc.col - dir.col] = '.';
-        }
-        else // vertical moves
-        {
-            grid[loc.row][loc.col] = '.';
-            grid[loc.row][loc.col + 1] = '.';
-        }
+        if (dir.col == 1) // this puts next back to where it was originally
+            --next.col;
+
+        grid[next.row][next.col] = grid[loc.row][loc.col], grid[next2.row][next2.col] = ']';
+
+        if (dir.col != 1)  grid[loc.row][loc.col + 1] = '.';
+        if (dir.col != -1) grid[loc.row][loc.col] = '.';
     }
-    else // single-wide moves
+    else
     {
-        if (grid[loc.row][loc.col] == '@')
-            robot = Location{ next_row, next_col };
-
-        grid[next_row][next_col] = grid[loc.row][loc.col];
+        grid[next.row][next.col] = grid[loc.row][loc.col];
         grid[loc.row][loc.col] = '.';
     }
+
+    return next;
 }
 
 auto expand_line(const std::string &line)
@@ -120,7 +119,7 @@ auto solve(const std::string &filename, bool expand)
     {
         Direction dir(move);
         if (can_move(grid, robot, dir))
-            do_move(grid, robot, dir, robot);
+            robot = do_move(grid, robot, dir);
     }
 
     auto gps_sum = 0;
