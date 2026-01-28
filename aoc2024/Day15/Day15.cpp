@@ -32,16 +32,19 @@ auto can_move(const Grid &grid, Location loc, Direction dir)
 
     auto is_double_wide = grid[loc.row][loc.col] == '[';
     auto next = Location{ loc.row + dir.row, loc.col + dir.col };
+    auto next2 = Location{ next.row, next.col + 1 }; // 2nd half of double-wides
 
-    if (is_double_wide && dir.col == 1)
-        next.col++;
+    if (is_double_wide && dir.col == 1) // rightward double-wide move
+        next = next2;
 
     if (!can_move(grid, next, dir))
         return false;
 
-    return 
-        grid[loc.row][loc.col] != '[' || dir.row == 0 ||
-        can_move(grid, Location{ next.row, next.col + 1 }, dir);
+    // additional check for double-wide vertical
+    if (is_double_wide && dir.row != 0 && !can_move(grid, Location{ next.row, next.col + 1 }, dir))
+        return false;
+
+    return true;
 }
 
 Location do_move(Grid &grid, Location loc, Direction dir)
@@ -57,18 +60,19 @@ Location do_move(Grid &grid, Location loc, Direction dir)
     if (is_double_wide && dir.col == 1) // rightward double-wide move
         next.col++;
 
-    if (grid[next.row][next.col] != '.')
+    if (grid[next.row][next.col] != '.') // handles all single-side moves
         do_move(grid, next, dir);
 
     if (is_double_wide)
     {
-        if (dir.row != 0 && grid[next2.row][next2.col] != '.') // vertical double-wide moves may have to move a second onstacle
+        if (dir.row != 0 && grid[next2.row][next2.col] != '.') // vertical double-wide moves may have to move a second obstacle
             do_move(grid, next2, dir);
 
         if (dir.col == 1) // this puts next back to where it was originally
             --next.col;
 
-        grid[next.row][next.col] = grid[loc.row][loc.col], grid[next2.row][next2.col] = ']';
+        grid[next.row][next.col] = grid[loc.row][loc.col];
+        grid[next2.row][next2.col] = ']';
 
         if (dir.col != 1)  grid[loc.row][loc.col + 1] = '.';
         if (dir.col != -1) grid[loc.row][loc.col] = '.';
