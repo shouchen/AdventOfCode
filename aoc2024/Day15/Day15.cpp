@@ -4,11 +4,10 @@
 #include <string>
 #include <cassert>
 
+using Grid = std::vector<std::string>;
+
 struct Location { int row = 0, col = 0; };
 struct Direction { int row, col; Direction(char move); };
-
-std::vector<std::string> grid;
-Location robot;
 
 Direction::Direction(char move)
 {
@@ -18,10 +17,11 @@ Direction::Direction(char move)
     case 'v': row =  1, col =  0; break;
     case '<': row =  0, col = -1; break;
     case '>': row =  0, col =  1; break;
+    default:  row =  0, col =  0;
     }
 }
 
-auto get_total_for_config()
+auto get_total_for_config(const Grid &grid)
 {
     auto retval = 0;
     for (auto row = 0; row < grid.size(); row++)
@@ -31,63 +31,32 @@ auto get_total_for_config()
     return retval;
 }
 
-auto do_move(Direction dir)
-{
-    // Find next empty space or wall in direction of travel.
-    auto row = robot.row + dir.row, col = robot.col + dir.col;
-    while (grid[row][col] != '#' && grid[row][col] != '.')
-        row += dir.row, col += dir.col;
-
-    // Find next space in direction of travel.
-    auto next_row = robot.row + dir.row, next_col = robot.col + dir.col;
-
-    // Blocked?
-    if (grid[row][col] == '#')
-        return false;
-
-    // Simple Move?
-    if (grid[next_row][next_col] == '.')
-    {
-        grid[robot.row][robot.col] = '.';
-        grid[robot.row + dir.row][robot.col + dir.col] = '@';
-        robot.row = next_row, robot.col = next_col;
-        return true;
-    }
-
-    // Else, it's a push
-    grid[robot.row][robot.col] = '.';
-    grid[robot.row + dir.row][robot.col + dir.col] = '@';
-    robot.row = next_row, robot.col = next_col;
-    grid[row][col] = 'O';
-    return  true;
-}
-
 // See if it will be possible to move the object at (row, col) in the specified direction
 // without actually performing the move.
-auto can_move2(int row, int col, Direction dir)
+auto can_move(const Grid &grid, Location loc, Direction dir)
 {
-    if (grid[row][col] == '.')
+    if (grid[loc.row][loc.col] == '.')
         return true;
 
-    if (grid[row][col] == '#')
+    if (grid[loc.row][loc.col] == '#')
         return false;
 
     // Align with start of object, like all other cases
-    if (grid[row][col] == ']')
-        col--;
+    if (grid[loc.row][loc.col] == ']')
+        loc.col--;
 
-    auto next_row = row + dir.row, next_col = col + dir.col;
-    if (grid[row][col] == '[' && dir.col == 1) next_col++;
+    auto next_loc = Location{ loc.row + dir.row, loc.col + dir.col };
+    if (grid[loc.row][loc.col] == '[' && dir.col == 1) next_loc.col++;
     return
-        can_move2(next_row, next_col, dir) &&
-        (grid[row][col] != '[' || dir.row == 0 || can_move2(next_row, next_col + 1, dir));
+        can_move(grid, next_loc, dir) &&
+        (grid[loc.row][loc.col] != '[' || dir.row == 0 || can_move(grid, Location{ next_loc.row, next_loc.col + 1 }, dir));
 }
 
 // Move the object at the location in the direction indicated. Should first call can_move2() 
 // to see whether the way is open or not. Otherwise, this function would have to back out
 // partial changes. TODO: Make this one function with a "test" bool parameter since the
 // traversal actions are essentially the same.
-auto move2(int row, int col, Direction dir)
+auto do_move(Grid &grid, Location &robot, int row, int col, Direction dir)
 {
     if (grid[row][col] == '.')
         return true;
@@ -102,8 +71,8 @@ auto move2(int row, int col, Direction dir)
     auto next_row = row + dir.row, next_col = col + dir.col;
     if (grid[row][col] == '[' && dir.col == 1) next_col++;
 
-    if (move2(next_row, next_col, dir) &&
-        (grid[row][col] != '[' || dir.row == 0 || move2(next_row, next_col + 1, dir)))
+    if (do_move(grid, robot, next_row, next_col, dir) &&
+        (grid[row][col] != '[' || dir.row == 0 || do_move(grid, robot, next_row, next_col + 1, dir)))
     {
         if (grid[row][col] == '[' && dir.col == 1) --next_col;
 
@@ -138,71 +107,58 @@ auto move2(int row, int col, Direction dir)
     return true;
 }
 
-auto do_part1(const std::string &filename)
+auto solve(const std::string &filename, bool expand)
 {
+    Grid grid;
+    Location robot;
     std::ifstream file(filename);
     std::string line;
 
     while (std::getline(file, line) && line.length())
     {
-        auto at_pos = line.find('@');
-        if (at_pos != std::string::npos)
-            robot.row = int(grid.size()), robot.col = int(at_pos);
-        grid.push_back(line);
+        if (expand)
+        {
+            std::string line2;
+            for (auto c : line)
+                if (c == '@')
+                    line2.push_back(c), line2.push_back('.');
+                else if (c == 'O')
+                    line2.push_back('['), line2.push_back(']');
+                else
+                    line2.push_back(c), line2.push_back(c);
+
+            auto at_pos = line2.find('@');
+            if (at_pos != std::string::npos)
+                robot.row = int(grid.size()), robot.col = int(at_pos);
+            grid.push_back(line2);
+        }
+        else
+        {
+            auto at_pos = line.find('@');
+            if (at_pos != std::string::npos)
+                robot.row = int(grid.size()), robot.col = int(at_pos);
+            grid.push_back(line);
+        }
     }
 
     auto move = ' ';
     while (file >> move)
     {
         Direction dir(move);
-        do_move(dir);
+        if (can_move(grid, robot, dir))
+            do_move(grid, robot, robot.row, robot.col, dir);
     }
 
-    return get_total_for_config();
-}
-
-auto do_part2(const std::string &filename)
-{
-    grid.clear();
-
-    std::ifstream file(filename);
-    std::string line;
-
-    while (std::getline(file, line) && line.length())
-    {
-        std::string line2;
-        for (auto c : line)
-            if (c == '@')
-                line2.push_back(c), line2.push_back('.');
-            else if (c == 'O')
-                line2.push_back('['), line2.push_back(']');
-            else
-                line2.push_back(c), line2.push_back(c);
-
-        auto at_pos = line2.find('@');
-        if (at_pos != std::string::npos)
-            robot.row = int(grid.size()), robot.col = int(at_pos);
-        grid.push_back(line2);
-    }
-
-    auto move = ' ';
-    while (file >> move)
-    {
-        Direction dir(move);
-        if (can_move2(robot.row, robot.col, dir))
-            move2(robot.row, robot.col, dir);
-    }
-
-    return get_total_for_config();
+    return get_total_for_config(grid);
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
+    auto part1 = solve("input.txt", false);
     std::cout << "Part One: " << part1 << std::endl;
     assert(part1 == 1438161);
 
-    auto part2 = do_part2("input.txt");
+    auto part2 = solve("input.txt", true);
     std::cout << "Part Two: " << part2 << std::endl;
     assert(part2 == 1437981);
 
