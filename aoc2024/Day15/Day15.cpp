@@ -26,59 +26,70 @@ auto can_move(const Grid &grid, Location loc, Direction dir)
     if (grid[loc.row][loc.col] == '.') return true;
     if (grid[loc.row][loc.col] == '#') return false;
 
-    // Align with start of object if second half of double-wide
     if (grid[loc.row][loc.col] == ']')
-        loc.col--;
+        loc.col--; // align to box start if double-wide
 
-    auto is_double_wide = grid[loc.row][loc.col] == '[';
     auto next = Location{ loc.row + dir.row, loc.col + dir.col };
-    auto next2 = Location{ next.row, next.col + 1 }; // 2nd half of double-wides
 
-    if (is_double_wide && dir.col == 1) // rightward double-wide move
-        next = next2;
+    // double-wide box moves require additional checks
+    if (grid[loc.row][loc.col] == '[')
+    {
+        auto next2 = Location{ next.row, next.col + 1 };
 
-    if (!can_move(grid, next, dir))
-        return false;
+        // rightward double-wide move: the single cell to check is 2 away from loc
+        if (dir.col == 1)
+            return can_move(grid, next2, dir);
 
-    // additional check for double-wide vertical
-    if (is_double_wide && dir.row != 0 && !can_move(grid, Location{ next.row, next.col + 1 }, dir))
-        return false;
+        // vertical double-wide moves have to check two cells - this one and the one below
+        if (dir.row != 0 && !can_move(grid, next2, dir))
+            return false;
+    }
 
-    return true;
+    return can_move(grid, next, dir);
 }
 
 Location do_move(Grid &grid, Location loc, Direction dir)
 {
-    // Align with start of object if second half of double-wide
+    if (grid[loc.row][loc.col] == '.' || grid[loc.row][loc.col] == '#') return loc;
+
     if (grid[loc.row][loc.col] == ']')
-        loc.col--;
+        loc.col--; // align to box start if double-wide
 
-    auto is_double_wide = grid[loc.row][loc.col] == '[';
     auto next = Location{ loc.row + dir.row, loc.col + dir.col };
-    auto next2 = Location{ next.row, next.col + 1}; // 2nd half of double-wides
 
-    if (is_double_wide && dir.col == 1) // rightward double-wide move
-        next.col++;
-
-    if (grid[next.row][next.col] != '.') // handles all single-side moves
-        do_move(grid, next, dir);
-
-    if (is_double_wide)
+    // open up destination cells, then do actual box move
+    if (grid[loc.row][loc.col] == '[')
     {
-        if (dir.row != 0 && grid[next2.row][next2.col] != '.') // vertical double-wide moves may have to move a second obstacle
+        auto next2 = Location{ next.row, next.col + 1 };
+
+        if (dir.col == 1)
+        {
+            // rightward double-wide move: the single cell to open up is 2 away from loc
             do_move(grid, next2, dir);
+        }
+        else
+        {
+            // for all moves other than right, open up one adjacent cell in the direction of move
+            do_move(grid, next, dir);
 
-        if (dir.col == 1) // this puts next back to where it was originally
-            --next.col;
+            // vertical double-wide moves also have to open up a second cell besides the above
+            if (dir.row != 0)
+                do_move(grid, next2, dir);
+        }
 
-        grid[next.row][next.col] = grid[loc.row][loc.col];
-        grid[next2.row][next2.col] = ']';
+        // actually do the double-wide move
+        grid[next.row][next.col] = '[', grid[next2.row][next2.col] = ']';
 
-        if (dir.col != 1)  grid[loc.row][loc.col + 1] = '.';
-        if (dir.col != -1) grid[loc.row][loc.col] = '.';
+        if (dir.col != -1) grid[loc.row][loc.col] = '.'; // for every move dir except left
+        if (dir.col != 1)  grid[loc.row][loc.col + 1] = '.'; // for every move dir except right
     }
     else
     {
+        // for single-wide, just free the adjacent cell in the direction of move
+        if (grid[next.row][next.col] != '.')
+            do_move(grid, next, dir);
+
+        // actually do the single-wide move
         grid[next.row][next.col] = grid[loc.row][loc.col];
         grid[loc.row][loc.col] = '.';
     }
