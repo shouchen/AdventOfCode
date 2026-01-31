@@ -6,50 +6,12 @@
 #include <string>
 #include <cassert>
 
-std::vector<std::string> patterns;
+using Patterns = std::vector<std::string>;
 
-auto is_possible(const std::string &design)
+auto how_many_ways(const Patterns &patterns, const std::string &design)
 {
-    if (design.empty())
-        return true;
+    static std::map<std::string, unsigned long long> memo;
 
-    for (auto &p : patterns)
-        if (design.length() >= p.length() && std::equal(p.begin(), p.end(), design.begin()))
-            if (is_possible(design.substr(p.length())))
-                return true;
-
-    return false;
-}
-
-auto do_part1(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line, pattern, design;
-    auto comma = ',';
-
-    std::getline(file, line);
-    std::istringstream iss(line);
-
-    while (iss >> pattern)
-    {
-        if (pattern.back() == ',') pattern.pop_back();
-        patterns.push_back(pattern);
-    }
-
-    auto retval = 0;
-    while (file >> design)
-    {
-        if (is_possible(design))
-            retval++;
-    }
-
-    return retval;
-}
-
-std::map<std::string, unsigned long long> memo;
-
-auto how_many_ways(const std::string &design)
-{
     if (design.empty())
         return 1ULL;
 
@@ -58,17 +20,15 @@ auto how_many_ways(const std::string &design)
 
     auto retval = 0ULL;
 
-    for (auto &p : patterns)
+    for (const auto &p : patterns)
         if (design.length() >= p.length() && std::equal(p.begin(), p.end(), design.begin()))
-            retval += how_many_ways(design.substr(p.length()));
+            retval += how_many_ways(patterns, design.substr(p.length()));
 
     return memo[design] = retval;
 }
 
-auto do_part2(const std::string &filename)
+auto solve(const std::string &filename)
 {
-    patterns.clear();
-
     std::ifstream file(filename);
     std::string line, pattern, design;
     auto comma = ',';
@@ -76,17 +36,19 @@ auto do_part2(const std::string &filename)
     std::getline(file, line);
     std::istringstream iss(line);
 
+    Patterns patterns;
     while (iss >> pattern)
     {
         if (pattern.back() == ',') pattern.pop_back();
         patterns.push_back(pattern);
     }
 
-    auto retval = 0ULL;
+    std::pair<int, unsigned long long> retval;
     while (file >> design)
     {
-        auto how_many = how_many_ways(design);
-        retval += how_many;
+        auto how_many = how_many_ways(patterns, design);
+        if (how_many) retval.first++;
+        retval.second += how_many;
     }
 
     return retval;
@@ -94,13 +56,11 @@ auto do_part2(const std::string &filename)
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 213);
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl;
-    assert(part2 == 1016700771200474);
-
+    assert(answer.first == 213);
+    assert(answer.second == 1016700771200474);
     return 0;
 }
