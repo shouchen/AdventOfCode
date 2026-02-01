@@ -7,13 +7,10 @@
 
 struct Location { int row = 0, col = 0; };
 
-std::vector<std::string> grid;
-Location start, end;
-
 std::vector<std::vector<int>> min_cost;
 std::vector<std::vector<bool>> contains_path;
 
-auto get_shortest_path()
+auto get_shortest_path(std::vector<std::string> &grid, Location start, Location end)
 {
     min_cost = std::vector<std::vector<int>>(grid.size(), std::vector<int>(grid[0].size(), INT_MAX));
     contains_path = std::vector<std::vector<bool>>(grid.size(), std::vector<bool>(grid[0].size(), false));
@@ -93,10 +90,12 @@ auto get_shortest_path()
     return path;
 }
 
-auto solve(const std::string &filename, int max_cheat_len)
+auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
+    std::vector<std::string> grid;
+    Location start, end;
 
     while (file >> line)
     {
@@ -108,37 +107,35 @@ auto solve(const std::string &filename, int max_cheat_len)
     }
 
     // Note that this goes from end to start (backwards)
-    auto path = get_shortest_path();
-    auto retval = 0;
+    auto path = get_shortest_path(grid, start, end);
+    auto retval = std::make_pair(0, 0);
 
-    for (auto cheat_time = 0; cheat_time < path.size() - 1; cheat_time++)
-    {
-        Location cheat_loc = path[cheat_time];
-
-        for (auto row = std::max(cheat_loc.row - max_cheat_len, 0); row <= std::min(cheat_loc.row + max_cheat_len, int(grid.size()) - 1); row++)
-            for (auto col = std::max(cheat_loc.col - max_cheat_len, 0); col <= std::min(cheat_loc.col + max_cheat_len, int(grid[row].size()) - 1); col++)
+    for (auto i = 0; i < path.size(); i++)
+        for (auto j = i + 1; j < path.size(); j++)
+        {
+            auto manhattan_dist = std::abs(path[i].row - path[j].row) + std::abs(path[i].col - path[j].col);
+            if (manhattan_dist <= 20)
             {
-                auto cheat_len = std::abs(row - cheat_loc.row) + std::abs(col - cheat_loc.col);
-                if (cheat_len <= max_cheat_len && contains_path[row][col] &&
-                    min_cost[cheat_loc.row][cheat_loc.col] - min_cost[row][col] - cheat_len >= 100)
+                auto maze_dist = min_cost[path[i].row][path[i].col] - min_cost[path[j].row][path[j].col];
+                if (maze_dist - manhattan_dist >= 100)
                 {
-                    retval++;
+                    if (manhattan_dist <= 2)
+                        retval.first++;
+                    retval.second++;
                 }
             }
-    }
+        }
 
     return retval;
 }
 
 int main()
 {
-    auto part1 = solve("input.txt", 2);
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 1406);
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part2 = solve("input.txt", 20);
-    std::cout << "Part Two: " << part2 << std::endl;
-    assert(part2 == 1006101);
-
+    assert(answer.first == 1406);
+    assert(answer.second == 1006101);
     return 0;
 }
