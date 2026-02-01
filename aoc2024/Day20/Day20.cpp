@@ -11,10 +11,12 @@ std::vector<std::string> grid;
 Location start, end;
 
 std::vector<std::vector<int>> min_cost;
+std::vector<std::vector<bool>> contains_path;
 
 auto get_shortest_path()
 {
     min_cost = std::vector<std::vector<int>>(grid.size(), std::vector<int>(grid[0].size(), INT_MAX));
+    contains_path = std::vector<std::vector<bool>>(grid.size(), std::vector<bool>(grid[0].size(), false));
 
     struct State
     {
@@ -58,43 +60,37 @@ auto get_shortest_path()
     std::vector<Location> path;
     auto curr = end;
     path.push_back(curr);
-    for (;;)
+    contains_path[curr.row][curr.col] = true;
+
+    while (curr.row != start.row || curr.col != start.col)
     {
         if (min_cost[curr.row - 1][curr.col] == min_cost[curr.row][curr.col] - 1)
         {
             curr = { curr.row - 1, curr.col };
             path.push_back(curr);
+            contains_path[curr.row][curr.col] = true;
         }
         else if (min_cost[curr.row + 1][curr.col] == min_cost[curr.row][curr.col] - 1)
         {
             curr = { curr.row + 1, curr.col };
             path.push_back(curr);
+            contains_path[curr.row][curr.col] = true;
         }
         else if (min_cost[curr.row][curr.col - 1] == min_cost[curr.row][curr.col] - 1)
         {
             curr = { curr.row, curr.col - 1 };
             path.push_back(curr);
+            contains_path[curr.row][curr.col] = true;
         }
         else if (min_cost[curr.row][curr.col + 1] == min_cost[curr.row][curr.col] - 1)
         {
             curr = { curr.row, curr.col + 1 };
             path.push_back(curr);
+            contains_path[curr.row][curr.col] = true;
         }
-
-        if (curr.row == start.row && curr.col == start.col)
-            break;
     }
 
     return path;
-}
-
-bool contains(const std::vector<Location> &path, Location loc)
-{
-    for (auto &i : path)
-        if (i.row == loc.row && i.col == loc.col)
-            return true;
-
-    return false;
 }
 
 auto solve(const std::string &filename, int max_cheat_len)
@@ -115,20 +111,18 @@ auto solve(const std::string &filename, int max_cheat_len)
     auto path = get_shortest_path();
     auto retval = 0;
 
-    // for each cheat_time, look for 
     for (auto cheat_time = 0; cheat_time < path.size() - 1; cheat_time++)
     {
         Location cheat_loc = path[cheat_time];
 
-        for (auto row = cheat_loc.row - 20; row <= cheat_loc.row + max_cheat_len; row++)
-            for (auto col = cheat_loc.col - 20; col <= cheat_loc.col + max_cheat_len; col++)
+        for (auto row = std::max(cheat_loc.row - max_cheat_len, 0); row <= std::min(cheat_loc.row + max_cheat_len, int(grid.size()) - 1); row++)
+            for (auto col = std::max(cheat_loc.col - max_cheat_len, 0); col <= std::min(cheat_loc.col + max_cheat_len, int(grid[row].size()) - 1); col++)
             {
                 auto cheat_len = std::abs(row - cheat_loc.row) + std::abs(col - cheat_loc.col);
-                if (cheat_len <= max_cheat_len && contains(path, { row, col }))
+                if (cheat_len <= max_cheat_len && contains_path[row][col] &&
+                    min_cost[cheat_loc.row][cheat_loc.col] - min_cost[row][col] - cheat_len >= 100)
                 {
-                    auto savings = min_cost[cheat_loc.row][cheat_loc.col] - min_cost[row][col] - cheat_len;
-                    if (savings >= 100)
-                        retval++;
+                    retval++;
                 }
             }
     }
