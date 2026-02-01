@@ -3,29 +3,12 @@
 #include <fstream>
 #include <vector>
 #include <queue>
-#include <set>
-#include <map>
-#include <string>
 #include <cassert>
 
 struct Location { int row = 0, col = 0; };
 
 std::vector<std::string> grid;
 Location start, end;
-
-void dump(std::vector<std::vector<int>> min_cost)
-{
-    for (int i = 0; i < min_cost.size(); i++)
-    {
-        for (int j = 0; j < min_cost[i].size(); j++)
-            if (min_cost[i][j] == INT_MAX)
-                std::cout << "  .";
-            else
-                std::cout << std::setw(3) << min_cost[i][j];
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
 
 std::vector<std::vector<int>> min_cost;
 
@@ -102,7 +85,6 @@ auto get_shortest_path()
             break;
     }
 
-//    dump(min_cost);
     return path;
 }
 
@@ -115,7 +97,7 @@ bool contains(const std::vector<Location> &path, Location loc)
     return false;
 }
 
-auto do_part1(const std::string &filename)
+auto solve(const std::string &filename, int max_cheat_len)
 {
     std::ifstream file(filename);
     std::string line;
@@ -131,31 +113,22 @@ auto do_part1(const std::string &filename)
 
     // Note that this goes from end to start (backwards)
     auto path = get_shortest_path();
-
-    dump(min_cost);
-
     auto retval = 0;
 
     // for each cheat_time, look for 
     for (auto cheat_time = 0; cheat_time < path.size() - 1; cheat_time++)
     {
-        std::cout << cheat_time << std::endl;
         Location cheat_loc = path[cheat_time];
 
-        for (auto row = cheat_loc.row - 2; row <= cheat_loc.row + 2; row++)
-            for (auto col = cheat_loc.col - 2; col <= cheat_loc.col + 2; col++)
+        for (auto row = cheat_loc.row - 20; row <= cheat_loc.row + max_cheat_len; row++)
+            for (auto col = cheat_loc.col - 20; col <= cheat_loc.col + max_cheat_len; col++)
             {
-                if (std::abs(row - cheat_loc.row) + std::abs(col - cheat_loc.col) == 2)
+                auto cheat_len = std::abs(row - cheat_loc.row) + std::abs(col - cheat_loc.col);
+                if (cheat_len <= max_cheat_len && contains(path, { row, col }))
                 {
-                    if (contains(path, { row, col }))
-                    {
-                        auto savings = min_cost[cheat_loc.row][cheat_loc.col] - min_cost[row][col] - 2;
-                        if (savings > 0)
-                        {
-                            if (savings >= 100)
-                                retval++;
-                        }
-                    }
+                    auto savings = min_cost[cheat_loc.row][cheat_loc.col] - min_cost[row][col] - cheat_len;
+                    if (savings >= 100)
+                        retval++;
                 }
             }
     }
@@ -165,12 +138,13 @@ auto do_part1(const std::string &filename)
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
+    auto part1 = solve("input.txt", 2);
     std::cout << "Part One: " << part1 << std::endl;
     assert(part1 == 1406);
 
-    //std::cout << "Part Two: " << part2 << std::endl;
-    //assert(part2 == );
+    auto part2 = solve("input.txt", 20);
+    std::cout << "Part Two: " << part2 << std::endl;
+    assert(part2 == 1006101);
 
     return 0;
 }
