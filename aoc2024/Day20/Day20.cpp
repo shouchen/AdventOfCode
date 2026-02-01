@@ -8,51 +8,50 @@
 struct Location { int row = 0, col = 0; };
 struct Direction { int row = 0, col = 0; };
 
-std::vector<std::vector<int>> min_cost;
+static const Direction dirs[] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
 
-auto get_shortest_path(std::vector<std::string> &grid, Location start, Location end)
+auto compute_distances(const std::vector<std::string> &grid, const Location &start, const Location &end)
 {
-    static const Direction dirs[] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
-
-    auto contains_path = std::vector<std::vector<bool>>(grid.size(), std::vector<bool>(grid[0].size(), false));
-    min_cost = std::vector<std::vector<int>>(grid.size(), std::vector<int>(grid[0].size(), INT_MAX));
+    auto dists = std::vector<std::vector<int>>(grid.size(), std::vector<int>(grid[0].size(), INT_MAX));
 
     std::queue<Location> q;
     q.push(start);
-    min_cost[start.row][start.col] = 0;
+    dists[start.row][start.col] = 0;
 
     while (!q.empty())
     {
         Location curr = q.front(); q.pop();
-        auto cost = min_cost[curr.row][curr.col];
-
+        
         for (auto &d : dirs)
         {
             auto next_row = curr.row + d.row, next_col = curr.col + d.col;
-            if (grid[next_row][next_col] != '#' && min_cost[next_row][next_col] == INT_MAX)
+            if (grid[next_row][next_col] != '#' && dists[next_row][next_col] == INT_MAX)
             {
-                min_cost[next_row][next_col] = cost + 1;
+                dists[next_row][next_col] = dists[curr.row][curr.col] + 1;
                 q.push({ next_row, next_col });
             }
         }
     }
 
+    return dists;
+}
+
+auto find_shortest_path(const std::vector<std::vector<int>> &min_cost, const Location &start, const Location &end)
+{
     std::vector<Location> path;
     auto curr = end;
 
     path.push_back(curr);
-    contains_path[curr.row][curr.col] = true;
 
     while (curr.row != start.row || curr.col != start.col)
         for (auto &d : dirs)
         {
             auto next_row = curr.row + d.row, next_col = curr.col + d.col;
 
-            if (min_cost[curr.row + d.row][curr.col + d.col] == min_cost[curr.row][curr.col] - 1)
+            if (min_cost[next_row][next_col] == min_cost[curr.row][curr.col] - 1)
             {
                 curr = { next_row, next_col };
                 path.push_back(curr);
-                contains_path[next_row][next_col] = true;
                 break;
             }
         }
@@ -77,7 +76,8 @@ auto solve(const std::string &filename)
         grid.push_back(line);
     }
 
-    auto path = get_shortest_path(grid, start, end);
+    auto dists = compute_distances(grid, start, end);
+    auto path = find_shortest_path(dists, start, end);
     auto retval = std::make_pair(0, 0);
 
     for (auto p1 = path.cbegin(); p1 != path.cend(); p1++)
@@ -87,13 +87,13 @@ auto solve(const std::string &filename)
             if (manhattan_dist > 20)
                 continue;
 
-            auto path_dist = min_cost[p2->row][p2->col] - min_cost[p1->row][p1->col];
-            if (path_dist - manhattan_dist >= 100)
-            {
-                if (manhattan_dist <= 2)
-                    retval.first++;
-                retval.second++;
-            }
+            auto path_dist = dists[p2->row][p2->col] - dists[p1->row][p1->col];
+            if (path_dist - manhattan_dist < 100)
+                continue;
+
+            if (manhattan_dist <= 2)
+                retval.first++;
+            retval.second++;
         }
 
     return retval;
