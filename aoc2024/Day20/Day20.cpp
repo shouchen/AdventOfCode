@@ -6,12 +6,15 @@
 #include <cassert>
 
 struct Location { int row = 0, col = 0; };
+struct Direction { int row = 0, col = 0; };
 
 std::vector<std::vector<int>> min_cost;
 std::vector<std::vector<bool>> contains_path;
 
 auto get_shortest_path(std::vector<std::string> &grid, Location start, Location end)
 {
+    static const Direction dirs[] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+
     min_cost = std::vector<std::vector<int>>(grid.size(), std::vector<int>(grid[0].size(), INT_MAX));
     contains_path = std::vector<std::vector<bool>>(grid.size(), std::vector<bool>(grid[0].size(), false));
 
@@ -33,25 +36,12 @@ auto get_shortest_path(std::vector<std::string> &grid, Location start, Location 
             continue;
         min_cost[state.loc.row][state.loc.col] = state.cost;
 
-        // up
-        Location new_loc = { state.loc.row - 1, state.loc.col };
-        if (grid[new_loc.row][new_loc.col] != '#')
-            q.push({ new_loc, state.cost + 1 });
-
-        // down
-        new_loc = { state.loc.row + 1, state.loc.col };
-        if (grid[new_loc.row][new_loc.col] != '#')
-            q.push({ new_loc, state.cost + 1 });
-
-        // left
-        new_loc = { state.loc.row, state.loc.col - 1 };
-        if (grid[new_loc.row][new_loc.col] != '#')
-            q.push({ new_loc, state.cost + 1 });
-
-        // right
-        new_loc = { state.loc.row, state.loc.col + 1 };
-        if (grid[new_loc.row][new_loc.col] != '#')
-            q.push({ new_loc, state.cost + 1 });
+        for (auto &d : dirs)
+        {
+            Location new_loc{ state.loc.row + d.row, state.loc.col + d.col };
+            if (grid[new_loc.row][new_loc.col] != '#')
+                q.push({ new_loc, state.cost + 1 });
+        }
     }
 
     std::vector<Location> path;
@@ -60,32 +50,14 @@ auto get_shortest_path(std::vector<std::string> &grid, Location start, Location 
     contains_path[curr.row][curr.col] = true;
 
     while (curr.row != start.row || curr.col != start.col)
-    {
-        if (min_cost[curr.row - 1][curr.col] == min_cost[curr.row][curr.col] - 1)
-        {
-            curr = { curr.row - 1, curr.col };
-            path.push_back(curr);
-            contains_path[curr.row][curr.col] = true;
-        }
-        else if (min_cost[curr.row + 1][curr.col] == min_cost[curr.row][curr.col] - 1)
-        {
-            curr = { curr.row + 1, curr.col };
-            path.push_back(curr);
-            contains_path[curr.row][curr.col] = true;
-        }
-        else if (min_cost[curr.row][curr.col - 1] == min_cost[curr.row][curr.col] - 1)
-        {
-            curr = { curr.row, curr.col - 1 };
-            path.push_back(curr);
-            contains_path[curr.row][curr.col] = true;
-        }
-        else if (min_cost[curr.row][curr.col + 1] == min_cost[curr.row][curr.col] - 1)
-        {
-            curr = { curr.row, curr.col + 1 };
-            path.push_back(curr);
-            contains_path[curr.row][curr.col] = true;
-        }
-    }
+        for (auto &d : dirs)
+            if (min_cost[curr.row + d.row][curr.col + d.col] == min_cost[curr.row][curr.col] - 1)
+            {
+                curr = { curr.row + d.row, curr.col + d.col };
+                path.push_back(curr);
+                contains_path[curr.row][curr.col] = true;
+                break;
+            }
 
     return path;
 }
@@ -110,19 +82,19 @@ auto solve(const std::string &filename)
     auto path = get_shortest_path(grid, start, end);
     auto retval = std::make_pair(0, 0);
 
-    for (auto i = 0; i < path.size(); i++)
-        for (auto j = i + 1; j < path.size(); j++)
+    for (auto p1 = path.cbegin(); p1 != path.cend(); p1++)
+        for (auto p2 = p1 + 1; p2 != path.cend(); p2++)
         {
-            auto manhattan_dist = std::abs(path[i].row - path[j].row) + std::abs(path[i].col - path[j].col);
-            if (manhattan_dist <= 20)
+            auto manhattan_dist = std::abs(p1->row - p2->row) + std::abs(p1->col - p2->col);
+            if (manhattan_dist > 20)
+                continue;
+
+            auto path_dist = min_cost[p1->row][p1->col] - min_cost[p2->row][p2->col];
+            if (path_dist - manhattan_dist >= 100)
             {
-                auto maze_dist = min_cost[path[i].row][path[i].col] - min_cost[path[j].row][path[j].col];
-                if (maze_dist - manhattan_dist >= 100)
-                {
-                    if (manhattan_dist <= 2)
-                        retval.first++;
-                    retval.second++;
-                }
+                if (manhattan_dist <= 2)
+                    retval.first++;
+                retval.second++;
             }
         }
 
