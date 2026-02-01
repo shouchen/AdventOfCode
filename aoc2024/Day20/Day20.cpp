@@ -5,14 +5,17 @@
 #include <queue>
 #include <cassert>
 
+using Grid = std::vector<std::string>;
+using DistanceMap = std::vector<std::vector<int>>;
+
 struct Location { int row = 0, col = 0; };
 struct Direction { int row = 0, col = 0; };
 
 static const Direction dirs[] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
 
-auto compute_distances(const std::vector<std::string> &grid, const Location &start, const Location &end)
+auto compute_distances(const Grid &grid, const Location &start, const Location &end)
 {
-    auto dists = std::vector<std::vector<int>>(grid.size(), std::vector<int>(grid[0].size(), INT_MAX));
+    DistanceMap dists(grid.size(), std::vector<int>(grid[0].size(), INT_MAX));
 
     std::queue<Location> q;
     q.push(start);
@@ -36,7 +39,7 @@ auto compute_distances(const std::vector<std::string> &grid, const Location &sta
     return dists;
 }
 
-auto find_shortest_path(const std::vector<std::vector<int>> &min_cost, const Location &start, const Location &end)
+auto find_shortest_path(const DistanceMap &dists, const Location &start, const Location &end)
 {
     std::vector<Location> path;
     auto curr = end;
@@ -48,7 +51,7 @@ auto find_shortest_path(const std::vector<std::vector<int>> &min_cost, const Loc
         {
             auto next_row = curr.row + d.row, next_col = curr.col + d.col;
 
-            if (min_cost[next_row][next_col] == min_cost[curr.row][curr.col] - 1)
+            if (dists[next_row][next_col] == dists[curr.row][curr.col] - 1)
             {
                 curr = { next_row, next_col };
                 path.push_back(curr);
@@ -64,7 +67,7 @@ auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
-    std::vector<std::string> grid;
+    Grid grid;
     Location start, end;
 
     while (file >> line)
