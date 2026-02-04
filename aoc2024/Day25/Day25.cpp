@@ -1,65 +1,51 @@
 #include <iostream>
 #include <fstream>
+#include <array>
 #include <vector>
 #include <string>
 #include <cassert>
 
-using Schematic = std::vector<int>;
+constexpr auto PINS = 5;
+using Schematic = std::array<int, PINS>;
 
-std::vector<Schematic> keys, locks;
-
-auto process_entity(std::vector<std::string> entity)
+auto fits(const Schematic &lock, const Schematic &key)
 {
-    Schematic heights{ -1, -1, -1, -1, -1 };
+    for (auto i = 0; i < PINS; i++)
+        if (lock[i] + key[i] > PINS)
+            return false;
 
-    for (auto &r : entity)
-        for (auto i = 0; i < 5; i++)
-            if (r[i] == '#')
-                heights[i]++;
-
-    auto is_key = entity[0][0] == '.';
-    std::vector<Schematic> &schematic_to_update = is_key ? keys : locks;
-    schematic_to_update.push_back(heights);
+    return true;
 }
 
 auto do_part1(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line;
-    std::vector<std::string> entity;
+    std::vector<Schematic> keys, locks;
+    auto c = ' ';
 
-    while (std::getline(file, line))
+    while (file >> line)
     {
-        if (line.length() == 0)
-        {
-            process_entity(entity);
+        auto &collection_to_update = (line[0] == '.') ? keys : locks;
+        Schematic heights{ 0 };
 
-            if (!std::getline(file, line))
-                break;
+        for (auto i = 0; i < PINS; i++)
+            for (auto j = 0; j < PINS; j++)
+            {
+                file >> c;
+                if (c == '#')
+                    heights[j]++;
+            }
 
-            entity.clear();
-        }
-
-        entity.push_back(line);
+        collection_to_update.push_back(heights);
+        file >> line;
     }
 
-    process_entity(entity);
-
     auto retval = 0;
-    for (auto &k : keys)
-        for (auto &l : locks)
-        {
-            bool fit = true;
-            for (int i = 0; i < 5; i++)
-                if (k[i] + l[i] > 5)
-                {
-                    fit = false;
-                    break;
-                }
-
-            if (fit)
+    for (auto &lock : locks)
+        for (auto &key : keys)
+            if (fits(lock, key))
                 retval++;
-        }
 
     return retval;
 }
