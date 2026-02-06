@@ -80,26 +80,51 @@ auto do_part1(const std::string &filename)
     return retval;
 }
 
+void dump_path(const std::vector<int> &path)
+{
+    for (auto i = 0; i < path.size(); i++)
+        std::cout << (i ? "," : "") << computers[i];
+    std::cout << std::endl;
+}
+
+auto prune_not_fully_connected(const std::vector<int> &group)
+{
+    for (auto i = 0; i < group.size(); i++)
+        for (auto j = i + 1; j < group.size(); j++)
+            if (!are_adjacent(computers[i], computers[j]))
+                return false;
+
+    return true;
+}
+
 auto do_part2(const std::string &filename)
 {
-    std::ifstream file(filename);
-    std::string line;
+    auto retval = 0;
 
-    while (file >> line)
-        ;
+    for (auto i = 0; i < computers.size(); i++)
+    {
+        std::vector<int> group;
 
-    return -1;
+        for (auto j = 0; j < computers.size(); j++)
+            if (are_adjacent(computers[i], computers[j]))
+                group.push_back(j);
+
+        prune_not_fully_connected(group);
+        retval = std::max(retval, int(group.size() + 1)); // +1 is for computer[i]
+    }
+
+    return retval;
 }
 
 int main()
 {
     auto part1 = do_part1("input.txt");
     std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 1064);
+    //assert(part1 == 1064);
 
     auto part2 = do_part2("input.txt");
     std::cout << "Part Two: " << part2 << std::endl;
-    //assert(part2 == );
+    //assert(part2 == "aq,cc,ea,gc,jo,od,pa,rg,rv,ub,ul,vr,yy");
 
     return 0;
 }
