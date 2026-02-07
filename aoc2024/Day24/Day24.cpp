@@ -13,68 +13,34 @@ struct Operation
     std::string w1, w2, out, op;
 };
 
+using WireToOperation = std::map<std::string, Operation>;
+using WireToOperations = std::unordered_map<std::string, std::vector<Operation>>;
+using WireToValue = std::map<std::string, int>;
+
 inline auto is_input_wire(const std::string &w) { return w.front() == 'x' || w.front() == 'y'; }
 inline auto is_output_wire(const std::string &w) { return w.front() == 'z'; }
 
-int get_value(const std::string &w, std::map<std::string, Operation> &output_to_op, std::map<std::string, int> wire_to_value)
+int get_value(const std::string &w, WireToOperation &output_to_op, WireToValue wtv)
 {
-    auto it = wire_to_value.find(w);
-    if (it != wire_to_value.end())
+    auto it = wtv.find(w);
+    if (it != wtv.end())
         return it->second;
 
     auto &curr = output_to_op[w];
     auto value = 0;
 
     if (curr.op == "AND")
-        value =  get_value(curr.w1, output_to_op, wire_to_value) & get_value(curr.w2, output_to_op, wire_to_value);
+        value =  get_value(curr.w1, output_to_op, wtv) & get_value(curr.w2, output_to_op, wtv);
     else if (curr.op == "OR")
-        value =  get_value(curr.w1, output_to_op, wire_to_value) | get_value(curr.w2, output_to_op, wire_to_value);
+        value =  get_value(curr.w1, output_to_op, wtv) | get_value(curr.w2, output_to_op, wtv);
     else if (curr.op == "XOR")
-        value = (get_value(curr.w1, output_to_op, wire_to_value) ^ get_value(curr.w2, output_to_op, wire_to_value)) & 0x1;
+        value = (get_value(curr.w1, output_to_op, wtv) ^ get_value(curr.w2, output_to_op, wtv)) & 0x1;
 
-    return wire_to_value[w] = value;
+    return wtv[w] = value;
 }
 
-auto solve(const std::string &filename)
+auto get_wrong_outputs(std::vector<Operation> &operations, WireToOperations &inputs_to_op, int max_z)
 {
-    std::ifstream file(filename);
-    std::string line, label1, label2, label3, op, arrow;
-    std::vector<Operation> operations;
-    std::map<std::string, Operation> output_to_op;
-    std::unordered_map<std::string, std::vector<Operation>> inputs_to_op;
-    std::map<std::string, int> wire_to_value; // Part 1
-    auto n = 0, max_z = 0;
-    std::pair<long long, std::string> retval;
-
-    // read input graph
-    while (std::getline(file, line) && line.length())
-    {
-        auto colon = line.find(":");
-        wire_to_value[line.substr(0, colon)] = atoi(line.substr(colon + 1).c_str());
-    }
-
-    while (file >> label1 >> op >> label2 >> arrow >> label3)
-    {
-        output_to_op[label3] = Operation{ label1, label2, label3, op }; // part1
-
-        auto operation = Operation{ label1, label2, label3, op };
-        operations.push_back(operation);
-
-        inputs_to_op[label1].push_back(operation);
-        inputs_to_op[label2].push_back(operation);
-
-        if (operation.out.front() == 'z')
-        {
-            const auto idx = std::stoi(operation.out.substr(1, operation.out.size() - 1));
-            max_z = std::max(int(idx), max_z);
-        }
-    }
-
-    // do part1
-    for (auto it = output_to_op.rbegin(); it->first.front() == 'z'; it++)
-        retval.first = (retval.first << 1) | get_value(it->first, output_to_op, wire_to_value);
-
-    // do part2
     for (auto &[wire, ops] : inputs_to_op)
     {
         std::sort(std::begin(ops), std::end(ops), [](const auto &op1, const auto &op2) {
@@ -91,7 +57,9 @@ auto solve(const std::string &filename)
         if (is_output)
         {
             const auto idx = std::stoi(out.substr(1, out.size() - 1));
-            if (idx == 0 || idx == max_z) continue;
+
+            if (idx == 0 || idx == max_z)
+                continue;
         }
 
         if (is_input1 && !is_input2)
@@ -126,7 +94,47 @@ auto solve(const std::string &filename)
         if (op.w1 == "x00" || op.w2 == "x00" || op.w1 == "y00" || op.w2 == "y00")
             wrong_outputs.erase(op.out);
 
-    // format part 2 output
+    return wrong_outputs;
+}
+
+auto solve(const std::string &filename)
+{
+    std::ifstream file(filename);
+    std::string line, w1, w2, w3, op, arrow;
+    std::vector<Operation> operations;
+    WireToOperation output_to_op;
+    WireToOperations inputs_to_op;
+    WireToValue wire_to_value;
+    std::pair<long long, std::string> retval;
+    auto max_z = 0;
+
+    // read input graph
+    while (std::getline(file, line) && line.length())
+    {
+        auto colon = line.find(":");
+        wire_to_value[line.substr(0, colon)] = std::stoi(line.substr(colon + 1));
+    }
+
+    while (file >> w1 >> op >> w2 >> arrow >> w3)
+    {
+        auto operation = Operation{ w1, w2, w3, op };
+        operations.push_back(operation);
+
+        inputs_to_op[w1].push_back(operation);
+        inputs_to_op[w2].push_back(operation);
+        output_to_op[w3] = operation;
+
+        if (operation.out.front() == 'z')
+            max_z = std::max(std::stoi(operation.out.substr(1)), max_z);
+    }
+
+    // part1
+    for (auto it = output_to_op.rbegin(); it->first.front() == 'z'; it++)
+        retval.first = (retval.first << 1) | get_value(it->first, output_to_op, wire_to_value);
+
+    // part2
+    auto wrong_outputs = get_wrong_outputs(operations, inputs_to_op, max_z);
+
     std::ostringstream oss;
     std::string separator;
 
