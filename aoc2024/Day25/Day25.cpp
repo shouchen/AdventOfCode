@@ -26,7 +26,7 @@ auto do_part1(const std::string &filename)
 
     while (file >> line)
     {
-        auto &collection_to_update = (line[0] == '.') ? keys : locks;
+        auto &collection_to_update = (line.front() == '.') ? keys : locks;
         Schematic heights{ 0 };
 
         for (auto i = 0; i < PINS; i++)
@@ -54,7 +54,7 @@ int main()
 {
     auto part1 = do_part1("input.txt");
     std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 3395 );
+    assert(part1 == 3395);
 
     std::cout << "Part Two: N/A" << std::endl;
     return 0;
