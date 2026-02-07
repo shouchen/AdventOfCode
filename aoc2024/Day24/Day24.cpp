@@ -20,81 +20,69 @@ using WireToValue = std::map<std::string, int>;
 inline auto is_input_wire(const std::string &w) { return w.front() == 'x' || w.front() == 'y'; }
 inline auto is_output_wire(const std::string &w) { return w.front() == 'z'; }
 
-int get_value(const std::string &w, WireToOperation &output_to_op, WireToValue wtv)
+int get_value(const std::string &w, WireToOperation &oto, WireToValue wtv)
 {
     auto it = wtv.find(w);
     if (it != wtv.end())
         return it->second;
 
-    auto &curr = output_to_op[w];
+    auto &curr = oto[w];
     auto value = 0;
 
+    // TODO: Switch from int to bool?
     if (curr.op == "AND")
-        value =  get_value(curr.w1, output_to_op, wtv) & get_value(curr.w2, output_to_op, wtv);
+        value =  get_value(curr.w1, oto, wtv) & get_value(curr.w2, oto, wtv);
     else if (curr.op == "OR")
-        value =  get_value(curr.w1, output_to_op, wtv) | get_value(curr.w2, output_to_op, wtv);
+        value =  get_value(curr.w1, oto, wtv) | get_value(curr.w2, oto, wtv);
     else if (curr.op == "XOR")
-        value = (get_value(curr.w1, output_to_op, wtv) ^ get_value(curr.w2, output_to_op, wtv)) & 0x1;
+        value = (get_value(curr.w1, oto, wtv) ^ get_value(curr.w2, oto, wtv)) & 0x1;
 
     return wtv[w] = value;
 }
 
-auto get_wrong_outputs(std::vector<Operation> &operations, WireToOperations &inputs_to_op, int max_z)
+auto is_wrong_output(const Operation &operation, WireToOperations &inputs_to_op, int max_z)
 {
-    for (auto &[wire, ops] : inputs_to_op)
+    auto &out = operation.out, &op = operation.op;
+    auto is_input1 = is_input_wire(operation.w1), is_input2 = is_input_wire(operation.w2), is_output = is_output_wire(out);
+
+    if (operation.w1 == "x00" || operation.w2 == "x00" || operation.w1 == "y00" || operation.w2 == "y00")
+        return false;
+
+    if (is_output)
     {
-        std::sort(std::begin(ops), std::end(ops), [](const auto &op1, const auto &op2) {
-            return op1.op < op2.op;
-        });
+        auto idx = std::stoi(out.substr(1));
+
+        if (idx == 0 || idx == max_z)
+            return false;
     }
 
-    std::set<std::string> wrong_outputs;
-    for (const auto &operation : operations)
+    if (is_input1 && !is_input2)
+        return true;
+
+    if (op == "XOR")
     {
-        const auto &w1 = operation.w1, &w2 = operation.w2, &out = operation.out, &op = operation.op;
-        const auto is_input1 = is_input_wire(w1), is_input2 = is_input_wire(w2), is_output = is_output_wire(out);
+        if (is_input1 == is_output)
+            return true;
 
-        if (is_output)
-        {
-            const auto idx = std::stoi(out.substr(1, out.size() - 1));
+        if (is_input1 && (inputs_to_op[out][0].op != "AND" || inputs_to_op[out][1].op != "XOR"))
+            return true;
+    }
+    else if (op == "AND")
+    {
+        if (inputs_to_op[out].size() < 1 || inputs_to_op[out][0].op != "OR")
+            return true;
+    }
+    else if (op == "OR")
+    {
+        if (is_input1 || is_input2)
+            return true;
 
-            if (idx == 0 || idx == max_z)
-                continue;
-        }
-
-        if (is_input1 && !is_input2)
-            wrong_outputs.insert(out);
-
-        if (op == "XOR")
-        {
-            if (is_input1 && is_output)
-                wrong_outputs.insert(out);
-
-            if (is_input1 && (inputs_to_op[out][0].op != "AND" || inputs_to_op[out][1].op != "XOR"))
-                wrong_outputs.insert(out);
-
-            if (!is_input1 && !is_output)
-                wrong_outputs.insert(out);
-        }
-        else if (op == "AND" && (inputs_to_op[out].size() < 1 || inputs_to_op[out][0].op != "OR"))
-        {
-            wrong_outputs.insert(out);
-        }
-        else if (op == "OR")
-        {
-            if (is_input1 || is_input2)
-                wrong_outputs.insert(out);
-
-            if (!inputs_to_op.contains(out) || (inputs_to_op[out].size() != 2 || inputs_to_op[out][0].op != "AND" || inputs_to_op[out][1].op != "XOR"))
-                wrong_outputs.insert(out);
-        }
+        if (!inputs_to_op.contains(out) ||
+            (inputs_to_op[out].size() != 2 || inputs_to_op[out][0].op != "AND" || inputs_to_op[out][1].op != "XOR"))
+            return true;
     }
 
-    for (const auto &op : operations)
-        if (op.w1 == "x00" || op.w2 == "x00" || op.w1 == "y00" || op.w2 == "y00")
-            wrong_outputs.erase(op.out);
-
-    return wrong_outputs;
+    return false;
 }
 
 auto solve(const std::string &filename)
@@ -108,7 +96,6 @@ auto solve(const std::string &filename)
     std::pair<long long, std::string> retval;
     auto max_z = 0;
 
-    // read input graph
     while (std::getline(file, line) && line.length())
     {
         auto colon = line.find(":");
@@ -133,7 +120,17 @@ auto solve(const std::string &filename)
         retval.first = (retval.first << 1) | get_value(it->first, output_to_op, wire_to_value);
 
     // part2
-    auto wrong_outputs = get_wrong_outputs(operations, inputs_to_op, max_z);
+    for (auto &[wire, ops] : inputs_to_op)
+    {
+        std::sort(std::begin(ops), std::end(ops), [](const auto &op1, const auto &op2) {
+            return op1.op < op2.op;
+        });
+    }
+
+    std::set<std::string> wrong_outputs;
+    for (const auto &op: operations)
+        if (is_wrong_output(op, inputs_to_op, max_z))
+            wrong_outputs.insert(op.out);
 
     std::ostringstream oss;
     std::string separator;
