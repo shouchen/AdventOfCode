@@ -8,55 +8,54 @@
 #include <algorithm>
 #include <cassert>
 
-constexpr auto TBD = -1;
-
-struct GateInputs // Part 1
-{
-    std::string op1, op2, operation;
-    int value = TBD;
-};
-
-struct Operation // Part 2
+struct Operation
 {
     std::string w1, w2, out, op;
 };
 
-int get_value(const std::string &label, std::map<std::string, GateInputs> &map) // Part 1
-{
-    auto &curr = map[label];
-    if (curr.value == TBD)
-    {
-        if      (curr.operation == "AND") curr.value =  get_value(curr.op1, map) & get_value(curr.op2, map);
-        else if (curr.operation == "OR")  curr.value =  get_value(curr.op1, map) | get_value(curr.op2, map);
-        else if (curr.operation == "XOR") curr.value = (get_value(curr.op1, map) ^ get_value(curr.op2, map)) & 0x1;
-    }
-
-    return curr.value;
-}
-
 inline auto is_input_wire(const std::string &w) { return w.front() == 'x' || w.front() == 'y'; }
 inline auto is_output_wire(const std::string &w) { return w.front() == 'z'; }
+
+int get_value(const std::string &w, std::map<std::string, Operation> &output_to_op, std::map<std::string, int> wire_to_value)
+{
+    auto it = wire_to_value.find(w);
+    if (it != wire_to_value.end())
+        return it->second;
+
+    auto &curr = output_to_op[w];
+    auto value = 0;
+
+    if (curr.op == "AND")
+        value =  get_value(curr.w1, output_to_op, wire_to_value) & get_value(curr.w2, output_to_op, wire_to_value);
+    else if (curr.op == "OR")
+        value =  get_value(curr.w1, output_to_op, wire_to_value) | get_value(curr.w2, output_to_op, wire_to_value);
+    else if (curr.op == "XOR")
+        value = (get_value(curr.w1, output_to_op, wire_to_value) ^ get_value(curr.w2, output_to_op, wire_to_value)) & 0x1;
+
+    return wire_to_value[w] = value;
+}
 
 auto solve(const std::string &filename)
 {
     std::ifstream file(filename);
     std::string line, label1, label2, label3, op, arrow;
     std::vector<Operation> operations;
-    std::map<std::string, GateInputs> output_to_op;
+    std::map<std::string, Operation> output_to_op;
     std::unordered_map<std::string, std::vector<Operation>> inputs_to_op;
+    std::map<std::string, int> wire_to_value; // Part 1
     auto n = 0, max_z = 0;
     std::pair<long long, std::string> retval;
 
+    // read input graph
     while (std::getline(file, line) && line.length())
     {
-        std::istringstream iss(line);
-        iss >> label1 >> n; label1.pop_back(); // colon
-        output_to_op[label1] = { "", "", "", n };
+        auto colon = line.find(":");
+        wire_to_value[line.substr(0, colon)] = atoi(line.substr(colon + 1).c_str());
     }
 
     while (file >> label1 >> op >> label2 >> arrow >> label3)
     {
-        output_to_op[label3] = GateInputs{ label1, label2, op, TBD }; // part1
+        output_to_op[label3] = Operation{ label1, label2, label3, op }; // part1
 
         auto operation = Operation{ label1, label2, label3, op };
         operations.push_back(operation);
@@ -71,9 +70,11 @@ auto solve(const std::string &filename)
         }
     }
 
+    // do part1
     for (auto it = output_to_op.rbegin(); it->first.front() == 'z'; it++)
-        retval.first = (retval.first << 1) | get_value(it->first, output_to_op);
+        retval.first = (retval.first << 1) | get_value(it->first, output_to_op, wire_to_value);
 
+    // do part2
     for (auto &[wire, ops] : inputs_to_op)
     {
         std::sort(std::begin(ops), std::end(ops), [](const auto &op1, const auto &op2) {
@@ -125,6 +126,7 @@ auto solve(const std::string &filename)
         if (op.w1 == "x00" || op.w2 == "x00" || op.w1 == "y00" || op.w2 == "y00")
             wrong_outputs.erase(op.out);
 
+    // format part 2 output
     std::ostringstream oss;
     std::string separator;
 
