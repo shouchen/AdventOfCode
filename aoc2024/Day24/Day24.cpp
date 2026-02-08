@@ -8,6 +8,19 @@
 #include <algorithm>
 #include <cassert>
 
+// The assumption for part 2 is that we're not dealing with some random configuration of logic gates that happens
+// to correctly output the sum of two numbers. Instead, we presume it's a canonical "Full Adder" design from
+// combinatorial circuits. Each stage of the adder takes in two input bits (one from each addend) and one carry
+// bit from the previous stage, and then it outputs one bit plus a carry bit (which goes to the next stage).
+//
+// The logic of a full adder is this:
+//   zi = xi XOR yi XOR carry_in
+//   carry_out = (xi AND yi) OR(c AND(xi XOR yi))
+//
+// - xi, yi, zi are the ith bit in the addends and sum
+// - carry_in comes from the carry out of the previous stage (if any)
+// - carry_out goes to the next stage, or straight to the final sum bit (overflow)
+
 struct Operation
 {
     std::string w1, w2, out, op;
@@ -29,7 +42,6 @@ int get_value(const std::string &w, WireToOperation &oto, WireToValue wtv)
     auto &curr = oto[w];
     auto value = 0;
 
-    // TODO: Switch from int to bool?
     if (curr.op == "AND")
         value =  get_value(curr.w1, oto, wtv) & get_value(curr.w2, oto, wtv);
     else if (curr.op == "OR")
@@ -40,49 +52,41 @@ int get_value(const std::string &w, WireToOperation &oto, WireToValue wtv)
     return wtv[w] = value;
 }
 
-auto is_wrong_output(const Operation &operation, WireToOperations &inputs_to_op, int max_z)
+auto is_correct_output(const Operation &operation, WireToOperations &inputs_to_op, const std::string &max_z)
 {
     auto &out = operation.out, &op = operation.op;
     auto is_input1 = is_input_wire(operation.w1), is_input2 = is_input_wire(operation.w2), is_output = is_output_wire(out);
 
-    if (operation.w1 == "x00" || operation.w2 == "x00" || operation.w1 == "y00" || operation.w2 == "y00")
-        return false;
-
-    if (is_output)
-    {
-        auto idx = std::stoi(out.substr(1));
-
-        if (idx == 0 || idx == max_z)
-            return false;
-    }
+    if (operation.w1 == "x00" || operation.w2 == "x00" || operation.w1 == "y00" || operation.w2 == "y00" || out == "z00" || out == max_z)
+        return true;
 
     if (is_input1 && !is_input2)
-        return true;
+        return false;
 
     if (op == "XOR")
     {
         if (is_input1 == is_output)
-            return true;
+            return false;
 
         if (is_input1 && (inputs_to_op[out][0].op != "AND" || inputs_to_op[out][1].op != "XOR"))
-            return true;
+            return false;
     }
     else if (op == "AND")
     {
         if (inputs_to_op[out].size() < 1 || inputs_to_op[out][0].op != "OR")
-            return true;
+            return false;
     }
     else if (op == "OR")
     {
         if (is_input1 || is_input2)
-            return true;
+            return false;
 
         if (!inputs_to_op.contains(out) ||
             (inputs_to_op[out].size() != 2 || inputs_to_op[out][0].op != "AND" || inputs_to_op[out][1].op != "XOR"))
-            return true;
+            return false;
     }
 
-    return false;
+    return true;
 }
 
 auto solve(const std::string &filename)
@@ -94,7 +98,6 @@ auto solve(const std::string &filename)
     WireToOperations inputs_to_op;
     WireToValue wire_to_value;
     std::pair<long long, std::string> retval;
-    auto max_z = 0;
 
     while (std::getline(file, line) && line.length())
     {
@@ -110,9 +113,6 @@ auto solve(const std::string &filename)
         inputs_to_op[w1].push_back(operation);
         inputs_to_op[w2].push_back(operation);
         output_to_op[w3] = operation;
-
-        if (operation.out.front() == 'z')
-            max_z = std::max(std::stoi(operation.out.substr(1)), max_z);
     }
 
     // part1
@@ -127,9 +127,11 @@ auto solve(const std::string &filename)
         });
     }
 
+    auto max_z = output_to_op.rbegin()->second.out;
     std::set<std::string> wrong_outputs;
+
     for (const auto &op: operations)
-        if (is_wrong_output(op, inputs_to_op, max_z))
+        if (!is_correct_output(op, inputs_to_op, max_z))
             wrong_outputs.insert(op.out);
 
     std::ostringstream oss;
