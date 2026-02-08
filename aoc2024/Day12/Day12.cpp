@@ -14,10 +14,7 @@ using Visited2 = std::vector<std::vector<bool>>;
 
 const struct { int dr, dc; } dirs[]{ { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0 ,1 } };
 
-Grid grid;
-Visited1 visited;
-
-void recur(int row, int col, int &area, int &perimeter)
+void recur(const Grid &grid, int row, int col, int &area, int &perimeter, Visited1 &visited)
 {
     if (visited.find({ row, col }) != visited.end())
         return;
@@ -34,19 +31,19 @@ void recur(int row, int col, int &area, int &perimeter)
         if (grid[new_row][new_col] != label)
             perimeter++;
         else
-            recur(new_row, new_col, area, perimeter);
+            recur(grid, new_row, new_col, area, perimeter, visited);
     }
 }
 
-auto price_region(int row, int col)
+auto price_region(const Grid &grid, int row, int col, Visited1 &visited)
 {
     auto area = 0, perimeter = 0;
 
-    recur(row, col, area, perimeter);
+    recur(grid, row, col, area, perimeter, visited);
     return area * perimeter;
 }
 
-auto check_corner(const Point &p)
+auto check_corner(const Grid &grid, const Point &p)
 {
     // Get state of all eight neighbors
     auto label = grid[p.first][p.second];
@@ -84,7 +81,7 @@ auto check_corner(const Point &p)
     return num_corners;
 }
 
-auto compute_price(int row, int col, Visited2 &visited)
+auto compute_price(const Grid &grid, int row, int col, Visited2 &visited)
 {
     static constexpr std::array<Point, 4> directions{ Point(0, -1), Point(-1, 0), Point(0, 1), Point(1, 0) }; // order matters
 
@@ -105,7 +102,7 @@ auto compute_price(int row, int col, Visited2 &visited)
         visited[p.first][p.second] = true;
 
         area++;
-        corner += check_corner(p);
+        corner += check_corner(grid, p);
 
         for (auto &dir : directions)
         {
@@ -127,6 +124,7 @@ auto solve(const std::string &filename)
     // add border of '#' chars around the grid to avoid boundary checks
     std::ifstream file(filename);
     std::string line;
+    Grid grid;
 
     grid.emplace_back();
     while (std::getline(file, line))
@@ -135,19 +133,20 @@ auto solve(const std::string &filename)
     grid[0] = std::string(grid[1].size(), '#');
     grid.emplace_back(grid[0]);
 
+    Visited1 visited1;
+    Visited2 visited2(grid.size(), std::vector<bool>(grid[0].size(), false));
     std::pair<int, long long> retval;
-
-    for (auto row = 1; row < grid.size() - 1; row++)
-        for (auto col = 1; col < grid[row].size() - 1; col++)
-            if (visited.find({ row, col }) == visited.end())
-                retval.first += price_region(row, col);
-
-    Visited2 visited(grid.size(), std::vector<bool>(grid[0].size(), false));
 
     for (auto row = 0; row < grid.size(); row++)
         for (auto col = 0; col < grid[row].size(); col++)
-            if (grid[row][col] != '#' && !visited[row][col])
-                retval.second += compute_price(row, col, visited);
+            if (grid[row][col] != '#')
+            {
+                if (visited1.find({ row, col }) == visited1.end())
+                    retval.first += price_region(grid, row, col, visited1);
+
+                if (!visited2[row][col])
+                    retval.second += compute_price(grid, row, col, visited2);
+            }
 
     return retval;
 }
