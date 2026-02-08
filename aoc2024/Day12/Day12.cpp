@@ -12,13 +12,10 @@ using Point = std::pair<int, int>;
 using Visited1 = std::set<std::pair<int, int>>;
 using Visited2 = std::vector<std::vector<bool>>;
 
+const struct { int dr, dc; } dirs[]{ { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0 ,1 } };
+
 Grid grid;
 Visited1 visited;
-
-auto count_sides(char label)
-{
-    return 4;
-}
 
 void recur(int row, int col, int &area, int &perimeter)
 {
@@ -30,25 +27,15 @@ void recur(int row, int col, int &area, int &perimeter)
     area++;
     auto label = grid[row][col];
 
-    if (row == 0 || grid[row - 1][col] != label)
-        perimeter++;
-    else
-        recur(row - 1, col, area, perimeter);
+    for (auto &dir : dirs)
+    {
+        auto new_row = row + dir.dr, new_col = col + dir.dc;
 
-    if ((row == grid.size() - 1) || grid[row + 1][col] != label)
-        perimeter++;
-    else
-        recur(row + 1, col, area, perimeter);
-
-    if (col == 0 || grid[row][col - 1] != label)
-        perimeter++;
-    else
-        recur(row, col - 1, area, perimeter);
-
-    if ((col == grid[row].size() - 1) || grid[row][col + 1] != label)
-        perimeter++;
-    else
-        recur(row, col + 1, area, perimeter);
+        if (grid[new_row][new_col] != label)
+            perimeter++;
+        else
+            recur(new_row, new_col, area, perimeter);
+    }
 }
 
 auto price_region(int row, int col)
@@ -135,31 +122,12 @@ auto compute_price(int row, int col, Visited2 &visited)
     return area * corner;
 }
 
-auto do_part1(const std::string &filename)
+auto solve(const std::string &filename)
 {
+    // add border of '#' chars around the grid to avoid boundary checks
     std::ifstream file(filename);
     std::string line;
 
-    while (file >> line)
-        grid.push_back(line);
-
-    auto retval = 0;
-    for (auto row = 0; row < grid.size(); row++)
-        for (auto col = 0; col < grid[row].size(); col++)
-            if (visited.find({ row, col }) == visited.end())
-                retval += price_region(row, col);
-
-    return retval;
-}
-
-auto do_part2(const std::string &filename)
-{
-    std::ifstream file(filename);
-    std::string line;
-
-    grid.clear();
-
-    // Add a buffer of '#' around the map to avoid boundary checks
     grid.emplace_back();
     while (std::getline(file, line))
         grid.push_back('#' + line + '#');
@@ -167,26 +135,30 @@ auto do_part2(const std::string &filename)
     grid[0] = std::string(grid[1].size(), '#');
     grid.emplace_back(grid[0]);
 
+    std::pair<int, long long> retval;
+
+    for (auto row = 1; row < grid.size() - 1; row++)
+        for (auto col = 1; col < grid[row].size() - 1; col++)
+            if (visited.find({ row, col }) == visited.end())
+                retval.first += price_region(row, col);
+
     Visited2 visited(grid.size(), std::vector<bool>(grid[0].size(), false));
-    auto total_cost = 0LL;
 
     for (auto row = 0; row < grid.size(); row++)
         for (auto col = 0; col < grid[row].size(); col++)
-            if (!visited[row][col] && grid[row][col] != '#')
-                total_cost += compute_price(row, col, visited);
+            if (grid[row][col] != '#' && !visited[row][col])
+                retval.second += compute_price(row, col, visited);
 
-    return total_cost;
+    return retval;
 }
 
 int main()
 {
-    auto part1 = do_part1("input.txt");
-    std::cout << "Part One: " << part1 << std::endl;
-    assert(part1 == 1489582);
+    auto answer = solve("input.txt");
+    std::cout << "Part One: " << answer.first << std::endl;
+    std::cout << "Part Two: " << answer.second << std::endl;
 
-    auto part2 = do_part2("input.txt");
-    std::cout << "Part Two: " << part2 << std::endl;
-    assert(part2 == 914966);
-
+    assert(answer.first == 1489582);
+    assert(answer.second == 914966);
     return 0;
 }
