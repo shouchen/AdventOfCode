@@ -13,13 +13,17 @@
 // combinatorial circuits. Each stage of the adder takes in two input bits (one from each addend) and one carry
 // bit from the previous stage, and then it outputs one bit plus a carry bit (which goes to the next stage).
 //
-// The logic of a full adder is this:
+// The logic of a full adder at a given stage is this:
 //   zi = xi XOR yi XOR carry_in
-//   carry_out = (xi AND yi) OR(c AND(xi XOR yi))
+//   carry_out = (xi AND yi) OR (c AND (xi XOR yi))
 //
 // - xi, yi, zi are the ith bit in the addends and sum
-// - carry_in comes from the carry out of the previous stage (if any)
+// - carry_in comes from the carry_out of the previous stage (if any)
 // - carry_out goes to the next stage, or straight to the final sum bit (overflow)
+//
+// Rather than testing inputs and outputs, we look for "wrong" operations/connections in the graph. We do not
+// care if swapping would fix them, nor even which pairs would need to be swapped (since we only need to generate
+// an alphabetized list of the eight that are wrong).
 
 struct Operation
 {
