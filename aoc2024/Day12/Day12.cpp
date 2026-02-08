@@ -9,17 +9,17 @@
 
 using Grid = std::vector<std::string>;
 using Point = std::pair<int, int>;
-using Visited1 = std::set<std::pair<int, int>>;
-using Visited2 = std::vector<std::vector<bool>>;
+using Visited = std::vector<std::vector<bool>>;
 
-const struct { int dr, dc; } dirs[]{ { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0 ,1 } };
+const struct Location { int row, col; }; // TODO: Merge with Point
+const struct { int dr, dc; } dirs[]{ { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }; // TODO: Merge with part2 directions
 
-void recur(const Grid &grid, int row, int col, int &area, int &perimeter, Visited1 &visited)
+void recur(const Grid &grid, int row, int col, int &area, int &perimeter, Visited &visited)
 {
-    if (visited.find({ row, col }) != visited.end())
+    if (visited[row][col])
         return;
 
-    visited.insert({ row, col });
+    visited[row][col] = true;
 
     area++;
     auto label = grid[row][col];
@@ -28,14 +28,14 @@ void recur(const Grid &grid, int row, int col, int &area, int &perimeter, Visite
     {
         auto new_row = row + dir.dr, new_col = col + dir.dc;
 
-        if (grid[new_row][new_col] != label)
-            perimeter++;
-        else
+        if (grid[new_row][new_col] == label)
             recur(grid, new_row, new_col, area, perimeter, visited);
+        else
+            perimeter++;
     }
 }
 
-auto price_region(const Grid &grid, int row, int col, Visited1 &visited)
+auto price_region(const Grid &grid, int row, int col, Visited &visited)
 {
     auto area = 0, perimeter = 0;
 
@@ -81,7 +81,7 @@ auto check_corner(const Grid &grid, const Point &p)
     return num_corners;
 }
 
-auto compute_price(const Grid &grid, int row, int col, Visited2 &visited)
+auto compute_price(const Grid &grid, int row, int col, Visited &visited)
 {
     static constexpr std::array<Point, 4> directions{ Point(0, -1), Point(-1, 0), Point(0, 1), Point(1, 0) }; // order matters
 
@@ -133,15 +133,16 @@ auto solve(const std::string &filename)
     grid[0] = std::string(grid[1].size(), '#');
     grid.emplace_back(grid[0]);
 
-    Visited1 visited1;
-    Visited2 visited2(grid.size(), std::vector<bool>(grid[0].size(), false));
+    // do both parts together
+    Visited visited1(grid.size(), std::vector<bool>(grid[0].size(), false));
+    Visited visited2(grid.size(), std::vector<bool>(grid[0].size(), false));
     std::pair<int, long long> retval;
 
     for (auto row = 0; row < grid.size(); row++)
         for (auto col = 0; col < grid[row].size(); col++)
             if (grid[row][col] != '#')
             {
-                if (visited1.find({ row, col }) == visited1.end())
+                if (!visited1[row][col])
                     retval.first += price_region(grid, row, col, visited1);
 
                 if (!visited2[row][col])
