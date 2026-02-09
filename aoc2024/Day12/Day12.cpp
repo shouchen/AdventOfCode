@@ -8,11 +8,10 @@
 #include <cassert>
 
 using Grid = std::vector<std::string>;
-using Point = std::pair<int, int>;
 using Visited = std::vector<std::vector<bool>>;
 
-const struct Location { int row, col; }; // TODO: Merge with Point
-const struct { int dr, dc; } dirs[]{ { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } }; // TODO: Merge with part2 directions
+struct Location { int row, col; };
+struct Direction { int dr, dc; } dirs[]{ { 0, -1 }, { -1, 0 }, { 0, 1 }, { 1, 0 } }; // order matters for part2 algorithm!
 
 void recur(const Grid &grid, int row, int col, int &area, int &perimeter, Visited &visited)
 {
@@ -43,13 +42,13 @@ auto price_region(const Grid &grid, int row, int col, Visited &visited)
     return area * perimeter;
 }
 
-auto check_corner(const Grid &grid, const Point &p)
+auto check_corner(const Grid &grid, const Location &loc)
 {
     // Get state of all eight neighbors
-    auto label = grid[p.first][p.second];
-    auto above_left = grid[p.first - 1][p.second - 1] == label, above = grid[p.first - 1][p.second] == label, above_right = grid[p.first - 1][p.second + 1] == label;
-    auto left =       grid[p.first][p.second - 1] == label,             /* reference point */                 right = grid[p.first][p.second + 1] == label;
-    auto below_left = grid[p.first + 1][p.second - 1] == label, below = grid[p.first + 1][p.second] == label, below_right = grid[p.first + 1][p.second + 1] == label;
+    auto label = grid[loc.row][loc.col];
+    auto above_left = grid[loc.row - 1][loc.col - 1] == label, above = grid[loc.row - 1][loc.col] == label, above_right = grid[loc.row - 1][loc.col + 1] == label;
+    auto left =       grid[loc.row][loc.col - 1] == label,             /* reference point */                 right = grid[loc.row][loc.col + 1] == label;
+    auto below_left = grid[loc.row + 1][loc.col - 1] == label, below = grid[loc.row + 1][loc.col] == label, below_right = grid[loc.row + 1][loc.col + 1] == label;
 
     // outside corners
     auto num_corners = 0;
@@ -83,35 +82,33 @@ auto check_corner(const Grid &grid, const Point &p)
 
 auto compute_price(const Grid &grid, int row, int col, Visited &visited)
 {
-    static constexpr std::array<Point, 4> directions{ Point(0, -1), Point(-1, 0), Point(0, 1), Point(1, 0) }; // order matters
-
     auto label = grid[row][col];
-    auto start = Point(row, col);
+    auto start = Location{ row, col };
     auto cost = 0LL, area = 0LL, corner = 0LL;
 
-    std::queue<Point> q;
+    std::queue<Location> q;
     q.push(start);
 
     while (!q.empty())
     {
-        auto p = q.front(); q.pop();
+        auto loc = q.front(); q.pop();
 
-        if (visited[p.first][p.second])
+        if (visited[loc.row][loc.col])
             continue;
 
-        visited[p.first][p.second] = true;
+        visited[loc.row][loc.col] = true;
 
         area++;
-        corner += check_corner(grid, p);
+        corner += check_corner(grid, loc);
 
-        for (auto &dir : directions)
+        for (auto &dir : dirs)
         {
-            auto next = Point(p.first + dir.first, p.second + dir.second);
+            auto next = Location{ loc.row + dir.dr, loc.col + dir.dc };
 
-            if (grid[next.first][next.second] != label)
+            if (grid[next.row][next.col] != label)
                 continue;
 
-            if (!visited[next.first][next.second])
+            if (!visited[next.row][next.col])
                 q.push(next);
         }
     }
