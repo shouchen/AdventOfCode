@@ -9,8 +9,6 @@
 #include <ranges>
 #include <cassert>
 
-using AllBestKeyboardPaths = std::map<std::pair<char, char>, std::vector<std::string>>;
-
 struct Memo
 {
     char start, end;
@@ -28,7 +26,8 @@ struct MemoHasher
     }
 };
 
-std::unordered_map<Memo, long long int, MemoHasher> memory;
+using MemoMap = std::unordered_map<Memo, long long int, MemoHasher>;
+using AllBestKeyboardPaths = std::map<std::pair<char, char>, std::vector<std::string>>;
 
 struct Point
 {
@@ -82,7 +81,9 @@ auto convert_path_to_arrows(const std::vector<Point> &path)
 // find all best paths between a given pair of points (with ' ' disallowed)
 auto find_best_paths(const std::vector<std::string> &map, const Point &start, const Point &end)
 {
-    std::priority_queue<std::tuple<Point, std::vector<Point>, int>, std::vector<std::tuple<Point, std::vector<Point>, int>>, Comparator> pq;
+    using State = std::tuple<Point, std::vector<Point>, int>;
+
+    std::priority_queue<State, std::vector<State>, Comparator> pq;
     pq.push({ start, {}, 0 });
 
     std::vector<std::vector<Point>> best_paths;
@@ -123,9 +124,6 @@ auto find_best_paths(const std::vector<std::string> &map, const Point &start, co
     return best_paths;
 }
 
-// best paths for each pair of points on the keypads
-AllBestKeyboardPaths num_keypad_paths, dir_keypad_paths;
-
 auto compute_all_best_paths(const std::vector<std::string> &keypad)
 {
     AllBestKeyboardPaths keypad_paths;
@@ -147,7 +145,7 @@ auto compute_all_best_paths(const std::vector<std::string> &keypad)
     return keypad_paths;
 }
 
-long long recur(const std::string &sequence, int keypad_idx)
+long long recur(const std::string &sequence, int keypad_idx, AllBestKeyboardPaths &dir_keypad_paths, MemoMap &memo)
 {
     if (keypad_idx == 0)
         return sequence.size();
@@ -159,17 +157,17 @@ long long recur(const std::string &sequence, int keypad_idx)
     {
         Memo m{ prev, curr, keypad_idx };
 
-        if (memory.contains(m))
+        if (memo.contains(m))
         {
-            retval += memory[m];
+            retval += memo[m];
         }
         else
         {
             auto answer = LLONG_MAX;
             for (const auto &v : dir_keypad_paths[{ prev, curr }])
-                answer = std::min(answer, recur(v + 'A', keypad_idx - 1));
+                answer = std::min(answer, recur(v + 'A', keypad_idx - 1, dir_keypad_paths, memo));
 
-            retval += memory[m] = answer;
+            retval += memo[m] = answer;
         }
 
         prev = curr;
@@ -180,8 +178,9 @@ long long recur(const std::string &sequence, int keypad_idx)
 
 auto solve(const std::string &filename, int highest_keypad_idx)
 {
-    num_keypad_paths = compute_all_best_paths(num_keypad);
-    dir_keypad_paths = compute_all_best_paths(dir_keypad);
+    AllBestKeyboardPaths num_keypad_paths = compute_all_best_paths(num_keypad);
+    AllBestKeyboardPaths dir_keypad_paths = compute_all_best_paths(dir_keypad);
+    MemoMap memo;
 
     std::ifstream file(filename);
     std::string code;
@@ -196,7 +195,7 @@ auto solve(const std::string &filename, int highest_keypad_idx)
         {
             auto best_length_consecutive = LLONG_MAX;
             for (const auto &v : num_keypad_paths[{ prev_key, key }])
-                best_length_consecutive = std::min(best_length_consecutive, recur(v + 'A', highest_keypad_idx - 1));
+                best_length_consecutive = std::min(best_length_consecutive, recur(v + 'A', highest_keypad_idx - 1, dir_keypad_paths, memo));
 
             best_length += best_length_consecutive;
             prev_key = key;
