@@ -178,8 +178,7 @@ long long recur(const std::string &sequence, int keypad_idx, AllBestKeyboardPath
 
 auto solve(const std::string &filename, int highest_keypad_idx)
 {
-    AllBestKeyboardPaths num_keypad_paths = compute_all_best_paths(num_keypad);
-    AllBestKeyboardPaths dir_keypad_paths = compute_all_best_paths(dir_keypad);
+    auto num_keypad_paths = compute_all_best_paths(num_keypad), dir_keypad_paths = compute_all_best_paths(dir_keypad);
     MemoMap memo;
 
     std::ifstream file(filename);
