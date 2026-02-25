@@ -95,7 +95,7 @@ auto hash_tops(Tower &tower)
     for (auto bit = 0x40; bit; bit >>= 1)
     {
         auto depth = 0;
-        for (int i = tower.size() - 1; i >= 0; i--)
+        for (auto i = int(tower.size() - 1); i >= 0; i--)
             if (tower[i] & bit)
                 break;
             else
@@ -123,7 +123,7 @@ auto process_input(const std::string &filename, long long times)
     {
         curr_piece = shapes[curr_shape];
 
-        for (curr_piece_row = tower.size() + 3; ; --curr_piece_row)
+        for (curr_piece_row = int(tower.size()) + 3; ; --curr_piece_row)
         {
             apply_jet(tower, jets, jet, curr_piece, curr_piece_row);
 
@@ -144,7 +144,7 @@ auto process_input(const std::string &filename, long long times)
         }
         else
         {
-            Key key{ hash_tops(tower), curr_shape, jet };
+            Key key{ hash_tops(tower), char(curr_shape), jet };
             auto value = seen.find(key);
 
             if (value != seen.end())
@@ -155,12 +155,14 @@ auto process_input(const std::string &filename, long long times)
                 future_full_cycles = (times - rock_count) / period;
                 auto modulo = (times - rock_count) % period;
 
-                skip_ahead = rock_count + modulo;
+                skip_ahead = int(rock_count + modulo);
             }
             else
                 seen[key] = Value{ rock_count, (int)tower.size() };
         }
     }
+
+    return 0ULL;
 }
 
 int main()

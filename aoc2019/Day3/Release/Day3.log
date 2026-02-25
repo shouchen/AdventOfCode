@@ -1,6 +1,7 @@
 ﻿  stdafx.cpp
   Day3.cpp
   Generating code
-  All 330 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Previous IPDB not found, fall back to full compilation.
+  All 301 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
-  Day3.vcxproj -> C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Release\Day3.exe
+  Day3.vcxproj -> D:\Git\shouchen\AdventOfCode\aoc2019\Release\Day3.exe

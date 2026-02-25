@@ -28,9 +28,9 @@ auto is_visible(int row, int col)
 {
     return
         all_trees_below_height(0, col, row - 1, col, grid[row][col]) ||
-        all_trees_below_height(row + 1, col, grid.size() - 1, col, grid[row][col]) ||
+        all_trees_below_height(row + 1, col, int(grid.size() - 1), col, grid[row][col]) ||
         all_trees_below_height(row, 0, row, col - 1, grid[row][col]) ||
-        all_trees_below_height(row, col + 1, row, grid[row].size() - 1, grid[row][col]);
+        all_trees_below_height(row, col + 1, row, int(grid[row].size()) - 1, grid[row][col]);
 }
 
 auto scenic_score(int row, int col)

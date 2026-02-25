@@ -4,6 +4,7 @@
 #include <vector>
 #include <queue>
 #include <set>
+#include <algorithm>
 #include <cassert>
 
 struct Point { int x, y, z; };
@@ -25,7 +26,7 @@ void read_input(const std::string &filename)
 
 auto do_part1(const std::string &filename)
 {
-    sort(bricks.begin(), bricks.end(), [&](auto lhs, auto rhs) {
+    std::sort(bricks.begin(), bricks.end(), [&](auto lhs, auto rhs) {
         return lhs.first.z < rhs.first.z;
     });
 

@@ -4,3 +4,10 @@ C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\bin\Release\Day22b
 C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.csprojResolveAssemblyReference.cache
 C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.exe
 C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.pdb
+D:\Git\shouchen\AdventOfCode\aoc2019\Day22b\bin\Release\Day22b.exe.config
+D:\Git\shouchen\AdventOfCode\aoc2019\Day22b\bin\Release\Day22b.exe
+D:\Git\shouchen\AdventOfCode\aoc2019\Day22b\bin\Release\Day22b.pdb
+D:\Git\shouchen\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.csproj.AssemblyReference.cache
+D:\Git\shouchen\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.csproj.CoreCompileInputs.cache
+D:\Git\shouchen\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.exe
+D:\Git\shouchen\AdventOfCode\aoc2019\Day22b\obj\Release\Day22b.pdb

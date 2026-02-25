@@ -1,6 +1,7 @@
 ﻿  stdafx.cpp
   Day14.cpp
   Generating code
-  All 714 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Previous IPDB not found, fall back to full compilation.
+  All 498 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Finished generating code
-  Day14.vcxproj -> C:\Users\Stephen\Documents\GitHub\AdventOfCode\aoc2019\Release\Day14.exe
+  Day14.vcxproj -> D:\Git\shouchen\AdventOfCode\aoc2019\Release\Day14.exe

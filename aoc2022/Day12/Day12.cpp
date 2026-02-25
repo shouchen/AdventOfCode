@@ -19,7 +19,7 @@ void replace_letter(std::string &line, char letter, char new_letter, RowCol &pos
         return;
 
     line[p] = new_letter;
-    pos = std::make_pair(height.size(), p);
+    pos = std::make_pair(int(height.size()), int(p));
 }
 
 void read_input(const std::string &filename)

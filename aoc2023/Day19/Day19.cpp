@@ -71,7 +71,7 @@ struct Part
         case 'm': return m;
         case 'a': return a;
         case 's': return s;
-        default: assert(false);
+        default: assert(false); return x;
         }
     }
 };

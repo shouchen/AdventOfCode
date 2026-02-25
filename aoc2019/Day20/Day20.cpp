@@ -5,6 +5,7 @@
 #include <queue>
 #include <set>
 #include <string>
+#include <algorithm>
 #include <cassert>
 
 using Grid = std::vector<std::vector<char>>;

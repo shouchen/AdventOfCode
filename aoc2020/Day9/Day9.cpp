@@ -35,16 +35,16 @@ auto find_sum(int start, int end, int target, bool include_intermediates = false
 
 auto do_part1(int preamble)
 {
-    for (auto i = preamble; i < data.size(); i++)
-        if (find_sum(i - preamble, i, data[i]).first == -1)
-            return data[i];
+    for (auto i = preamble; i < int(data.size()); i++)
+        if (find_sum(i - preamble, i, int(data[i])).first == -1)
+            return int(data[i]);
 
-    return -1LL;
+    return -1;
 }
 
-auto do_part2(long long target)
+auto do_part2(int target)
 {
-    auto pair = find_sum(0, data.size() - 1, target, true);
+    auto pair = find_sum(0, int(data.size()) - 1, target, true);
 
     return
         *std::min_element(data.begin() + pair.first, data.begin() + pair.second + 1) +
