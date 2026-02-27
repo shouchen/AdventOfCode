@@ -1,0 +1,31 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="../aoc2021/Day1/Day1.vcxproj" Id="dea7e1e9-8bf4-4827-9ca5-e6f743542ad3" />
+  <Project Path="../aoc2021/Day10/Day10.vcxproj" Id="fa9e1f50-36df-4767-bbf8-d6ce43b758da" />
+  <Project Path="../aoc2021/Day11/Day11.vcxproj" Id="be54b1b3-96ed-48ac-b29c-24e99755a250" />
+  <Project Path="../aoc2021/Day12/Day12.vcxproj" Id="3e6f755e-154a-42d0-8ddf-0b331cbb1921" />
+  <Project Path="../aoc2021/Day13/Day13.vcxproj" Id="9e1bada9-1cc4-4041-9e8b-ea3ff8e91b8f" />
+  <Project Path="../aoc2021/Day14/Day14.vcxproj" Id="feae0f0d-e2e5-4711-b461-6df3115731ee" />
+  <Project Path="../aoc2021/Day15/Day15.vcxproj" Id="40268d32-f678-4acc-9f9b-f534000156f2" />
+  <Project Path="../aoc2021/Day16/Day16.vcxproj" Id="826c51fa-8ebd-4f61-a256-c0291cafae49" />
+  <Project Path="../aoc2021/Day17/Day17.vcxproj" Id="419c7bef-72ef-4622-a1aa-e30bb6df5cd0" />
+  <Project Path="../aoc2021/Day18/Day18.vcxproj" Id="72da5fe7-2dec-44f8-9480-807fc16778f9" />
+  <Project Path="../aoc2021/Day19/Day19.vcxproj" Id="7d687874-32ff-404a-9278-8151454d63fc" />
+  <Project Path="../aoc2021/Day2/Day2.vcxproj" Id="3d94bc5a-a6fa-44d8-94e4-31cdec42622e" />
+  <Project Path="../aoc2021/Day20/Day20.vcxproj" Id="58bbc2b5-0033-40c3-b529-b217e4484dcd" />
+  <Project Path="../aoc2021/Day21/Day21.vcxproj" Id="2c5117fb-3e63-4685-91f9-2d60e506f1bf" />
+  <Project Path="../aoc2021/Day22/Day22.vcxproj" Id="7d6ad2d0-474d-435b-b4f9-d1c15705a1a1" />
+  <Project Path="../aoc2021/Day23/Day23.vcxproj" Id="8deac29a-3242-47d8-8c58-427ded6737d4" />
+  <Project Path="../aoc2021/Day24/Day24.vcxproj" Id="9f2439df-dc38-43d7-b39b-1bc34413bee5" />
+  <Project Path="../aoc2021/Day25/Day25.vcxproj" Id="06d67193-12f1-47d3-adbb-98a0e932dde3" />
+  <Project Path="../aoc2021/Day3/Day3.vcxproj" Id="5e29731e-3aa5-4172-8548-a5ed5d8b0b86" />
+  <Project Path="../aoc2021/Day4/Day4.vcxproj" Id="a1dee362-9645-42bf-bd9f-6ea1f4cdbdf6" />
+  <Project Path="../aoc2021/Day5/Day5.vcxproj" Id="efe32e55-b6f3-4a3c-9172-802318e09c41" />
+  <Project Path="../aoc2021/Day6/Day6.vcxproj" Id="fef29dd0-f0fc-4327-a885-ed2a5e3ad76a" />
+  <Project Path="../aoc2021/Day7/Day7.vcxproj" Id="3c275025-6c1d-48c6-bb38-66df2d5baa16" />
+  <Project Path="../aoc2021/Day8/Day8.vcxproj" Id="31999867-3a83-458c-b94b-2e5681abcf85" />
+  <Project Path="../aoc2021/Day9/Day9.vcxproj" Id="f9a38450-4168-49f4-8bc4-09d34e22cd90" />
+</Solution>
