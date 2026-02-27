@@ -1,0 +1,81 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Day01/Elevator.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day02/Wrapping.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day03/Houses.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day04/MD5.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day05/NaughtyOrNice.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day06/XmasLights.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day07/Circuit.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day08/Escaping.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day09/Travel.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day10/LookAndSay.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day11/Password.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day12/JSON.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day13/Happiness.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day14/Reindeer.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day15/Cookies.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day16/AuntSue.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day17/Eggnog.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day18/AnimatedLights.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day19/Rudolph.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day20/InfiniteElves.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day21/RolePlayingGame.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day22/Wizard.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day23/Computer.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day24/Sleigh.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+  <Project Path="Day25/WeatherMachine.vcxproj">
+    <Platform Project="Win32" />
+  </Project>
+</Solution>
